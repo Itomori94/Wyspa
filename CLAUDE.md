@@ -108,6 +108,34 @@ APP=$PWD/build/Wyspa.app/Contents
 - AirDrop: `NSSharingService(named: .sendViaAirDrop)`; treści bez pliku trafiają do katalogu tymczasowego.
 - Wyłączenie modułu zwalnia pamięć, zawartość półki zostaje na dysku.
 
+## HUD, Zasilanie, Bluetooth (etap 4)
+
+- **HUD** (`WyspaHUD`, wymaga Dostępności): `CGEventTap` (`.cgSessionEventTap`, `.defaultTap`) na `NX_SYSDEFINED` (typ 14),
+  podtyp 8, `data1` = kod klawisza (bity 16–31) + stan (0x0A/0x0B) + powtórzenie (bit 0). Callback C dekoduje zdarzenie
+  i przekazuje do głównego aktora tylko wartości `Sendable`. Decyzję podejmuje czysty `HUDKeyRouter`:
+  obsłużone klawisze są pochłaniane (system nie pokazuje swojego HUD), nieobsłużone i niedostępne wracają do systemu,
+  sam ⌥ zostaje dla systemu, ⇧⌥ = krok 1/64. Tap wyłączony przez system (timeout) jest włączany ponownie.
+  Głośność: CoreAudio `VirtualMainVolume` + `Mute` domyślnego wyjścia; urządzenia bez sterowania → klawisz do systemu.
+- **Zasilanie** (`WyspaPower`): `IOPSNotificationCreateRunLoopSource` (bez odpytywania), `PowerEventDetector`
+  (ładowarka, naładowana, progi 20 i 10% raz na rozładowanie). Priorytet aktywności `.alert` na 3 s.
+- **Bluetooth** (`WyspaBluetooth`, wymaga zgody na Bluetooth): `IOBluetoothDevice.register(forConnectNotifications:)`
+  i powiadomienia o rozłączeniu per urządzenie; poziom baterii odświeżany raz po 2 s od połączenia.
+- `ModuleRegistry.retryInactiveModules()` po powiadomieniu `com.apple.accessibility.api` — HUD startuje sam po nadaniu
+  Dostępności, bez ponownego przełączania modułu.
+- `LiveActivity.wingWidth`: szersze skrzydła dla pasków i procentów (HUD 70, zasilanie/Bluetooth 46).
+
+## Prywatne API — rejestr
+
+| API | Gdzie | Ryzyko | Tryb awaryjny |
+|---|---|---|---|
+| MediaRemote przez mediaremote-adapter (`/usr/bin/perl`) | `WyspaMedia` | Apple może zablokować Perla albo usunąć go z systemu | `test` adaptera → AppleScript (Muzyka, Spotify) |
+| `DisplayServicesGet/SetBrightness` (DisplayServices) | `DisplayBrightnessControl` | symbol może zniknąć | `make()` → nil, klawisze jasności wracają do systemu |
+| `KeyboardBrightnessClient` (CoreBrightness) | `KeyboardBacklightControl` | klasa/selektory mogą się zmienić | `responds(to:)`; brak → klawisze do systemu |
+| `IOBluetoothDevice.batteryPercent*` | `BluetoothMonitor` | selektory mogą zniknąć | `responds(to:)`; brak → urządzenie bez poziomu baterii |
+
+Ładowanie funkcji C wyłącznie przez `PrivateSymbol.load` (dlopen/dlsym, log przy braku). Selektory Objective-C zawsze
+za `responds(to:)` — `value(forKey:)` bez tej kontroli rzuca wyjątek, którego Swift nie złapie.
+
 ## Budżet wydajności
 
 W spoczynku < 1% CPU, żadnych ciągłych timerów. Wyjątek zaakceptowany: moduł schowka (polling `changeCount`),

@@ -51,34 +51,41 @@ struct IslandLayoutTests {
 
     @Test("Zwinięta bez aktywności obejmuje notch i wklęsłe rogi")
     func collapsedWithoutActivity() {
-        let size = IslandLayout.size(for: .collapsed, notch: notch, hasActivity: false, expanded: expanded)
+        let size = IslandLayout.size(for: .collapsed, notch: notch, activityWingWidth: nil, expanded: expanded)
         #expect(size == CGSize(width: 185 + 2 * IslandLayout.collapsedTopRadius, height: 38))
     }
 
     @Test("Aktywność dodaje dwa skrzydła")
     func collapsedWithActivity() {
-        let without = IslandLayout.size(for: .collapsed, notch: notch, hasActivity: false, expanded: expanded)
-        let with = IslandLayout.size(for: .collapsed, notch: notch, hasActivity: true, expanded: expanded)
+        let without = IslandLayout.size(for: .collapsed, notch: notch, activityWingWidth: nil, expanded: expanded)
+        let with = IslandLayout.size(for: .collapsed, notch: notch, activityWingWidth: IslandLayout.wingWidth, expanded: expanded)
         #expect(with.width - without.width == IslandLayout.wingWidth * 2)
+    }
+
+    @Test("Szersze skrzydła aktywności poszerzają wyspę")
+    func wideWings() {
+        let narrow = IslandLayout.size(for: .collapsed, notch: notch, activityWingWidth: 40, expanded: expanded)
+        let wide = IslandLayout.size(for: .collapsed, notch: notch, activityWingWidth: 70, expanded: expanded)
+        #expect(wide.width - narrow.width == 60)
     }
 
     @Test("Podgląd jest nieco większy od stanu zwiniętego")
     func peekGrows() {
-        let collapsed = IslandLayout.size(for: .collapsed, notch: notch, hasActivity: false, expanded: expanded)
-        let peek = IslandLayout.size(for: .peek, notch: notch, hasActivity: false, expanded: expanded)
+        let collapsed = IslandLayout.size(for: .collapsed, notch: notch, activityWingWidth: nil, expanded: expanded)
+        let peek = IslandLayout.size(for: .peek, notch: notch, activityWingWidth: nil, expanded: expanded)
         #expect(peek.width > collapsed.width && peek.height > collapsed.height)
     }
 
     @Test("Rozwinięta nigdy nie jest węższa od zwiniętej")
     func expandedAtLeastCollapsed() {
         let wideNotch = CGSize(width: 600, height: 40)
-        let size = IslandLayout.size(for: .expanded, notch: wideNotch, hasActivity: true, expanded: IslandSize.small.expandedSize)
+        let size = IslandLayout.size(for: .expanded, notch: wideNotch, activityWingWidth: IslandLayout.wingWidth, expanded: IslandSize.small.expandedSize)
         #expect(size.width >= 600 + IslandLayout.wingWidth * 2)
     }
 
     @Test("Ukryta to cienki pas o szerokości notcha")
     func hidden() {
-        let size = IslandLayout.size(for: .hidden, notch: notch, hasActivity: false, expanded: expanded)
+        let size = IslandLayout.size(for: .hidden, notch: notch, activityWingWidth: nil, expanded: expanded)
         #expect(size == CGSize(width: 185, height: IslandLayout.hiddenHotZoneHeight))
     }
 

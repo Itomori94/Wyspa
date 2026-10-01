@@ -120,6 +120,14 @@ public final class ModuleRegistry {
         }
     }
 
+    /// Ponawia start modułów włączonych, ale nieaktywnych (np. po nadaniu uprawnienia w Ustawieniach systemowych).
+    /// Nie pokazuje dialogów uprawnień.
+    public func retryInactiveModules() async {
+        for type in catalog where settings.isModuleEnabled(type.descriptor.id) && instances[type.descriptor.id] == nil {
+            await activate(type, promptForPermissions: false)
+        }
+    }
+
     public func setEnabled(_ id: String, _ enabled: Bool) async {
         guard let type = catalog.first(where: { $0.descriptor.id == id }), !pending.contains(id) else { return }
         if enabled {

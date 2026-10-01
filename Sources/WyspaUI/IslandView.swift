@@ -94,11 +94,11 @@ struct CollapsedActivityView: View {
         HStack(spacing: 0) {
             activity.leading
                 .matchedGeometryEffect(id: "activity.leading", in: namespace)
-                .frame(width: IslandLayout.wingWidth)
+                .frame(width: activity.wingWidth)
             Color.clear.frame(width: notchWidth)
             activity.trailing
                 .matchedGeometryEffect(id: "activity.trailing", in: namespace)
-                .frame(width: IslandLayout.wingWidth)
+                .frame(width: activity.wingWidth)
         }
     }
 }

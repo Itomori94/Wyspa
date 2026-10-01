@@ -1,6 +1,7 @@
 import AppKit
 import ApplicationServices
 import AVFoundation
+import CoreBluetooth
 import EventKit
 
 @MainActor
@@ -23,6 +24,12 @@ public final class PermissionCenter: PermissionProviding {
             case .notDetermined: return .notDetermined
             default: return .denied
             }
+        case .bluetooth:
+            switch CBManager.authorization {
+            case .allowedAlways: return .granted
+            case .notDetermined: return .notDetermined
+            default: return .denied
+            }
         }
     }
 
@@ -39,6 +46,8 @@ public final class PermissionCenter: PermissionProviding {
                 return try await EKEventStore().requestFullAccessToReminders() ? .granted : .denied
             case .camera:
                 return await AVCaptureDevice.requestAccess(for: .video) ? .granted : .denied
+            case .bluetooth:
+                return await BluetoothAuthorization.request()
             }
         } catch {
             log.error("Prośba o uprawnienie \(permission.rawValue) nie powiodła się: \(error.localizedDescription)")
@@ -52,6 +61,7 @@ public final class PermissionCenter: PermissionProviding {
         case .calendars: "Privacy_Calendars"
         case .reminders: "Privacy_Reminders"
         case .camera: "Privacy_Camera"
+        case .bluetooth: "Privacy_Bluetooth"
         }
         guard let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?\(anchor)") else { return }
         NSWorkspace.shared.open(url)

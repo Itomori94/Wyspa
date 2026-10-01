@@ -231,4 +231,19 @@ struct ModuleRegistryTests {
         #expect(DropZoneID.moduleID(of: "shelf.airdrop") == "shelf")
         #expect(DropZoneID.moduleID(of: "shelf") == "shelf")
     }
+
+    @Test("Ponowienie startu po nadaniu uprawnienia, bez dialogu")
+    func retryAfterGrant() async {
+        let settings = makeSettings()
+        settings.setModule("camera", enabled: true)
+        let permissions = FakePermissions(statuses: [.camera: .denied])
+        let registry = makeRegistry(settings: settings, permissions: permissions)
+        await registry.startEnabledModules()
+        #expect(registry.entries.first { $0.id == "camera" }?.isActive == false)
+
+        permissions.statuses[.camera] = .granted
+        await registry.retryInactiveModules()
+        #expect(registry.entries.first { $0.id == "camera" }?.isActive == true)
+        #expect(permissions.requested.isEmpty)
+    }
 }

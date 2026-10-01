@@ -12,6 +12,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var settingsWindow: SettingsWindowController?
     private var hotkey: HotkeyController?
     private var terminationSignal: DispatchSourceSignal?
+    private var accessibilityObserver: NSObjectProtocol?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         handleTerminationSignal()
@@ -43,6 +44,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
 
         Task { await registry.startEnabledModules() }
+        observeAccessibilityChanges(registry)
+    }
+
+    /// System ogłasza zmianę zaufania Dostępności; moduły czekające na nią startują bez ponownego włączania.
+    private func observeAccessibilityChanges(_ registry: ModuleRegistry) {
+        accessibilityObserver = DistributedNotificationCenter.default().addObserver(
+            forName: Notification.Name("com.apple.accessibility.api"), object: nil, queue: .main
+        ) { _ in
+            Task { @MainActor in
+                // Powiadomienie przychodzi chwilę przed faktyczną zmianą stanu zaufania.
+                try? await Task.sleep(for: .milliseconds(500))
+                await registry.retryInactiveModules()
+            }
+        }
     }
 
     /// SIGTERM (np. `pkill`, wylogowanie) zamyka aplikację porządnie, żeby moduły zakończyły procesy potomne.

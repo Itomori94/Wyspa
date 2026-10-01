@@ -26,6 +26,8 @@
 	<true/>
 	<key>NSAppleEventsUsageDescription</key>
 	<string>W trybie awaryjnym Wyspa odczytuje i steruje odtwarzaniem w Muzyce i Spotify.</string>
+	<key>NSBluetoothAlwaysUsageDescription</key>
+	<string>Wyspa pokazuje podłączenie słuchawek i innych urządzeń Bluetooth oraz poziom ich baterii.</string>
 	<key>NSCalendarsFullAccessUsageDescription</key>
 	<string>Wyspa pokazuje Twoje wydarzenia i najbliższe spotkanie.</string>
 	<key>NSCameraUsageDescription</key>

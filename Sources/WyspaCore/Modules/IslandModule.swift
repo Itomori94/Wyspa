@@ -24,6 +24,8 @@ public struct ActivityPriority: Comparable, Sendable {
 
     public static let hud = ActivityPriority(100)
     public static let attention = ActivityPriority(80)
+    /// Krótkie zdarzenia systemowe (ładowarka, słuchawki): wygrywają z multimediami na kilka sekund.
+    public static let alert = ActivityPriority(70)
     public static let timer = ActivityPriority(60)
     public static let upcomingEvent = ActivityPriority(50)
     public static let media = ActivityPriority(40)
@@ -37,6 +39,8 @@ public struct LiveActivity {
     public let id: String
     public let priority: ActivityPriority
     public let accent: Color?
+    /// Szerokość każdego skrzydła; szersze dla treści typu pasek poziomu albo tekst.
+    public let wingWidth: CGFloat
     public let leading: AnyView
     public let trailing: AnyView
 
@@ -44,12 +48,14 @@ public struct LiveActivity {
         id: String,
         priority: ActivityPriority,
         accent: Color? = nil,
+        wingWidth: CGFloat = IslandLayout.wingWidth,
         @ViewBuilder leading: () -> Leading,
         @ViewBuilder trailing: () -> Trailing
     ) {
         self.id = id
         self.priority = priority
         self.accent = accent
+        self.wingWidth = wingWidth
         self.leading = AnyView(leading())
         self.trailing = AnyView(trailing())
     }

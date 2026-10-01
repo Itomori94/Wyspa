@@ -43,6 +43,9 @@ Wyłączony moduł nie działa w tle.
 | — | Fundament wyspy nie wymaga żadnych uprawnień |
 | — | **Teraz odtwarzane** przez mediaremote-adapter nie wymaga uprawnień |
 | — | **Półka** nie wymaga uprawnień |
+| Dostępność | **HUD głośności i jasności** (przechwytywanie klawiszy). Po nadaniu w Ustawieniach systemowych moduł startuje sam |
+| — | **Zasilanie** nie wymaga uprawnień |
+| Bluetooth | **Bluetooth** (podłączenie urządzeń i poziom baterii słuchawek) |
 | Automatyzacja: Muzyka, Spotify | **Teraz odtwarzane** w trybie awaryjnym AppleScript (system pyta przy pierwszym użyciu) |
 
 Tabela rośnie wraz z kolejnymi modułami.
@@ -73,6 +76,23 @@ albo na pole AirDrop, żeby od razu wysłać.
   Obrazy i linki przeciągnięte z przeglądarki są kopiowane do `~/Library/Application Support/Wyspa/Shelf`.
 - Półka przetrwa restart aplikacji i komputera. Usunięcie z półki nigdy nie kasuje Twoich oryginałów.
 
+### HUD głośności i jasności
+
+Klawisze głośności, wyciszenia, jasności ekranu i podświetlenia klawiatury pokazują poziom w wyspie zamiast
+systemowego okienka. ⇧⌥ z klawiszem zmienia poziom drobniejszymi krokami, sam ⌥ otwiera ustawienia systemowe jak zwykle.
+Każdy rodzaj można wyłączyć osobno w ustawieniach modułu. Urządzenia audio bez regulacji głośności (np. część
+wyjść HDMI) zostają obsługiwane przez system.
+
+### Zasilanie
+
+Krótka aktywność w wyspie po podłączeniu i odłączeniu ładowarki, po pełnym naładowaniu i przy 20% oraz 10% baterii.
+Zakładka z poziomem baterii i szacowanym czasem ładowania albo pracy.
+
+### Bluetooth
+
+Krótka aktywność po podłączeniu i odłączeniu urządzenia: ikona (AirPods, słuchawki, klawiatura, mysz…) i poziom baterii.
+Zakładka z listą połączonych urządzeń i baterią lewej i prawej słuchawki oraz etui.
+
 ## Znane ograniczenia
 
 - **MediaRemote (prywatne API)**: od macOS 15.4 Apple blokuje je zwykłym aplikacjom. Wyspa korzysta z
@@ -80,6 +100,11 @@ albo na pole AirDrop, żeby od razu wysłać.
   systemowy `/usr/bin/perl`. Kolejna wersja macOS może to zablokować albo usunąć Perla. Wtedy test adaptera nie przejdzie,
   a moduł sam przełączy się na AppleScript (tylko Muzyka i Spotify, bez przeglądarek). Aplikacja się nie wywali.
   Przetestowano na macOS 27.2 (26B5091g).
+- **Prywatne API w HUD i Bluetooth**: jasność ekranu (DisplayServices), podświetlenie klawiatury (CoreBrightness)
+  i bateria słuchawek (`IOBluetoothDevice.batteryPercent*`). Gdy nowa wersja macOS je usunie, odpowiednia funkcja
+  się wyłączy (klawisze wrócą do systemowego HUD, urządzenie pokaże się bez poziomu baterii). Aplikacja się nie wywali.
+- HUD jasności działa tylko dla wbudowanego ekranu (monitory zewnętrzne zostają przy systemie).
+- Tryb skupienia nie jest obsługiwany (wymagałby pełnego dostępu do dysku).
 - Półka: element, którego oryginał został usunięty, zostaje na półce wyszarzony, dopóki go nie usuniesz.
 - Quick Look i AirDrop przenoszą Wyspę na pierwszy plan (systemowe okna potrzebują aktywnej aplikacji).
 - Wizualizer w zwiniętej wyspie pokazuje rytm odtwarzania, nie rzeczywisty poziom dźwięku.

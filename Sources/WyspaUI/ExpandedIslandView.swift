@@ -33,7 +33,7 @@ struct ExpandedIslandView: View {
             if let activity = model.activity {
                 activity.leading
                     .matchedGeometryEffect(id: "activity.leading", in: namespace)
-                    .frame(width: IslandLayout.wingWidth)
+                    .frame(width: activity.wingWidth)
             }
             ClockLabel()
             // Środek nagłówka leży pod fizycznym notchem i musi pozostać pusty.
@@ -44,7 +44,7 @@ struct ExpandedIslandView: View {
             if let activity = model.activity {
                 activity.trailing
                     .matchedGeometryEffect(id: "activity.trailing", in: namespace)
-                    .frame(width: IslandLayout.wingWidth)
+                    .frame(width: activity.wingWidth)
             }
         }
     }

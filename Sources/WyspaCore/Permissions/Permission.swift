@@ -5,6 +5,7 @@ public enum Permission: String, Hashable, Sendable, CaseIterable {
     case calendars
     case reminders
     case camera
+    case bluetooth
 
     public var displayName: String {
         switch self {
@@ -12,6 +13,7 @@ public enum Permission: String, Hashable, Sendable, CaseIterable {
         case .calendars: "Kalendarze"
         case .reminders: "Przypomnienia"
         case .camera: "Kamera"
+        case .bluetooth: "Bluetooth"
         }
     }
 }

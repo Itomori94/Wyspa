@@ -32,13 +32,14 @@ public enum IslandLayout {
     /// Pasek pod wirtualnym notchem, na który można najechać, gdy wyspa jest ukryta.
     public static let hiddenHotZoneHeight: CGFloat = 3
 
+    /// - Parameter activityWingWidth: szerokość skrzydła bieżącej aktywności; nil = brak aktywności.
     public static func size(
         for phase: IslandPhase,
         notch: CGSize,
-        hasActivity: Bool,
+        activityWingWidth: CGFloat?,
         expanded: CGSize
     ) -> CGSize {
-        let wings = hasActivity ? wingWidth * 2 : 0
+        let wings = (activityWingWidth ?? 0) * 2
         let collapsed = CGSize(width: notch.width + wings + collapsedTopRadius * 2, height: notch.height)
         switch phase {
         case .hidden:
