@@ -1,0 +1,5 @@
+repository=https://github.com/ungive/mediaremote-adapter
+tag=v0.7.7
+commit=e3ff5021eb0875858bd05f48d2e9ba2e962d1cf6
+archive_sha256=2d9c10177dfff499fe396fe0137b9d1c501c8a3f4799cb747c0016f8b55db5b0
+license=BSD-3-Clause (Vendor/mediaremote-adapter/LICENSE)

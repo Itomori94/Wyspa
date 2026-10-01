@@ -2,24 +2,39 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-    <key>CFBundleName</key><string>Wyspa</string>
-    <key>CFBundleDisplayName</key><string>Wyspa</string>
-    <key>CFBundleIdentifier</key><string>pl.net.kurant.wyspa</string>
-    <key>CFBundleExecutable</key><string>Wyspa</string>
-    <key>CFBundlePackageType</key><string>APPL</string>
-    <key>CFBundleShortVersionString</key><string>0.1.0</string>
-    <key>CFBundleVersion</key><string>1</string>
-    <key>CFBundleDevelopmentRegion</key><string>pl</string>
-    <key>LSMinimumSystemVersion</key><string>14.0</string>
-    <key>LSUIElement</key><true/>
-    <key>LSApplicationCategoryType</key><string>public.app-category.utilities</string>
-    <key>NSHighResolutionCapable</key><true/>
-    <key>NSSupportsAutomaticGraphicsSwitching</key><true/>
-    <key>NSCalendarsFullAccessUsageDescription</key>
-    <string>Wyspa pokazuje Twoje wydarzenia i najbliższe spotkanie.</string>
-    <key>NSRemindersFullAccessUsageDescription</key>
-    <string>Wyspa pokazuje Twoje przypomnienia na dziś.</string>
-    <key>NSCameraUsageDescription</key>
-    <string>Lusterko w wyspie pokazuje podgląd z kamery. Obraz nie jest nigdzie zapisywany.</string>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>pl</string>
+	<key>CFBundleDisplayName</key>
+	<string>Wyspa</string>
+	<key>CFBundleExecutable</key>
+	<string>Wyspa</string>
+	<key>CFBundleIdentifier</key>
+	<string>pl.net.kurant.wyspa</string>
+	<key>CFBundleName</key>
+	<string>Wyspa</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleShortVersionString</key>
+	<string>0.1.0</string>
+	<key>CFBundleVersion</key>
+	<string>1</string>
+	<key>LSApplicationCategoryType</key>
+	<string>public.app-category.utilities</string>
+	<key>LSMinimumSystemVersion</key>
+	<string>14.0</string>
+	<key>LSUIElement</key>
+	<true/>
+	<key>NSAppleEventsUsageDescription</key>
+	<string>W trybie awaryjnym Wyspa odczytuje i steruje odtwarzaniem w Muzyce i Spotify.</string>
+	<key>NSCalendarsFullAccessUsageDescription</key>
+	<string>Wyspa pokazuje Twoje wydarzenia i najbliższe spotkanie.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Lusterko w wyspie pokazuje podgląd z kamery. Obraz nie jest nigdzie zapisywany.</string>
+	<key>NSHighResolutionCapable</key>
+	<true/>
+	<key>NSRemindersFullAccessUsageDescription</key>
+	<string>Wyspa pokazuje Twoje przypomnienia na dziś.</string>
+	<key>NSSupportsAutomaticGraphicsSwitching</key>
+	<true/>
 </dict>
 </plist>

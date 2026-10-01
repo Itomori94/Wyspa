@@ -11,8 +11,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusItem: StatusItemController?
     private var settingsWindow: SettingsWindowController?
     private var hotkey: HotkeyController?
+    private var terminationSignal: DispatchSourceSignal?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        handleTerminationSignal()
         let registry = ModuleRegistry(
             catalog: ModuleCatalog.all,
             settings: settings,
@@ -41,6 +43,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
 
         Task { await registry.startEnabledModules() }
+    }
+
+    /// SIGTERM (np. `pkill`, wylogowanie) zamyka aplikację porządnie, żeby moduły zakończyły procesy potomne.
+    private func handleTerminationSignal() {
+        signal(SIGTERM, SIG_IGN)
+        let source = DispatchSource.makeSignalSource(signal: SIGTERM, queue: .main)
+        source.setEventHandler { NSApp.terminate(nil) }
+        source.resume()
+        terminationSignal = source
     }
 
     func applicationWillTerminate(_ notification: Notification) {

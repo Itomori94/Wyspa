@@ -10,6 +10,7 @@ scripts/test.sh                 # wszystkie testy jednostkowe (Swift Testing) �
 scripts/build-app.sh            # build/Wyspa.app, universal (arm64 + x86_64), release
 scripts/build-app.sh --native --debug   # szybki build tylko na bieżącą architekturę
 scripts/dev-cert.sh             # jednorazowo: lokalny certyfikat „Wyspa Development”
+scripts/update-mediaremote-adapter.sh v0.7.8   # aktualizacja adaptera MediaRemote (jedna komenda)
 open build/Wyspa.app            # uruchomienie
 log stream --predicate 'subsystem == "pl.net.kurant.wyspa"' --info   # logi
 ```
@@ -50,6 +51,38 @@ binarka ma `minos 14.0` dla obu architektur (sprawdź: `vtool -arch x86_64 -show
 - **Swift 6 language mode**: callbacki C (Carbon, event tap) wchodzą na MainActor przez `MainActor.assumeIsolated`.
 - **Ustawienia**: `SettingsStore` (UserDefaults, `@Observable`); moduły dostają `ModuleSettings` z prefiksem `module.<id>.`.
 - **Obserwacja**: `observeChanges` (Observation, re-rejestracja po każdej zmianie) zamiast timerów i Combine.
+
+## Media (moduł `WyspaMedia`)
+
+- **Źródło systemowe**: [mediaremote-adapter](https://github.com/ungive/mediaremote-adapter), BSD-3-Clause,
+  vendorowany **w całości i bez zmian** w `Vendor/mediaremote-adapter`, przypięty w `Vendor/mediaremote-adapter.version`
+  (tag, commit, SHA-256 archiwum). Od macOS 15.4 MediaRemote jest zablokowany dla zwykłych aplikacji;
+  adapter działa, bo `/usr/bin/perl` ma uprawnienie systemowe i ładuje `MediaRemoteAdapter.framework` przez DynaLoader.
+- **Budowanie bez CMake**: `scripts/build-mediaremote-adapter.sh` kompiluje framework i klienta testowego `clang`-iem,
+  listę źródeł czyta z bloku `ADAPTER_SOURCES` w `CMakeLists.txt` adaptera. Wywoływany z `build-app.sh`.
+- **Pakiet**: `Contents/Frameworks/MediaRemoteAdapter.framework`, `Contents/Helpers/MediaRemoteAdapterTestClient`,
+  `Contents/Resources/mediaremote-adapter/{mediaremote-adapter.pl, LICENSE, mediaremote-adapter.version}`.
+  Framework wołamy zawsze ścieżką bezwzględną (względna nie ładuje się w Perlu).
+- **Warstwa Swift**: protokół `NowPlayingSource` (`AdapterNowPlayingSource`, `AppleScriptNowPlayingSource`).
+  Moduł zna tylko protokół; nowe źródło = nowa implementacja + przypadek w `MediaSourceKind`.
+- **Wybór źródła** (`MediaSourceSelector`): Automatycznie → `test` adaptera (kod 0) → adapter, inaczej AppleScript.
+  W trakcie działania przejście na AppleScript, gdy adapter padnie 3 razy z rzędu albo milczy ≥ 4 s,
+  choć Muzyka/Spotify zgłaszają odtwarzanie (`SilentAdapterDetector`). Aktywne źródło i powód widać w ustawieniach modułu.
+- **Bez odpytywania**: adapter `stream --no-diff --micros --debounce=100` wysyła dane tylko przy zmianach;
+  AppleScript odświeża się po powiadomieniach rozproszonych `com.apple.Music.playerInfo` / `com.spotify.client.PlaybackStateChanged`.
+  Pozycja odtwarzania jest liczona lokalnie z `elapsedTime + (teraz − timestamp) × playbackRate`.
+- **Wizualizer**: `CALayer` + `CABasicAnimation` (animacje w serwerze okien, nie na głównym wątku); wyłączony przy „Ogranicz ruch”.
+  To wizualizacja rytmu, nie analiza audio.
+
+### Aktualizacja adaptera
+
+```bash
+scripts/update-mediaremote-adapter.sh v0.7.8   # pobiera wydanie, podmienia Vendor/, zapisuje przypięcie
+scripts/test.sh && scripts/build-app.sh        # build + test adaptera z pakietu:
+APP=$PWD/build/Wyspa.app/Contents
+/usr/bin/perl $APP/Resources/mediaremote-adapter/mediaremote-adapter.pl \
+  $APP/Frameworks/MediaRemoteAdapter.framework $APP/Helpers/MediaRemoteAdapterTestClient test; echo $?   # 0 = działa
+```
 
 ## Budżet wydajności
 

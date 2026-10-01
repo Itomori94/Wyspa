@@ -40,16 +40,39 @@ Wyłączony moduł nie działa w tle.
 
 | Uprawnienie | Kto go używa |
 |---|---|
-| — | Fundament wyspy (etap 1) nie wymaga żadnych uprawnień |
+| — | Fundament wyspy nie wymaga żadnych uprawnień |
+| — | **Teraz odtwarzane** przez mediaremote-adapter nie wymaga uprawnień |
+| Automatyzacja: Muzyka, Spotify | **Teraz odtwarzane** w trybie awaryjnym AppleScript (system pyta przy pierwszym użyciu) |
 
 Tabela rośnie wraz z kolejnymi modułami.
 
+## Moduły
+
+### Teraz odtwarzane
+
+Okładka, tytuł, wykonawca, pasek przewijania i sterowanie dla dowolnej aplikacji odtwarzającej dźwięk
+(Muzyka, Spotify, przeglądarki, podcasty). W zwiniętej wyspie: miniatura okładki i wizualizer w kolorze okładki.
+
+Źródło danych wybierasz w Ustawieniach → Moduły → Teraz odtwarzane. Tam też widać, które źródło jest aktywne i dlaczego.
+
 ## Znane ograniczenia
+
+- **MediaRemote (prywatne API)**: od macOS 15.4 Apple blokuje je zwykłym aplikacjom. Wyspa korzysta z
+  [mediaremote-adapter](https://github.com/ungive/mediaremote-adapter) (BSD-3-Clause), który uruchamia je przez
+  systemowy `/usr/bin/perl`. Kolejna wersja macOS może to zablokować albo usunąć Perla. Wtedy test adaptera nie przejdzie,
+  a moduł sam przełączy się na AppleScript (tylko Muzyka i Spotify, bez przeglądarek). Aplikacja się nie wywali.
+  Przetestowano na macOS 27.2 (26B5091g).
+- Wizualizer w zwiniętej wyspie pokazuje rytm odtwarzania, nie rzeczywisty poziom dźwięku.
 
 - Na monitorach bez notcha wyspa rysuje wirtualny notch. W trybie „Tylko gdy coś się dzieje”
   jest niewidoczna, dopóki nie najedziesz kursorem na środek górnej krawędzi ekranu.
 - Haptyka działa tylko na gładzikach Force Touch i tylko wtedy, gdy palec dotyka gładzika.
 - Start przy logowaniu najlepiej działa, gdy aplikacja leży w `/Applications`.
+
+## Licencje zewnętrzne
+
+- mediaremote-adapter © Jonas van den Berg i współtwórcy, BSD-3-Clause.
+  Pełny tekst: `Vendor/mediaremote-adapter/LICENSE`, w pakiecie aplikacji `Contents/Resources/mediaremote-adapter/LICENSE`.
 
 ## Rozwój
 

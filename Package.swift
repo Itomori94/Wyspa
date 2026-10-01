@@ -11,12 +11,18 @@ let package = Package(
         .target(name: "WyspaCore", path: "Sources/WyspaCore"),
         .target(name: "WyspaUI", dependencies: ["WyspaCore"], path: "Sources/WyspaUI"),
         // Katalog modułów. Każdy moduł funkcji to osobny target w Sources/Features/<Nazwa>.
-        .target(name: "WyspaFeatures", dependencies: ["WyspaCore", "WyspaUI"], path: "Sources/Features/Catalog"),
+        .target(name: "WyspaMedia", dependencies: ["WyspaCore", "WyspaUI"], path: "Sources/Features/Media"),
+        .target(
+            name: "WyspaFeatures",
+            dependencies: ["WyspaCore", "WyspaUI", "WyspaMedia"],
+            path: "Sources/Features/Catalog"
+        ),
         .executableTarget(
             name: "WyspaApp",
             dependencies: ["WyspaCore", "WyspaUI", "WyspaFeatures"],
             path: "Sources/WyspaApp"
         ),
         .testTarget(name: "WyspaCoreTests", dependencies: ["WyspaCore"], path: "Tests/WyspaCoreTests"),
+        .testTarget(name: "WyspaMediaTests", dependencies: ["WyspaMedia"], path: "Tests/WyspaMediaTests"),
     ]
 )
