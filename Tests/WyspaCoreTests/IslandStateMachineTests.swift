@@ -99,8 +99,8 @@ struct IslandStateMachineTests {
 
     @Test("Przeciąganie rozwija i blokuje zwijanie do czasu wyjścia")
     func dragging() {
-        #expect(reduce(IslandState(phase: .collapsed), .dragEntered).state.phase == .expanded)
-        #expect(reduce(IslandState(phase: .expanded), .dragEntered).effects == [.cancel(.collapse)])
+        #expect(reduce(IslandState(phase: .collapsed), .dragEntered(preferredTab: nil)).state.phase == .expanded)
+        #expect(reduce(IslandState(phase: .expanded), .dragEntered(preferredTab: nil)).effects == [.cancel(.collapse)])
         #expect(reduce(IslandState(phase: .expanded), .dragExited).effects == [.schedule(.collapse, after: 0.4)])
     }
 
@@ -134,5 +134,15 @@ struct IslandStateMachineTests {
         #expect(reduce(state, .tabSelected(2)).state.selectedTab == 2)
         #expect(reduce(state, .tabSelected(5)).state.selectedTab == 0)
         #expect(reduce(state, .tabSelected(-1)).state.selectedTab == 0)
+    }
+
+    @Test("Przeciąganie przełącza na zakładkę modułu przyjmującego upuszczenia")
+    func dragSwitchesTab() {
+        let state = IslandState(phase: .collapsed, tabCount: 3, selectedTab: 0)
+        let result = reduce(state, .dragEntered(preferredTab: 2))
+        #expect(result.state.phase == .expanded && result.state.selectedTab == 2)
+        #expect(reduce(state, .dragEntered(preferredTab: 7)).state.selectedTab == 0)
+        let expanded = IslandState(phase: .expanded, tabCount: 2, selectedTab: 0)
+        #expect(reduce(expanded, .dragEntered(preferredTab: 1)).state.selectedTab == 1)
     }
 }

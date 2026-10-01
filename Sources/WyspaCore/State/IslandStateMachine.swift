@@ -25,7 +25,8 @@ public enum IslandEvent: Equatable, Sendable {
     case clicked
     case swipe(SwipeDirection)
     case toggleRequested
-    case dragEntered
+    /// Przeciąganie weszło nad wyspę; `preferredTab` = zakładka modułu przyjmującego upuszczenia.
+    case dragEntered(preferredTab: Int?)
     case dragExited
     case timerFired(IslandTimer)
     case activityChanged(hasActivity: Bool)
@@ -102,10 +103,12 @@ public enum IslandStateMachine {
             return swipe(state, direction, config: config)
         case .toggleRequested:
             return state.phase == .expanded ? collapse(state, config: config) : expand(state)
-        case .dragEntered:
+        case .dragEntered(let preferredTab):
+            let target = preferredTab.flatMap { (0..<state.tabCount).contains($0) ? $0 : nil } ?? state.selectedTab
+            let retabbed = state.with(selectedTab: target)
             return state.phase == .expanded
-                ? (state, [.cancel(.collapse)])
-                : expand(state)
+                ? (retabbed, [.cancel(.collapse)])
+                : expand(retabbed)
         case .dragExited:
             return state.phase == .expanded
                 ? (state, [.schedule(.collapse, after: config.collapseDelay)])

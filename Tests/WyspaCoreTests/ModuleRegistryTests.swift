@@ -1,6 +1,7 @@
 import Foundation
 import SwiftUI
 import Testing
+import UniformTypeIdentifiers
 @testable import WyspaCore
 
 @MainActor
@@ -71,6 +72,24 @@ final class CameraModule: IslandModule {
         LiveActivity(id: "camera", priority: .status, leading: { EmptyView() }, trailing: { EmptyView() })
     }
     func makeExpandedView() -> AnyView? { nil }
+}
+
+@MainActor
+@Observable
+final class DropModule: IslandModule, IslandDropHandling {
+    static let descriptor = ModuleDescriptor(id: "drop", name: "Upuść", summary: "", symbol: "tray")
+    static let acceptedDropTypes: [UTType] = [.fileURL, .image]
+    static var drops: [String?] = []
+
+    init(context: ModuleContext) {}
+    func activate() async throws {}
+    func deactivate() {}
+    var liveActivity: LiveActivity? { nil }
+    func makeExpandedView() -> AnyView? { AnyView(Text("drop")) }
+    func performDrop(_ providers: [NSItemProvider], zoneID: String?) -> Bool {
+        Self.drops.append(zoneID)
+        return true
+    }
 }
 
 @MainActor
@@ -182,5 +201,34 @@ struct ModuleRegistryTests {
         let registry = makeRegistry(settings: settings)
         await registry.setEnabled("nieistnieje", true)
         #expect(!settings.isModuleEnabled("nieistnieje"))
+    }
+
+    @Test("Upuszczenia: typy, zakładka i kierowanie do strefy modułu")
+    func dropRouting() async {
+        Probe.reset()
+        DropModule.drops = []
+        let settings = makeSettings()
+        let registry = ModuleRegistry(
+            catalog: [PlainModule.self, DropModule.self], settings: settings,
+            permissions: FakePermissions(), requestExpand: {}
+        )
+        #expect(registry.dropTypes.isEmpty)
+        #expect(!registry.performDrop([], zoneID: nil))
+
+        await registry.setEnabled("plain", true)
+        await registry.setEnabled("drop", true)
+        #expect(registry.dropTypes == [.fileURL, .image])
+        #expect(registry.dropTabIndex == 1)
+
+        #expect(registry.performDrop([], zoneID: "drop.airdrop"))
+        #expect(registry.performDrop([], zoneID: nil))
+        #expect(registry.performDrop([], zoneID: "obcy.strefa"))
+        #expect(DropModule.drops == ["drop.airdrop", nil, nil])
+    }
+
+    @Test("Identyfikator modułu ze strefy upuszczania")
+    func zoneModuleID() {
+        #expect(DropZoneID.moduleID(of: "shelf.airdrop") == "shelf")
+        #expect(DropZoneID.moduleID(of: "shelf") == "shelf")
     }
 }

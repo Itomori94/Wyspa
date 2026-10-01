@@ -21,11 +21,26 @@ public struct IslandView: View {
             IslandShape(topRadius: topRadius, bottomRadius: bottomRadius)
                 .fill(Color.black.opacity(model.phase == .hidden ? Self.hiddenAlpha : 1))
                 .shadow(color: .black.opacity(model.phase == .expanded ? 0.5 : 0), radius: 20, y: 10)
+                .contentShape(IslandShape(topRadius: topRadius, bottomRadius: bottomRadius))
+                .onTapGesture {
+                    // W rozwiniętej wyspie kliknięcia obsługują kontrolki modułów.
+                    if model.phase != .expanded { model.onClick() }
+                }
 
             content
                 .padding(.horizontal, model.phase == .expanded ? topRadius + Self.contentInset : topRadius)
         }
         .frame(width: size.width, height: size.height)
+        .backgroundPreferenceValue(DropZoneKey.self) { anchors in
+            GeometryReader { proxy in
+                let frames = anchors.mapValues { proxy[$0] }
+                Color.clear
+                    .onAppear { model.dropZoneFrames = frames }
+                    .onChange(of: frames) { _, new in model.dropZoneFrames = new }
+            }
+        }
+        .onDrop(of: model.registry.dropTypes, delegate: IslandDropDelegate(model: model, types: model.registry.dropTypes))
+        .environment(\.islandDropTarget, model.dropTarget)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .environment(\.colorScheme, .dark)
     }

@@ -43,6 +43,16 @@ binarka ma `minos 14.0` dla obu architektur (sprawdź: `vtool -arch x86_64 -show
   kliknięcia (okno `isOpaque = false`). `IslandContainerView` śledzi kursor `NSTrackingArea` tylko nad wyspą
   i zwraca nil z `hitTest` poza nią. Brak globalnych monitorów myszy.
   Ukryta wyspa (wirtualny notch bez aktywności) ma alfę 0.01, żeby okno wciąż dostawało najechanie.
+- **Kliknięcia i przeciąganie**: `IslandContainerView.hitTest` zwraca nil poza wyspą, a w jej obrębie przekazuje
+  wszystko do `IslandHostingView` (SwiftUI, `acceptsFirstMouse = true`). Kliknięcie zwiniętej wyspy to `onTapGesture`
+  na kształcie wyspy.
+- **Upuszczanie**: jeden `DropDelegate` na całej wyspie (`IslandDropDelegate`), żeby przejścia między strefami
+  nie wyglądały jak opuszczenie wyspy. Moduły implementują `IslandDropHandling` i oznaczają strefy
+  `.islandDropZone("<id modułu>.<strefa>")`; ramki stref zbiera preferencja `DropZoneKey`, trafienie wybiera
+  najmniejsza strefa pod kursorem. `ModuleRegistry.performDrop` kieruje upuszczenie do właściciela strefy.
+  Podświetlenie strefy: `@Environment(\.islandDropTarget)`. Po upuszczeniu `resyncPointer()` przywraca śledzenie
+  kursora (AppKit wstrzymuje je podczas przeciągania). `IslandDragSession.isDraggingOut` blokuje upuszczenie
+  elementów wyciąganych z wyspy z powrotem na nią.
 - **Gesty**: lokalny monitor `scrollWheel` filtrowany do panelu → `SwipeRecognizer` (jeden kierunek na gest).
 - **Skrót globalny**: Carbon `RegisterEventHotKey` (bez Accessibility).
 - **Panel**: poziom `mainMenu + 3`, `canJoinAllSpaces`, `fullScreenAuxiliary`, `nonactivatingPanel`, `canBecomeKey = false`.
@@ -83,6 +93,20 @@ APP=$PWD/build/Wyspa.app/Contents
 /usr/bin/perl $APP/Resources/mediaremote-adapter/mediaremote-adapter.pl \
   $APP/Frameworks/MediaRemoteAdapter.framework $APP/Helpers/MediaRemoteAdapterTestClient test; echo $?   # 0 = działa
 ```
+
+## Półka (moduł `WyspaShelf`)
+
+- `ShelfStore` (`@MainActor`): indeks `shelf.json` + kopie w `Items/<uuid>/` w `~/Library/Application Support/Wyspa/Shelf`.
+  Zapis po każdej zmianie (atomowo). Uszkodzony indeks = pusta półka, bez awarii.
+- Pliki z dysku jako **bookmarki** (śledzą przeniesienia, nieaktualny bookmark odświeżany przy odczycie);
+  treści bez pliku (obraz z przeglądarki, link → `.webloc`, tekst → `.txt`, obietnice plików) jako **kopie**.
+  Usunięcie z półki kasuje tylko kopie, nigdy oryginały. Nazwy plików są oczyszczane (`sanitizedFileName`).
+- `IngestPlan.choose` wybiera sposób wczytania po typach: plik → obraz → link → tekst → inne dane.
+- Mysz na kafelkach w AppKit (`TileMouseView`): klik/⌘/⇧, dwuklik, menu kontekstowe i przeciąganie
+  **wielu plików naraz** (`beginDraggingSession`); SwiftUI `onDrag` obsługuje tylko jeden element.
+- Quick Look: `QLPreviewPanel` z ustawionym bezpośrednio `dataSource` (panel wyspy nie jest kluczowy), aplikacja aktywowana.
+- AirDrop: `NSSharingService(named: .sendViaAirDrop)`; treści bez pliku trafiają do katalogu tymczasowego.
+- Wyłączenie modułu zwalnia pamięć, zawartość półki zostaje na dysku.
 
 ## Budżet wydajności
 

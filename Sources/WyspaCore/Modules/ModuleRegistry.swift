@@ -1,5 +1,6 @@
 import Observation
 import SwiftUI
+import UniformTypeIdentifiers
 
 /// Stan modułu widoczny w ustawieniach.
 public struct ModuleEntry: Identifiable {
@@ -73,6 +74,39 @@ public final class ModuleRegistry {
                 ModuleTab(id: descriptor.id, name: descriptor.name, symbol: descriptor.symbol, content: $0)
             }
         }
+    }
+
+    // MARK: - Przeciąganie
+
+    /// Typy przyjmowane przez którykolwiek aktywny moduł; pusta lista = wyspa nie jest celem upuszczania.
+    public var dropTypes: [UTType] {
+        var seen = Set<UTType>()
+        return dropModules
+            .flatMap { type(of: $0).acceptedDropTypes }
+            .filter { seen.insert($0).inserted }
+    }
+
+    /// Zakładka modułu przyjmującego upuszczenia, pokazywana przy przeciąganiu nad wyspą.
+    public var dropTabIndex: Int? {
+        guard let first = dropModules.first else { return nil }
+        let id = type(of: first).descriptor.id
+        return tabs.firstIndex { $0.id == id }
+    }
+
+    /// Kieruje upuszczenie do modułu właściciela strefy, a bez strefy do pierwszego modułu przyjmującego.
+    @discardableResult
+    public func performDrop(_ providers: [NSItemProvider], zoneID: String?) -> Bool {
+        let target = zoneID
+            .map(DropZoneID.moduleID(of:))
+            .flatMap { id in dropModules.first { type(of: $0).descriptor.id == id } }
+            ?? dropModules.first
+        guard let target else { return false }
+        let ownZone = zoneID.flatMap { DropZoneID.moduleID(of: $0) == type(of: target).descriptor.id ? $0 : nil }
+        return target.performDrop(providers, zoneID: ownZone)
+    }
+
+    private var dropModules: [any IslandDropHandling] {
+        activeModules.compactMap { $0 as? any IslandDropHandling }
     }
 
     public func settingsView(for id: String) -> AnyView? {

@@ -42,6 +42,7 @@ Wyłączony moduł nie działa w tle.
 |---|---|
 | — | Fundament wyspy nie wymaga żadnych uprawnień |
 | — | **Teraz odtwarzane** przez mediaremote-adapter nie wymaga uprawnień |
+| — | **Półka** nie wymaga uprawnień |
 | Automatyzacja: Muzyka, Spotify | **Teraz odtwarzane** w trybie awaryjnym AppleScript (system pyta przy pierwszym użyciu) |
 
 Tabela rośnie wraz z kolejnymi modułami.
@@ -55,6 +56,18 @@ Okładka, tytuł, wykonawca, pasek przewijania i sterowanie dla dowolnej aplikac
 
 Źródło danych wybierasz w Ustawieniach → Moduły → Teraz odtwarzane. Tam też widać, które źródło jest aktywne i dlaczego.
 
+### Półka
+
+Przeciągnij plik, obraz, link albo tekst nad notch: wyspa się rozwinie i pokaże półkę. Upuść na półkę, żeby odłożyć,
+albo na pole AirDrop, żeby od razu wysłać.
+
+- Klik zaznacza, ⌘-klik dodaje do zaznaczenia, ⇧-klik zaznacza zakres, dwuklik otwiera.
+- Przeciągnij kafelek poza wyspę, żeby wyciągnąć plik (całe zaznaczenie naraz).
+- Ikona oka: podgląd Quick Look zaznaczonych elementów. Prawy przycisk: Otwórz, Podgląd, Pokaż w Finderze, Usuń.
+- Pliki z dysku zostają na swoim miejscu (półka trzyma tylko odnośnik i nadąża za przeniesieniem pliku).
+  Obrazy i linki przeciągnięte z przeglądarki są kopiowane do `~/Library/Application Support/Wyspa/Shelf`.
+- Półka przetrwa restart aplikacji i komputera. Usunięcie z półki nigdy nie kasuje Twoich oryginałów.
+
 ## Znane ograniczenia
 
 - **MediaRemote (prywatne API)**: od macOS 15.4 Apple blokuje je zwykłym aplikacjom. Wyspa korzysta z
@@ -62,6 +75,8 @@ Okładka, tytuł, wykonawca, pasek przewijania i sterowanie dla dowolnej aplikac
   systemowy `/usr/bin/perl`. Kolejna wersja macOS może to zablokować albo usunąć Perla. Wtedy test adaptera nie przejdzie,
   a moduł sam przełączy się na AppleScript (tylko Muzyka i Spotify, bez przeglądarek). Aplikacja się nie wywali.
   Przetestowano na macOS 27.2 (26B5091g).
+- Półka: element, którego oryginał został usunięty, zostaje na półce wyszarzony, dopóki go nie usuniesz.
+- Quick Look i AirDrop przenoszą Wyspę na pierwszy plan (systemowe okna potrzebują aktywnej aplikacji).
 - Wizualizer w zwiniętej wyspie pokazuje rytm odtwarzania, nie rzeczywisty poziom dźwięku.
 
 - Na monitorach bez notcha wyspa rysuje wirtualny notch. W trybie „Tylko gdy coś się dzieje”

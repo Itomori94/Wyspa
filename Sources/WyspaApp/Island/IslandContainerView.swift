@@ -1,23 +1,20 @@
 import AppKit
 import SwiftUI
 
-/// Kontener panelu: śledzi kursor tylko nad wyspą i przechwytuje kliknięcie w stanie zwiniętym.
+/// Kontener panelu: śledzi kursor tylko nad wyspą i ogranicza zdarzenia do jej obszaru.
 ///
-/// Przezroczyste obszary okna przepuszczają kliknięcia do aplikacji pod spodem
-/// (macOS testuje przezroczystość pikseli okien nieprzezroczystych = false).
+/// Wszystkie kliknięcia i przeciągania nad wyspą trafiają do SwiftUI (`IslandHostingView`).
+/// Poza wyspą `hitTest` zwraca nil, a przezroczyste piksele okna przepuszczają kliknięcia do aplikacji pod spodem.
 final class IslandContainerView: NSView {
     var onPointerEntered: () -> Void = {}
     var onPointerExited: () -> Void = {}
-    var onClick: () -> Void = {}
-    /// Czy kliknięcia mają trafiać do SwiftUI (stan rozwinięty), czy do kontenera.
-    var forwardsClicksToContent = false
 
     /// Obszar wyspy we współrzędnych widoku (y w górę).
     var interactiveRect: CGRect = .zero {
         didSet {
             guard interactiveRect != oldValue else { return }
             updateTrackingAreas()
-            syncPointerState()
+            resyncPointer()
         }
     }
 
@@ -26,7 +23,7 @@ final class IslandContainerView: NSView {
     private var isPointerInside = false
 
     init(content: some View) {
-        hostingView = NSHostingView(rootView: content)
+        hostingView = IslandHostingView(rootView: AnyView(content))
         super.init(frame: .zero)
         hostingView.translatesAutoresizingMaskIntoConstraints = false
         addSubview(hostingView)
@@ -58,15 +55,12 @@ final class IslandContainerView: NSView {
 
     override func hitTest(_ point: NSPoint) -> NSView? {
         let local = convert(point, from: superview)
-        guard interactiveRect.contains(local) else { return nil }
-        return forwardsClicksToContent ? super.hitTest(point) : self
+        return interactiveRect.contains(local) ? super.hitTest(point) : nil
     }
 
-    override func mouseDown(with event: NSEvent) { onClick() }
-    override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
-
-    /// Po zmianie obszaru (np. zwinięcie) kursor mógł znaleźć się poza nim bez zdarzenia `mouseExited`.
-    private func syncPointerState() {
+    /// Po zmianie obszaru albo po przeciąganiu (które wstrzymuje zdarzenia śledzenia)
+    /// kursor mógł zmienić położenie bez `mouseEntered`/`mouseExited`.
+    func resyncPointer() {
         guard let window else { return }
         let location = convert(window.mouseLocationOutsideOfEventStream, from: nil)
         setPointerInside(interactiveRect.contains(location))
@@ -77,4 +71,9 @@ final class IslandContainerView: NSView {
         isPointerInside = inside
         inside ? onPointerEntered() : onPointerExited()
     }
+}
+
+/// Panel nigdy nie jest oknem kluczowym, więc każde kliknięcie jest „pierwszym” — musi działać od razu.
+private final class IslandHostingView: NSHostingView<AnyView> {
+    override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
 }

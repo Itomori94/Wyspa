@@ -36,11 +36,16 @@ final class IslandWindowController {
         container = IslandContainerView(content: IslandView(model: model))
         model.onOpenSettings = openSettings
         model.onSelectTab = { [weak self] index in self?.selectTab(index) }
+        model.onClick = { [weak self] in self?.send(.clicked) }
+        model.onDragEntered = { [weak self] in
+            self?.send(.dragEntered(preferredTab: self?.registry.dropTabIndex))
+        }
+        model.onDragExited = { [weak self] in self?.send(.dragExited) }
+        model.onDropFinished = { [weak self] in self?.container.resyncPointer() }
 
         panel.contentView = container
         container.onPointerEntered = { [weak self] in self?.send(.pointerEntered) }
         container.onPointerExited = { [weak self] in self?.send(.pointerExited) }
-        container.onClick = { [weak self] in self?.send(.clicked) }
 
         layout()
         panel.orderFrontRegardless()
@@ -84,7 +89,6 @@ final class IslandWindowController {
             withAnimation(IslandMotion.animation(to: next.phase)) {
                 model.phase = next.phase
             }
-            container.forwardsClicksToContent = next.phase == .expanded
         }
         if next.selectedTab != model.selectedTab {
             model.selectedTab = next.selectedTab
