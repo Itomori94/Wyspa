@@ -18,7 +18,7 @@ struct MediaExpandedView: View {
             }
             .frame(maxHeight: .infinity)
         } else {
-            NothingPlaying(status: module.status)
+            NothingPlaying(status: module.status, scope: module.scope)
         }
     }
 }
@@ -169,6 +169,7 @@ private struct ControlButton: View {
 
 private struct NothingPlaying: View {
     let status: MediaModule.SourceStatus
+    let scope: MediaScope
 
     var body: some View {
         HStack(spacing: 14) {
@@ -196,9 +197,13 @@ private struct NothingPlaying: View {
         switch status {
         case .starting: "To potrwa kilka sekund."
         case .running(let decision):
-            decision.kind == .adapter
-                ? "Włącz muzykę, podcast albo film w dowolnej aplikacji."
-                : "Włącz muzykę w Muzyce albo Spotify."
+            if scope == .appleMusic {
+                "Włącz muzykę w Apple Music."
+            } else if decision.kind == .adapter {
+                "Włącz muzykę, podcast albo film w dowolnej aplikacji."
+            } else {
+                "Włącz muzykę w Muzyce albo Spotify."
+            }
         case .failed(let message): message
         }
     }

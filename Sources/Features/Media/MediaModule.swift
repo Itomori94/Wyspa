@@ -20,6 +20,7 @@ public final class MediaModule: IslandModule {
     }
 
     private static let preferenceKey = "sourcePreference"
+    private static let scopeKey = "scope"
 
     public private(set) var nowPlaying: NowPlaying?
     public private(set) var status: SourceStatus = .starting
@@ -34,7 +35,23 @@ public final class MediaModule: IslandModule {
         }
     }
 
+    /// Z jakich aplikacji pokazywać dźwięk.
+    public var scope: MediaScope {
+        didSet {
+            guard scope != oldValue else { return }
+            context.settings.set(scope, for: Self.scopeKey)
+            if source?.kind == .appleScript {
+                // AppleScript odpytuje tylko odtwarzacze z zakresu, więc trzeba go uruchomić od nowa.
+                restartSource()
+            } else {
+                publish(latestUpdate)
+            }
+        }
+    }
+
     @ObservationIgnored private let context: ModuleContext
+    /// Ostatnia aktualizacja ze źródła przed filtrem zakresu.
+    @ObservationIgnored private var latestUpdate: NowPlaying?
     @ObservationIgnored private var source: NowPlayingSource?
     @ObservationIgnored private var silenceWatch: SilenceWatch?
     @ObservationIgnored private var startTask: Task<Void, Never>?
@@ -44,6 +61,7 @@ public final class MediaModule: IslandModule {
     public required init(context: ModuleContext) {
         self.context = context
         self.preference = context.settings.value(Self.preferenceKey, default: MediaSourcePreference.automatic)
+        self.scope = context.settings.value(Self.scopeKey, default: MediaScope.system)
     }
 
     public func activate() async throws {
@@ -55,6 +73,7 @@ public final class MediaModule: IslandModule {
         startTask = nil
         stopSource()
         nowPlaying = nil
+        latestUpdate = nil
         artwork = nil
         accent = nil
         artworkData = nil
@@ -116,7 +135,7 @@ public final class MediaModule: IslandModule {
             }
             source = AdapterNowPlayingSource(bundle: bundle)
         case .appleScript:
-            source = AppleScriptNowPlayingSource()
+            source = AppleScriptNowPlayingSource(players: scope.scriptablePlayers)
         }
         self.source = source
         status = .running(decision)
@@ -157,6 +176,12 @@ public final class MediaModule: IslandModule {
 
     private func apply(_ update: NowPlaying?) {
         silenceWatch?.adapterReported(hasData: update != nil)
+        latestUpdate = update
+        publish(update)
+    }
+
+    private func publish(_ unfiltered: NowPlaying?) {
+        let update = scope.filter(unfiltered)
         if update?.artwork != artworkData {
             // Okładka dociera czasem później niż tytuł: dla tego samego utworu zostaw poprzednią.
             if update?.artwork != nil || !(update?.isSameTrack(as: nowPlaying) ?? false) {

@@ -54,7 +54,12 @@ Tabela rośnie wraz z kolejnymi modułami.
 Okładka, tytuł, wykonawca, pasek przewijania i sterowanie dla dowolnej aplikacji odtwarzającej dźwięk
 (Muzyka, Spotify, przeglądarki, podcasty). W zwiniętej wyspie: miniatura okładki i wizualizer w kolorze okładki.
 
-Źródło danych wybierasz w Ustawieniach → Moduły → Teraz odtwarzane. Tam też widać, które źródło jest aktywne i dlaczego.
+W Ustawieniach → Moduły → Teraz odtwarzane wybierasz:
+
+- **Pokazuj dźwięk z**: *Cały system* (każda aplikacja, w tym przeglądarki) albo *Tylko Apple Music*.
+  W trybie *Tylko Apple Music* wyspa pokazuje Muzykę wtedy, gdy to ona jest bieżącym odtwarzaczem w systemie;
+  gdy gra inna aplikacja, wyspa zachowuje się, jakby nic nie grało.
+- **Źródło danych**: adapter MediaRemote albo AppleScript. Tam też widać, które źródło jest aktywne i dlaczego.
 
 ### Półka
 

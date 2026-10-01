@@ -8,6 +8,7 @@ import WyspaCore
 @MainActor
 final class AppleScriptNowPlayingSource: NowPlayingSource {
     let kind = MediaSourceKind.appleScript
+    private let players: [ScriptablePlayer]
     private let runner = ScriptRunner()
     private let log = Log.logger("media.applescript")
     private var distributedObservers: [NSObjectProtocol] = []
@@ -18,10 +19,14 @@ final class AppleScriptNowPlayingSource: NowPlayingSource {
     private var artworkCache: (key: String, data: Data?)?
     private var refreshGeneration = 0
 
+    init(players: [ScriptablePlayer] = ScriptablePlayer.allCases) {
+        self.players = players
+    }
+
     func start(onUpdate: @escaping @MainActor (NowPlaying?) -> Void, onFailure: @escaping @MainActor (String) -> Void) {
         self.onUpdate = onUpdate
         let distributed = DistributedNotificationCenter.default()
-        for player in ScriptablePlayer.allCases {
+        for player in players {
             distributedObservers.append(distributed.addObserver(forName: player.changeNotification, object: nil, queue: .main) { [weak self] _ in
                 MainActor.assumeIsolated { self?.refresh() }
             })
@@ -64,7 +69,7 @@ final class AppleScriptNowPlayingSource: NowPlayingSource {
     private func refresh() {
         refreshGeneration += 1
         let generation = refreshGeneration
-        let running = ScriptablePlayer.allCases.filter { player in
+        let running = players.filter { player in
             !NSRunningApplication.runningApplications(withBundleIdentifier: player.rawValue).isEmpty
         }
         Task {
