@@ -1,0 +1,192 @@
+import Foundation
+
+public enum IslandPhase: Equatable, Sendable {
+    /// Wirtualny notch bez aktywności: widoczny jest tylko cienki pas do najechania.
+    case hidden
+    /// Spoczynek, ewentualnie z live activity po bokach.
+    case collapsed
+    /// Kursor nad wyspą, czekamy na opóźnienie rozwinięcia.
+    case peek
+    case expanded
+}
+
+public enum SwipeDirection: Equatable, Sendable {
+    case up, down, left, right
+}
+
+public enum IslandTimer: Hashable, Sendable {
+    case expand
+    case collapse
+}
+
+public enum IslandEvent: Equatable, Sendable {
+    case pointerEntered
+    case pointerExited
+    case clicked
+    case swipe(SwipeDirection)
+    case toggleRequested
+    case dragEntered
+    case dragExited
+    case timerFired(IslandTimer)
+    case activityChanged(hasActivity: Bool)
+    case tabCountChanged(Int)
+    case tabSelected(Int)
+}
+
+public enum IslandEffect: Equatable, Sendable {
+    case schedule(IslandTimer, after: TimeInterval)
+    case cancel(IslandTimer)
+    case haptic
+}
+
+public struct IslandConfig: Equatable, Sendable {
+    public var expandOnHover: Bool
+    public var hoverDelay: TimeInterval
+    public var collapseDelay: TimeInterval
+    /// true dla wirtualnego notcha w trybie „tylko gdy coś się dzieje”.
+    public var hidesWhenIdle: Bool
+
+    public init(expandOnHover: Bool, hoverDelay: TimeInterval, collapseDelay: TimeInterval, hidesWhenIdle: Bool) {
+        self.expandOnHover = expandOnHover
+        self.hoverDelay = hoverDelay
+        self.collapseDelay = collapseDelay
+        self.hidesWhenIdle = hidesWhenIdle
+    }
+}
+
+public struct IslandState: Equatable, Sendable {
+    public let phase: IslandPhase
+    public let hasActivity: Bool
+    public let tabCount: Int
+    public let selectedTab: Int
+
+    public init(phase: IslandPhase, hasActivity: Bool = false, tabCount: Int = 0, selectedTab: Int = 0) {
+        self.phase = phase
+        self.hasActivity = hasActivity
+        self.tabCount = tabCount
+        self.selectedTab = selectedTab
+    }
+
+    public static func initial(config: IslandConfig) -> IslandState {
+        IslandState(phase: config.hidesWhenIdle ? .hidden : .collapsed)
+    }
+
+    func with(
+        phase: IslandPhase? = nil,
+        hasActivity: Bool? = nil,
+        tabCount: Int? = nil,
+        selectedTab: Int? = nil
+    ) -> IslandState {
+        IslandState(
+            phase: phase ?? self.phase,
+            hasActivity: hasActivity ?? self.hasActivity,
+            tabCount: tabCount ?? self.tabCount,
+            selectedTab: selectedTab ?? self.selectedTab
+        )
+    }
+}
+
+/// Czysty reducer stanów wyspy. Opóźnienia są efektami, więc całość jest deterministyczna i testowalna.
+public enum IslandStateMachine {
+    public typealias Result = (state: IslandState, effects: [IslandEffect])
+
+    public static func reduce(_ state: IslandState, _ event: IslandEvent, config: IslandConfig) -> Result {
+        switch event {
+        case .pointerEntered:
+            return pointerEntered(state, config: config)
+        case .pointerExited:
+            return pointerExited(state, config: config)
+        case .clicked:
+            return state.phase == .expanded ? (state, []) : expand(state)
+        case .swipe(let direction):
+            return swipe(state, direction, config: config)
+        case .toggleRequested:
+            return state.phase == .expanded ? collapse(state, config: config) : expand(state)
+        case .dragEntered:
+            return state.phase == .expanded
+                ? (state, [.cancel(.collapse)])
+                : expand(state)
+        case .dragExited:
+            return state.phase == .expanded
+                ? (state, [.schedule(.collapse, after: config.collapseDelay)])
+                : (state, [])
+        case .timerFired(.expand):
+            return state.phase == .peek ? expand(state) : (state, [])
+        case .timerFired(.collapse):
+            return state.phase == .expanded ? collapse(state, config: config) : (state, [])
+        case .activityChanged(let hasActivity):
+            return activityChanged(state, hasActivity: hasActivity, config: config)
+        case .tabCountChanged(let count):
+            let selected = count == 0 ? 0 : min(state.selectedTab, count - 1)
+            return (state.with(tabCount: count, selectedTab: selected), [])
+        case .tabSelected(let index):
+            guard state.tabCount > 0, (0..<state.tabCount).contains(index) else { return (state, []) }
+            return (state.with(selectedTab: index), [])
+        }
+    }
+
+    static func restingPhase(hasActivity: Bool, config: IslandConfig) -> IslandPhase {
+        config.hidesWhenIdle && !hasActivity ? .hidden : .collapsed
+    }
+
+    private static func pointerEntered(_ state: IslandState, config: IslandConfig) -> Result {
+        switch state.phase {
+        case .hidden, .collapsed:
+            let effects: [IslandEffect] = config.expandOnHover
+                ? [.schedule(.expand, after: config.hoverDelay)]
+                : []
+            return (state.with(phase: .peek), effects)
+        case .peek:
+            return (state, [])
+        case .expanded:
+            return (state, [.cancel(.collapse)])
+        }
+    }
+
+    private static func pointerExited(_ state: IslandState, config: IslandConfig) -> Result {
+        switch state.phase {
+        case .peek:
+            let resting = restingPhase(hasActivity: state.hasActivity, config: config)
+            return (state.with(phase: resting), [.cancel(.expand)])
+        case .expanded:
+            return (state, [.schedule(.collapse, after: config.collapseDelay)])
+        case .hidden, .collapsed:
+            return (state, [])
+        }
+    }
+
+    private static func swipe(_ state: IslandState, _ direction: SwipeDirection, config: IslandConfig) -> Result {
+        switch (state.phase, direction) {
+        case (.expanded, .up):
+            return collapse(state, config: config)
+        case (.expanded, .left), (.expanded, .right):
+            guard state.tabCount > 1 else { return (state, []) }
+            let step = direction == .left ? 1 : -1
+            let next = (state.selectedTab + step + state.tabCount) % state.tabCount
+            return (state.with(selectedTab: next), [.haptic])
+        case (.collapsed, .down), (.peek, .down), (.hidden, .down):
+            return expand(state)
+        default:
+            return (state, [])
+        }
+    }
+
+    private static func activityChanged(_ state: IslandState, hasActivity: Bool, config: IslandConfig) -> Result {
+        let updated = state.with(hasActivity: hasActivity)
+        switch state.phase {
+        case .hidden, .collapsed:
+            return (updated.with(phase: restingPhase(hasActivity: hasActivity, config: config)), [])
+        case .peek, .expanded:
+            return (updated, [])
+        }
+    }
+
+    private static func expand(_ state: IslandState) -> Result {
+        (state.with(phase: .expanded), [.cancel(.expand), .cancel(.collapse), .haptic])
+    }
+
+    private static func collapse(_ state: IslandState, config: IslandConfig) -> Result {
+        let resting = restingPhase(hasActivity: state.hasActivity, config: config)
+        return (state.with(phase: resting), [.cancel(.expand), .cancel(.collapse)])
+    }
+}
