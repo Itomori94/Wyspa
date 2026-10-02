@@ -382,4 +382,11 @@ final class SlowPermissions: PermissionProviding {
         continuation?.resume(returning: status)
         continuation = nil
     }
+
+    @Test("Aktywność domyślnie widoczna w nagłówku rozwiniętej wyspy, można to wyłączyć")
+    func headerVisibility() {
+        let shown = LiveActivity(id: "a", priority: .hud, leading: { EmptyView() }, trailing: { EmptyView() })
+        let hidden = LiveActivity(id: "b", priority: .media, showsInExpandedHeader: false, leading: { EmptyView() }, trailing: { EmptyView() })
+        #expect(shown.showsInExpandedHeader && !hidden.showsInExpandedHeader)
+    }
 }

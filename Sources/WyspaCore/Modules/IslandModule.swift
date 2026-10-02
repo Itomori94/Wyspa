@@ -50,6 +50,9 @@ public struct LiveActivity {
     public let accent: Color?
     /// Szerokość każdego skrzydła; szersze dla treści typu pasek poziomu albo tekst (najwyżej `IslandLayout.maxWingWidth`).
     public let wingWidth: CGFloat
+    /// Czy skrzydła pokazywać też w nagłówku rozwiniętej wyspy. Wyłączone, gdy rozwinięta treść
+    /// i tak pokazuje to samo (np. odtwarzacz z dużą okładką).
+    public let showsInExpandedHeader: Bool
     public let leading: AnyView
     public let trailing: AnyView
 
@@ -58,6 +61,7 @@ public struct LiveActivity {
         priority: ActivityPriority,
         accent: Color? = nil,
         wingWidth: CGFloat = IslandLayout.wingWidth,
+        showsInExpandedHeader: Bool = true,
         @ViewBuilder leading: () -> Leading,
         @ViewBuilder trailing: () -> Trailing
     ) {
@@ -65,6 +69,7 @@ public struct LiveActivity {
         self.priority = priority
         self.accent = accent
         self.wingWidth = IslandLayout.clampedWingWidth(wingWidth)
+        self.showsInExpandedHeader = showsInExpandedHeader
         self.leading = AnyView(leading())
         self.trailing = AnyView(trailing())
     }

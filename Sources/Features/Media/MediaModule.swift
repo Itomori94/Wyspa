@@ -83,7 +83,8 @@ public final class MediaModule: IslandModule {
     public var liveActivity: LiveActivity? {
         guard let nowPlaying, nowPlaying.isPlaying else { return nil }
         let tint = accent ?? .white
-        return LiveActivity(id: "media", priority: .media, accent: accent) {
+        // Okładka i wizualizer tylko w zwiniętej wyspie — rozwinięty odtwarzacz ma dużą okładkę.
+        return LiveActivity(id: "media", priority: .media, accent: accent, showsInExpandedHeader: false) {
             ArtworkView(image: artwork, size: 22, cornerRadius: 6)
         } trailing: {
             VisualizerBars(color: tint, isAnimating: true)

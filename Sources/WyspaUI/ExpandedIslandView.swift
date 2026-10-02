@@ -54,7 +54,7 @@ struct ExpandedIslandView: View {
             tabCount: tabs.count,
             selected: model.selectedTab,
             available: IslandLayout.headerSideWidth(islandWidth: model.islandSize.width, notchGap: notchGap),
-            wingWidth: model.activity?.wingWidth
+            wingWidth: headerActivity?.wingWidth
         )
     }
 
@@ -63,9 +63,14 @@ struct ExpandedIslandView: View {
         model.notch.isPhysical ? model.notch.size.width : 12
     }
 
+    /// Aktywność pokazywana w nagłówku: nie ta, której treść dubluje rozwinięty widok (np. okładka mediów).
+    private var headerActivity: LiveActivity? {
+        model.activity.flatMap { $0.showsInExpandedHeader ? $0 : nil }
+    }
+
     @ViewBuilder
     private var leadingWing: some View {
-        if let activity = model.activity {
+        if let activity = headerActivity {
             activity.leading
                 .matchedGeometryEffect(id: ActivityGeometryID.leading(activity), in: namespace)
                 .frame(width: activity.wingWidth)
@@ -74,7 +79,7 @@ struct ExpandedIslandView: View {
 
     @ViewBuilder
     private var trailingWing: some View {
-        if let activity = model.activity {
+        if let activity = headerActivity {
             activity.trailing
                 .matchedGeometryEffect(id: ActivityGeometryID.trailing(activity), in: namespace)
                 .frame(width: activity.wingWidth)
