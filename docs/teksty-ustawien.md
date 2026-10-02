@@ -39,7 +39,7 @@ zaktualizuj też ten plik. Karty okna: **Ogólne · Wyspa · Moduły · Układ**
 | Historia schowka | Ostatnio kopiowane teksty, pliki i obrazy z wyszukiwaniem. Hasła z menedżerów haseł są pomijane. Historia jest tylko w pamięci. |
 | Skróty | Uruchamia wybrane Skróty macOS jednym kliknięciem z wyspy. |
 | Skrypty | Komenda wyspa i adresy wyspa:// — karty („Backup gotowy”) i paski postępu ze skryptów, Skrótów i crona. |
-| Szybkie akcje | Zrzut zaznaczenia prosto na Półkę, pipeta koloru (kopiuje HEX), blokada ekranu i „nie usypiaj Maca”. |
+| Szybkie akcje | Zrzut zaznaczenia prosto na Półkę, tekst ze zrzutu do schowka, pipeta koloru (kopiuje HEX), blokada ekranu i „nie usypiaj Maca”. |
 | Mikrofon | Wycisza mikrofon globalnym skrótem (domyślnie ⌃⌥M). Wyciszony mikrofon to czerwona ikona w zwiniętej wyspie. |
 | Lusterko | Podgląd z kamery przed rozmową wideo. Kamera włącza się tylko, gdy zakładka jest widoczna; obraz nie jest zapisywany. |
 | Powiadomienia | Pokazuje powiadomienia macOS w wyspie zamiast w rogu ekranu. Najechanie zatrzymuje kartę, kliknięcie otwiera aplikację. |
@@ -101,7 +101,7 @@ zaktualizuj też ten plik. Karty okna: **Ogólne · Wyspa · Moduły · Układ**
 - **Pogoda** — „Temperatura w zwiniętej wyspie” · „Dane z Open-Meteo (bez konta). Wysyłane są tylko współrzędne
   zaokrąglone do ok. 1 km; odświeżanie przy otwarciu wyspy, gdy dane mają ponad 15 minut. Kliknięcie pogody otwiera
   aplikację Pogoda.”
-- **Szybkie akcje** — skróty: Zrzut na Półkę / Pipeta koloru / Zablokuj ekran / Nie usypiaj (przełącz) · „Skróty
+- **Szybkie akcje** — skróty: Zrzut na Półkę / Tekst ze zrzutu / Pipeta koloru / Zablokuj ekran / Nie usypiaj (przełącz) · „Skróty
   działają w całym systemie, także przy zwiniętej wyspie.”
 - **Skróty** — „Nie masz jeszcze żadnych skrótów. Utwórz je w aplikacji Skróty.” · „Ulubione (pokazywane w wyspie;
   bez ulubionych widać wszystkie)” · „Uruchom skrót „…”” · „Odśwież”

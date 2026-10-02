@@ -169,6 +169,7 @@ APP=$PWD/build/Wyspa.app/Contents
 | Historia schowka | `WyspaClipboard` | — | `changeCount` co 0,75 s tylko gdy włączony (zaakceptowany wyjątek); pomija Concealed/Transient; limit 10–500; tylko w pamięci; wyszukiwanie z „ł”→„l” |
 | Skróty | `WyspaShortcuts` | — | `/usr/bin/shortcuts list/run`, nazwy jako argumenty procesu (bez powłoki), ulubione w ustawieniach |
 | Lusterko | `WyspaMirror` | Kamera | sesja AVCapture tylko gdy widok zakładki jest w oknie |
+| Szybkie akcje | `WyspaQuickActions` | Nagrywanie ekranu (przy pierwszym zrzucie) | zrzut `screencapture -i`; „Tekst ze zrzutu” = Vision `VNRecognizeTextRequest` (accurate, pl-PL + en-US, poza głównym wątkiem) → schowek, plik kasowany; nowe akcje dopisywać na końcu enuma przed istniejącymi tylko wtedy, gdy rawValue się nie zmienia (zapis skrótów) |
 
 ## Monitor Claude Code (etap 6, moduł `WyspaClaudeMonitor`)
 

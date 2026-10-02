@@ -256,9 +256,11 @@ w zwiniętej wyspie (domyślnie wyłączona).
 
 ### Szybkie akcje
 
-Strona albo widżet z czterema przyciskami:
+Strona albo widżet z pięcioma przyciskami:
 - **Zrzut na Półkę**: zaznaczasz obszar ekranu, zrzut ląduje na Półce (gdy Półka jest wyłączona — w schowku).
   Przy pierwszym użyciu macOS zapyta o zgodę na nagrywanie ekranu dla Wyspy.
+- **Tekst ze zrzutu**: zaznaczasz obszar, rozpoznany tekst (polski i angielski) trafia do schowka. Rozpoznawanie działa
+  na Macu (Vision), nic nie wychodzi do sieci, zrzut jest od razu kasowany.
 - **Pipeta koloru**: systemowa pipeta, kod HEX koloru trafia do schowka.
 - **Zablokuj ekran**: od razu blokuje Maca.
 - **Nie usypiaj**: Mac i ekran nie zasypiają (jak `caffeinate -d`), dopóki nie klikniesz ponownie albo nie wyłączysz modułu.

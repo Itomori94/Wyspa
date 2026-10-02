@@ -11,6 +11,27 @@ struct QuickActionsTests {
         #expect(QuickActionsLogic.hex(red: -1, green: 2, blue: 0.5) == "#00FF80")
     }
 
+    @Test("Tekst z OCR: bez pustych wierszy i spacji na brzegach; pusty wynik = nil")
+    func recognizedText() {
+        #expect(QuickActionsLogic.recognizedText(lines: ["  Zażółć gęślą ", "", "   ", "jaźń"]) == "Zażółć gęślą\njaźń")
+        #expect(QuickActionsLogic.recognizedText(lines: [" ", ""]) == nil)
+        #expect(QuickActionsLogic.recognizedText(lines: []) == nil)
+    }
+
+    @Test("Odmiana liczby wierszy")
+    func linesMessage() {
+        #expect(QuickActionsLogic.copiedLinesMessage(1).hasSuffix("1 wiersz"))
+        #expect(QuickActionsLogic.copiedLinesMessage(3).hasSuffix("3 wiersze"))
+        #expect(QuickActionsLogic.copiedLinesMessage(5).hasSuffix("5 wierszy"))
+        #expect(QuickActionsLogic.copiedLinesMessage(12).hasSuffix("12 wierszy"))
+        #expect(QuickActionsLogic.copiedLinesMessage(22).hasSuffix("22 wiersze"))
+    }
+
+    @Test("Nowa akcja nie zmienia zapisanych nazw starych akcji")
+    func actionRawValues() {
+        #expect(QuickActionsModule.Action.allCases.map(\.rawValue) == ["capture", "captureText", "pickColor", "lock", "keepAwake"])
+    }
+
     @Test("Nazwa pliku zrzutu z datą, w podanym katalogu")
     func screenshotName() {
         var calendar = Calendar(identifier: .gregorian)
