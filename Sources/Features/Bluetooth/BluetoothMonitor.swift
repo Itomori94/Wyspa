@@ -45,8 +45,10 @@ final class BluetoothMonitor: NSObject {
         )
     }
 
+    /// IOBluetooth zgłasza przy rejestracji także urządzenia połączone już wcześniej — to nie jest nowe połączenie,
+    /// więc aktywność pokazujemy tylko dla urządzeń, których jeszcze nie śledzimy.
     @objc private func deviceConnected(_ notification: IOBluetoothUserNotification, device: IOBluetoothDevice) {
-        track(device)
+        guard track(device) else { return }
         onChange(.connected(snapshot(of: device)))
     }
 
@@ -59,12 +61,15 @@ final class BluetoothMonitor: NSObject {
         onChange(.disconnected(snapshot))
     }
 
-    private func track(_ device: IOBluetoothDevice) {
-        guard let id = device.addressString, devices[id] == nil else { return }
+    /// Zwraca true, gdy urządzenie jest nowe (wcześniej nieśledzone).
+    @discardableResult
+    private func track(_ device: IOBluetoothDevice) -> Bool {
+        guard let id = device.addressString, devices[id] == nil else { return false }
         devices[id] = device
         disconnectNotifications[id] = device.register(
             forDisconnectNotification: self, selector: #selector(deviceDisconnected(_:device:))
         )
+        return true
     }
 
     private static func battery(of device: IOBluetoothDevice) -> BatteryLevels {
