@@ -29,7 +29,9 @@ public struct IslandView: View {
 
             content
                 .padding(.horizontal, model.phase == .expanded ? topRadius + Self.contentInset : topRadius)
-                // Zawartość nigdy nie wychodzi poza kształt wyspy, także w trakcie animacji szerokości.
+                // Najpierw rama o rozmiarze wyspy, potem przycięcie do jej kształtu: cokolwiek narysuje moduł,
+                // nie wyjdzie poza wyspę (clipShape bez ramy przycina do granic samej treści, które mogą urosnąć).
+                .frame(width: size.width, height: size.height, alignment: .top)
                 .clipShape(IslandShape(topRadius: topRadius, bottomRadius: bottomRadius))
         }
         .frame(width: size.width, height: size.height)

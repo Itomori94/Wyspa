@@ -29,6 +29,7 @@ let package = Package(
             path: "Sources/WyspaApp"
         ),
         .testTarget(name: "WyspaCoreTests", dependencies: ["WyspaCore"], path: "Tests/WyspaCoreTests"),
+        .testTarget(name: "WyspaUITests", dependencies: ["WyspaCore", "WyspaUI"], path: "Tests/WyspaUITests"),
         .testTarget(name: "WyspaMediaTests", dependencies: ["WyspaMedia"], path: "Tests/WyspaMediaTests"),
         .testTarget(name: "WyspaShelfTests", dependencies: ["WyspaShelf"], path: "Tests/WyspaShelfTests"),
         .testTarget(name: "WyspaHUDTests", dependencies: ["WyspaHUD"], path: "Tests/WyspaHUDTests"),

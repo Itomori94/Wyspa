@@ -128,6 +128,14 @@ APP=$PWD/build/Wyspa.app/Contents
 - Skrzydła w zwiniętej wyspie wypełniają bieżącą, animowaną szerokość (`maxWidth: .infinity`), zawartość wyspy jest
   przycinana do `IslandShape`, a zmiana aktywności to nowy widok (`.id(activity.id)`) z wygaszeniem. Identyfikatory
   `matchedGeometryEffect` zawierają id aktywności (`ActivityGeometryID`), żeby nie dopasowywać różnych aktywności.
+- Zawartość wyspy: najpierw `.frame` o rozmiarze wyspy, potem `.clipShape(IslandShape)` — sam `clipShape` przycina
+  do granic treści, które przy przepełnieniu rosną razem z nią.
+- Nagłówek rozwiniętej wyspy: lewa połowa | przerwa pod notchem | prawa połowa, każda połowa to `ViewThatFits`
+  z wariantami od najbogatszego; ostatni wariant mieści się zawsze. Prawa połowa: zakładki ze skrzydłem →
+  kompaktowe ze skrzydłem → same zakładki → przewijany pasek (zakładki mają pierwszeństwo przed ozdobnym skrzydłem).
+- Test wizualny `WyspaUITests/IslandOverflowTests`: renderuje wyspę poza ekranem (fazy × rozmiary × 0–10 zakładek ×
+  szerokości skrzydeł) i wymaga braku jasnych pikseli poza kształtem. Podgląd klatek:
+  `WYSPA_RENDER_DIR=/katalog swift test --filter IslandOverflowTests`.
 
 ## Prywatne API — rejestr
 
