@@ -200,6 +200,15 @@ APP=$PWD/build/Wyspa.app/Contents
   zapisuje przez dowiązania, zachowuje prawa pliku, trzyma 5 ostatnich kopii; zmiana czasu decyzji zapisuje hooki po 0,8 s.
 - Sesje znikają po zakończeniu procesu Claude Code (`DispatchSource.makeProcessSource(.exit)`), bez odpytywania.
 
+## Mikrofon (moduł `WyspaMicrophone`)
+
+- CoreAudio, domyślne wejście: `Mute` (zakres wejścia), a bez niego `VolumeScalar` (element główny albo kanały 1…n)
+  ustawiane na 0; głośność sprzed wyciszenia zapamiętana per UID urządzenia (`restoreVolumes`), przy braku — 75%.
+- Zmiany urządzenia, wyciszenia i głośności przez `AudioObjectAddPropertyListenerBlock` na kolejce głównej (bez odpytywania).
+  Nie czytamy dźwięku, więc bez `NSMicrophoneUsageDescription` i zgody TCC.
+- Aktywność „wyciszony” ma priorytet 52 (nad mediami i spotkaniem, pod pobieraniem i timerem); przełączenie pokazuje
+  na 1,5 s komunikat z priorytetem `.alert`. Skrót domyślny ⌃⌥M (`StoredShortcut` odróżnia „bez skrótu” od domyślnego).
+
 ## Skrypty (moduł `WyspaScripts`)
 
 - Adresy `wyspa://notify|progress|done` (Info.plist `CFBundleURLTypes`) → `AppDelegate.application(_:open:)` →

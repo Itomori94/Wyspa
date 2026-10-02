@@ -31,13 +31,14 @@ let package = Package(
         .target(name: "WyspaShortcuts", dependencies: ["WyspaCore", "WyspaUI"], path: "Sources/Features/Shortcuts"),
         .target(name: "WyspaMirror", dependencies: ["WyspaCore", "WyspaUI"], path: "Sources/Features/Mirror"),
         .target(name: "WyspaCalendar", dependencies: ["WyspaCore", "WyspaUI"], path: "Sources/Features/Calendar"),
+        .target(name: "WyspaMicrophone", dependencies: ["WyspaCore", "WyspaUI"], path: "Sources/Features/Microphone"),
         .target(name: "WyspaScripts", dependencies: ["WyspaCore", "WyspaUI"], path: "Sources/Features/Scripts"),
         .target(name: "WyspaReminders", dependencies: ["WyspaCore", "WyspaUI"], path: "Sources/Features/Reminders"),
         .target(
             name: "WyspaFeatures",
             dependencies: [
                 "WyspaCore", "WyspaUI", "WyspaMedia", "WyspaShelf", "WyspaHUD", "WyspaPower", "WyspaBluetooth",
-                "WyspaTimer", "WyspaNotes", "WyspaNotifications", "WyspaQuickActions", "WyspaWeather", "WyspaDownloads", "WyspaClaudeMonitor", "WyspaClipboard", "WyspaShortcuts", "WyspaMirror", "WyspaCalendar", "WyspaReminders", "WyspaScripts",
+                "WyspaTimer", "WyspaNotes", "WyspaNotifications", "WyspaQuickActions", "WyspaWeather", "WyspaDownloads", "WyspaClaudeMonitor", "WyspaClipboard", "WyspaShortcuts", "WyspaMirror", "WyspaCalendar", "WyspaReminders", "WyspaScripts", "WyspaMicrophone",
             ],
             path: "Sources/Features/Catalog"
         ),
@@ -71,6 +72,7 @@ let package = Package(
         .testTarget(name: "WyspaWeatherTests", dependencies: ["WyspaWeather"], path: "Tests/WyspaWeatherTests"),
         .testTarget(name: "WyspaQuickActionsTests", dependencies: ["WyspaQuickActions", "WyspaCore"], path: "Tests/WyspaQuickActionsTests"),
         .testTarget(name: "WyspaScriptsTests", dependencies: ["WyspaScripts", "WyspaCore"], path: "Tests/WyspaScriptsTests"),
+        .testTarget(name: "WyspaMicrophoneTests", dependencies: ["WyspaMicrophone", "WyspaCore"], path: "Tests/WyspaMicrophoneTests"),
         .testTarget(name: "WyspaBluetoothTests", dependencies: ["WyspaBluetooth"], path: "Tests/WyspaBluetoothTests"),
     ]
 )

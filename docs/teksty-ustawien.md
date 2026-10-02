@@ -40,6 +40,7 @@ zaktualizuj też ten plik. Karty okna: **Ogólne · Wyspa · Moduły · Układ**
 | Skróty | Uruchamia wybrane Skróty macOS jednym kliknięciem z wyspy. |
 | Skrypty | Komenda wyspa i adresy wyspa:// — karty („Backup gotowy”) i paski postępu ze skryptów, Skrótów i crona. |
 | Szybkie akcje | Zrzut zaznaczenia prosto na Półkę, pipeta koloru (kopiuje HEX), blokada ekranu i „nie usypiaj Maca”. |
+| Mikrofon | Wycisza mikrofon globalnym skrótem (domyślnie ⌃⌥M). Wyciszony mikrofon to czerwona ikona w zwiniętej wyspie. |
 | Lusterko | Podgląd z kamery przed rozmową wideo. Kamera włącza się tylko, gdy zakładka jest widoczna; obraz nie jest zapisywany. |
 | Powiadomienia | Pokazuje powiadomienia macOS w wyspie zamiast w rogu ekranu. Najechanie zatrzymuje kartę, kliknięcie otwiera aplikację. |
 | HUD głośności i jasności | Zamiast systemowego okienka pokazuje głośność, jasność ekranu i podświetlenie klawiatury w wyspie. |
@@ -92,6 +93,9 @@ zaktualizuj też ten plik. Karty okna: **Ogólne · Wyspa · Moduły · Układ**
 - **Skrypty** — „Komenda wyspa zainstalowana w ~/.local/bin” + „Usuń komendę” / „Komenda wyspa jest starsza niż aplikacja” +
   „Zaktualizuj” / „Komenda wyspa nie jest zainstalowana.” + „Zainstaluj w ~/.local/bin” / „~/.local/bin/wyspa to inny program —
   Wyspa go nie nadpisze.” · podpowiedź o PATH, przykłady poleceń · „Gdy Wyspa nie działa, komenda kończy się po cichu z kodem 0. …”
+- **Mikrofon** — „Wycisz / włącz mikrofon” (skrót) · „„…” nie pozwala się wyciszyć ani zmienić głośności wejścia.” ·
+  „Wyciszenie działa dla domyślnego wejścia z Ustawień systemowych → Dźwięk. Gdy mikrofon nie ma przełącznika wyciszenia,
+  Wyspa ustawia głośność wejścia na zero i przywraca ją po włączeniu. Wyspa nie słucha dźwięku z mikrofonu.”
 - **Historia schowka** — „Zapamiętuj … wpisów” · „Wyczyść historię”
 - **Timer** — „Dzienny cel Pomodoro: brak / … sesji”
 - **Pogoda** — „Temperatura w zwiniętej wyspie” · „Dane z Open-Meteo (bez konta). Wysyłane są tylko współrzędne

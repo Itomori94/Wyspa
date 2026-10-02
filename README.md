@@ -212,6 +212,14 @@ Pobierany plik (Safari, Chrome i inne przeglądarki pokazujące postęp na ikoni
 jako pierścień postępu z procentem; kilka pobierań naraz — łączny postęp. Po zakończeniu plik trafia na Półkę
 (do wyłączenia). Bez odpytywania: wyspa odbiera postęp publikowany przez przeglądarkę, odświeża się co pełny procent.
 
+### Mikrofon
+
+Globalny skrót (domyślnie ⌃⌥M, do zmiany w ustawieniach modułu) wycisza i włącza domyślne wejście dźwięku; kliknięcie
+widżetu robi to samo. Wyciszony mikrofon to czerwona ikona w zwiniętej wyspie (ważniejsza niż odtwarzanie i spotkanie,
+mniej ważna niż timer i prośby Claude). Mikrofony bez przełącznika wyciszenia są wyciszane głośnością wejścia
+ustawioną na zero — po włączeniu wraca poprzednia. Bez zgody na mikrofon: Wyspa nie słucha dźwięku, zmienia tylko
+ustawienie urządzenia (publiczne CoreAudio, zmiany z Ustawień systemowych widać od razu, bez odpytywania).
+
 ### Skrypty (komenda `wyspa`)
 
 Karty i paski postępu z dowolnego skryptu, Skrótu albo crona. Ustawienia → Moduły → Skrypty → *Zainstaluj w ~/.local/bin*

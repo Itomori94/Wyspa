@@ -6,6 +6,7 @@ import WyspaDownloads
 import WyspaCore
 import WyspaHUD
 import WyspaMedia
+import WyspaMicrophone
 import WyspaMirror
 import WyspaNotes
 import WyspaNotifications
@@ -36,6 +37,7 @@ public enum ModuleCatalog {
         ScriptsModule.self,
         QuickActionsModule.self,
         MirrorModule.self,
+        MicrophoneModule.self,
         ClaudeMonitorModule.self,
         NotificationsModule.self,
         HUDModule.self,
