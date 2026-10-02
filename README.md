@@ -68,6 +68,9 @@ W Ustawieniach → Moduły → Teraz odtwarzane wybierasz:
   gdy gra inna aplikacja, wyspa zachowuje się, jakby nic nie grało.
 - **Źródło danych**: adapter MediaRemote albo AppleScript. Tam też widać, które źródło jest aktywne i dlaczego.
 
+Muzyka grająca przez AirPlay (np. na Apple TV) nie jest widoczna dla MediaRemote — wtedy wyspa bierze dane wprost
+z aplikacji Muzyka (AppleScript, bez odpytywania). Przy pierwszym razie macOS zapyta o zgodę na sterowanie Muzyką.
+
 ### Półka
 
 Przeciągnij plik, obraz, link albo tekst nad notch: wyspa się rozwinie i pokaże półkę. Upuść na półkę, żeby odłożyć,

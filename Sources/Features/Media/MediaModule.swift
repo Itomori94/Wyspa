@@ -54,6 +54,11 @@ public final class MediaModule: IslandModule {
     /// Ostatnia aktualizacja ze źródła przed filtrem zakresu.
     @ObservationIgnored private var latestUpdate: NowPlaying?
     @ObservationIgnored private var source: NowPlayingSource?
+    /// Obok adaptera: sama Muzyka przez AppleScript (Muzyka grająca przez AirPlay nie trafia do MediaRemote).
+    @ObservationIgnored private var musicCompanion: AppleScriptNowPlayingSource?
+    @ObservationIgnored private var latestMusic: NowPlaying?
+    /// Skąd pochodzi pokazywany utwór — tam trafiają polecenia (pauza, następny, przewijanie).
+    @ObservationIgnored private var displayedOrigin: NowPlayingMerge.Origin = .adapter
     @ObservationIgnored private var silenceWatch: SilenceWatch?
     @ObservationIgnored private var startTask: Task<Void, Never>?
     @ObservationIgnored private var artworkData: Data?
@@ -105,11 +110,11 @@ public final class MediaModule: IslandModule {
     }
 
     public func send(_ command: MediaCommand) {
-        source?.send(command)
+        displayedOrigin == .music ? musicCompanion?.send(command) : source?.send(command)
     }
 
     public func seek(to seconds: TimeInterval) {
-        source?.seek(to: seconds)
+        displayedOrigin == .music ? musicCompanion?.seek(to: seconds) : source?.seek(to: seconds)
     }
 
     // MARK: - Źródło
@@ -151,6 +156,13 @@ public final class MediaModule: IslandModule {
             onUpdate: { [weak self] in self?.apply($0) },
             onFailure: { [weak self] in self?.sourceFailed($0) }
         )
+        if decision.kind == .adapter {
+            let companion = AppleScriptNowPlayingSource(players: [.music])
+            musicCompanion = companion
+            companion.start(onUpdate: { [weak self] in self?.musicReported($0) }, onFailure: { [weak self] message in
+                self?.log.error("Muzyka przez AppleScript: \(message)")
+            })
+        }
         if decision.kind == .adapter, preference == .automatic {
             silenceWatch = SilenceWatch { [weak self] in
                 self?.fallBack(reason: "adapter nie zwraca danych, choć odtwarzacz gra")
@@ -163,6 +175,9 @@ public final class MediaModule: IslandModule {
         silenceWatch = nil
         source?.stop()
         source = nil
+        musicCompanion?.stop()
+        musicCompanion = nil
+        latestMusic = nil
     }
 
     private func sourceFailed(_ message: String) {
@@ -186,8 +201,17 @@ public final class MediaModule: IslandModule {
         publish(update)
     }
 
+    private func musicReported(_ update: NowPlaying?) {
+        latestMusic = update
+        publish(latestUpdate)
+    }
+
     private func publish(_ unfiltered: NowPlaying?) {
-        let update = scope.filter(unfiltered)
+        let picked: (NowPlaying, NowPlayingMerge.Origin)? = source?.kind == .adapter
+            ? NowPlayingMerge.pick(adapter: unfiltered, music: latestMusic, scope: scope)
+            : scope.filter(unfiltered).map { ($0, .adapter) }
+        displayedOrigin = picked?.1 ?? .adapter
+        let update = picked?.0
         if update?.artwork != artworkData {
             // Okładka dociera czasem później niż tytuł: dla tego samego utworu zostaw poprzednią.
             if update?.artwork != nil || !(update?.isSameTrack(as: nowPlaying) ?? false) {
