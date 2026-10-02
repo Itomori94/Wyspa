@@ -148,6 +148,7 @@ public final class ClaudeMonitorModule: IslandModule {
 
     public func removeDeadSessions() {
         store = store.removingDead { pid in kill(pid, 0) == 0 || errno == EPERM }
+        log.notice("sesje po usunięciu martwych: \(self.store.sessions.count)")
     }
 
     // MARK: - Hooki w ~/.claude/settings.json
@@ -219,6 +220,9 @@ public final class ClaudeMonitorModule: IslandModule {
     private func receive(_ envelope: HookProtocol.Envelope, channel: HookServer.ReplyChannel?) {
         let (next, alert) = store.applying(envelope, at: Date())
         store = next
+        // Diagnostyka bez treści rozmów: nazwa zdarzenia, początek identyfikatora sesji, wynikowy stan.
+        let sessionID = envelope.event.sessionID
+        log.notice("hook \(envelope.event.name, privacy: .public) sesja \(String(sessionID.prefix(8)), privacy: .public) pid \(envelope.claudePID ?? 0) → \(String(describing: next.sessions[sessionID]?.state), privacy: .public)")
         if envelope.event.name == "PermissionRequest", let channel {
             // Potwierdzenie z głównego wątku: hook wie, że Wyspa żyje i czeka na decyzję użytkownika.
             channel.acknowledge()
@@ -263,6 +267,7 @@ public final class ClaudeMonitorModule: IslandModule {
         for (id, path) in wanted where transcriptWatchers[id] == nil {
             transcriptWatchers[id] = TranscriptWatcher(path: path) { [weak self] interrupted in
                 guard interrupted, let self else { return }
+                self.log.notice("przerwanie w zapisie sesji \(String(id.prefix(8)), privacy: .public)")
                 self.store = self.store.interrupting(id, at: Date())
             }
         }
