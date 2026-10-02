@@ -1,6 +1,7 @@
 import AppKit
 import SwiftUI
 import WyspaCore
+import WyspaUI
 
 /// Karty i paski postępu ze skryptów, Skrótów i crona: komenda `wyspa` i adresy `wyspa://`.
 ///
@@ -73,9 +74,9 @@ public final class ScriptsModule: IslandModule {
         let finished = state.progress.allSatisfy(\.isFinished)
         let count = state.progress.count
         return LiveActivity(id: "scripts.progress", priority: Self.progressPriority, accent: .green, wingWidth: 52) {
-            ScriptProgressRing(fraction: fraction, finished: finished)
+            ProgressRing(fraction: finished ? 1 : fraction, tint: .green, symbol: finished ? "checkmark" : "terminal")
         } trailing: {
-            Text(count > 1 ? "\(count) × \(ScriptsState.percentText(fraction))" : (finished ? "Gotowe" : ScriptsState.percentText(fraction)))
+            Text(count > 1 ? "\(count) × \(ProgressSummary.percentText(fraction))" : (finished ? "Gotowe" : ProgressSummary.percentText(fraction)))
                 .font(.system(size: 11, weight: .semibold, design: .rounded))
                 .monospacedDigit()
                 .lineLimit(1)

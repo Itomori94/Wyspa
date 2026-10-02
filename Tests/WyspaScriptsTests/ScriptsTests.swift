@@ -54,12 +54,6 @@ struct ScriptsStateTests {
         for index in 0..<9 { state = state.applying(.progress(id: "p\(index)", fraction: 0, label: nil), at: start) }
         #expect(state.progress.count == ScriptsState.maxProgress && state.progress.first?.id == "p3")
     }
-
-    @Test("Tekst procentu")
-    func percent() {
-        #expect(ScriptsState.percentText(0.429) == "42%")
-        #expect(ScriptsState.percentText(nil) == "…")
-    }
 }
 
 @Suite("Instalacja komendy wyspa")

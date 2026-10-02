@@ -91,10 +91,13 @@ public final class NotificationsModule: IslandModule {
     // MARK: - Kolejka
 
     private func receive(_ card: NotificationCard) {
-        // Skupienie: karta czeka do końca sesji (systemowy baner i tak jest chowany, gdy to włączone).
-        if context.focus.isActive {
+        switch FocusDigest.disposition(focusActive: context.focus.isActive, hidesOriginal: hidesOriginal) {
+        case .show: break
+        case .hold:
             held = FocusDigest.holding(held, card)
             heldTotal += 1
+            return
+        case .skip:
             return
         }
         context.privacy.refresh()

@@ -1,4 +1,5 @@
 import Foundation
+import WyspaCore
 
 /// Czyste funkcje Szybkich akcji (testowane).
 public enum QuickActionsLogic {
@@ -16,17 +17,7 @@ public enum QuickActionsLogic {
 
     /// Komunikat po OCR: „Skopiowano 1 wiersz / 3 wiersze / 5 wierszy”.
     public static func copiedLinesMessage(_ count: Int) -> String {
-        let lastTwo = count % 100
-        let last = count % 10
-        let noun: String
-        if count == 1 {
-            noun = "wiersz"
-        } else if (2...4).contains(last) && !(12...14).contains(lastTwo) {
-            noun = "wiersze"
-        } else {
-            noun = "wierszy"
-        }
-        return "Skopiowano tekst: \(count) \(noun)"
+        "Skopiowano tekst: " + PolishPlural.format(count, one: "wiersz", few: "wiersze", many: "wierszy")
     }
 
     // MARK: - Miejsca na akcje
@@ -109,18 +100,20 @@ public enum QuickActionsLogic {
     }
 
     public static func recordingURL(in directory: URL, at date: Date) -> URL {
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "en_US_POSIX")
-        formatter.dateFormat = "yyyy-MM-dd 'o' HH.mm.ss"
-        return directory.appendingPathComponent("Nagranie ekranu \(formatter.string(from: date)).mov")
+        directory.appendingPathComponent("Nagranie ekranu \(fileDate(date)).mov")
     }
 
     /// Plik zrzutu w katalogu tymczasowym, z datą w nazwie (tak trafia na Półkę).
     public static func screenshotURL(in directory: URL, at date: Date) -> URL {
+        directory.appendingPathComponent("Zrzut \(fileDate(date)).png")
+    }
+
+    /// Data w nazwie pliku jak w zrzutach macOS: „2026-10-02 o 09.05.07”.
+    static func fileDate(_ date: Date) -> String {
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "en_US_POSIX")
         formatter.dateFormat = "yyyy-MM-dd 'o' HH.mm.ss"
-        return directory.appendingPathComponent("Zrzut \(formatter.string(from: date)).png")
+        return formatter.string(from: date)
     }
 }
 

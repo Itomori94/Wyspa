@@ -192,7 +192,8 @@ Wyłączony domyślnie, wymaga Dostępności. Powiadomienia macOS pojawiają si�
 aplikacji, tytuł, treść. Karta znika po kilku sekundach (czas w ustawieniach), najechanie ją zatrzymuje, kliknięcie
 otwiera aplikację, kolejne powiadomienia czekają w kolejce („+2”). Systemowy baner jest domyślnie chowany
 (do wyłączenia w ustawieniach) — powiadomienie i tak zostaje w Centrum powiadomień. Podczas skupienia Pomodoro karty
-czekają do końca sesji (patrz Timer).
+czekają do końca sesji (patrz Timer); bez chowania banera wyspa w tym czasie nie pokazuje kart, żeby nie dublować
+banera systemowego.
 
 ### Claude Code
 

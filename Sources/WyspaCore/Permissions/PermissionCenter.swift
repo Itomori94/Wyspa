@@ -61,6 +61,11 @@ public final class PermissionCenter: PermissionProviding {
     }
 
     public func openSystemSettings(for permission: Permission) {
+        Self.openSettings(for: permission)
+    }
+
+    /// Bez instancji — dla widoków modułów, które proszą o uprawnienie opcjonalne (np. wklejanie w schowku).
+    public static func openSettings(for permission: Permission) {
         let anchor = switch permission {
         case .accessibility: "Privacy_Accessibility"
         case .calendars: "Privacy_Calendars"

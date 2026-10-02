@@ -1,4 +1,5 @@
 import SwiftUI
+import WyspaCore
 import WyspaUI
 
 struct ShelfExpandedView: View {

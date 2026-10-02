@@ -72,14 +72,14 @@ public final class QuickActionsModule: IslandModule {
     /// Czas na zwinięcie wyspy, zanim zrobimy zrzut całego ekranu (żeby nie było jej na zrzucie).
     static let collapseDelay: Duration = .milliseconds(450)
     /// Krótki komunikat po akcji („Skopiowano #1E90FF”).
-    public private(set) var feedback: String?
+    public var feedback: String? { message.text }
     /// Globalne skróty akcji (bez domyślnych — ustawiasz je sam); działają tylko, gdy moduł jest włączony.
     public private(set) var shortcuts: [Action: HotkeyShortcut]
     public private(set) var shortcutProblem: String?
 
     @ObservationIgnored private let context: ModuleContext
     @ObservationIgnored private var assertionID: IOPMAssertionID = 0
-    @ObservationIgnored private var feedbackTask: Task<Void, Never>?
+    @ObservationIgnored private let message = TransientMessage()
     @ObservationIgnored private var sampler: NSColorSampler?
     @ObservationIgnored private let log = Log.logger("quickactions")
     @ObservationIgnored private var hotkeys: [GlobalHotkey] = []
@@ -102,7 +102,7 @@ public final class QuickActionsModule: IslandModule {
         captureProcess?.terminate()
         captureProcess = nil
         if isKeepingAwake { toggleKeepAwake() }
-        feedbackTask?.cancel()
+        message.clear()
         sampler = nil
     }
 
@@ -203,23 +203,9 @@ public final class QuickActionsModule: IslandModule {
         let directory = QuickActionsLogic.recordingDirectory(systemLocation: defaults?.string(forKey: "location"),
                                                              home: FileManager.default.homeDirectoryForCurrentUser)
         let url = QuickActionsLogic.recordingURL(in: directory, at: Date())
-        let process = Process()
-        process.executableURL = URL(fileURLWithPath: "/usr/sbin/screencapture")
-        process.arguments = ["-i", "-U", "-J", "video", "-k", url.path]
-        process.terminationHandler = { [weak self] finished in
-            Task { @MainActor in
-                guard let self, self.captureProcess === finished else { return }
-                self.captureProcess = nil
-                self.recordingFinished(url)
-            }
-        }
-        do {
-            try process.run()
-            captureProcess = process
-        } catch {
-            log.error("screencapture -v: \(error.localizedDescription, privacy: .public)")
-            show("Nie udało się uruchomić nagrywania")
-        }
+        // Plik docelowy: przy wyłączeniu modułu w trakcie zostaje na dysku (to nagranie użytkownika).
+        runScreencapture(["-i", "-U", "-J", "video", "-k", url.path], output: url, isTemporary: false,
+                         failureMessage: "Nie udało się uruchomić nagrywania") { [weak self] url in self?.recordingFinished(url) }
     }
 
     /// Nagranie jest plikiem docelowym (nie tymczasowym): Półka dostaje odnośnik, plik zostaje na dysku.
@@ -237,10 +223,11 @@ public final class QuickActionsModule: IslandModule {
     /// znika po 90 s, jeśli w międzyczasie nic innego nie skopiowano.
     func copyPassword() {
         let pasteboard = NSPasteboard.general
-        pasteboard.clearContents()
-        pasteboard.declareTypes([.string, NSPasteboard.PasteboardType("org.nspasteboard.ConcealedType")], owner: nil)
+        let concealed = NSPasteboard.PasteboardType(PasteboardPrivacy.concealed)
+        // `declareTypes` czyści schowek sam.
+        pasteboard.declareTypes([.string, concealed], owner: nil)
         pasteboard.setString(QuickActionsLogic.password(), forType: .string)
-        pasteboard.setString("", forType: NSPasteboard.PasteboardType("org.nspasteboard.ConcealedType"))
+        pasteboard.setString("", forType: concealed)
         let change = pasteboard.changeCount
         show("Hasło w schowku — zniknie za 90 s")
         Task {
@@ -295,16 +282,23 @@ public final class QuickActionsModule: IslandModule {
     /// Zrzut ekranu (domyślnie zaznaczenie obszaru); `completion` dostaje plik (może go nie być po Esc)
     /// i odpowiada za jego usunięcie.
     private func startCapture(arguments: [String] = ["-i"], _ completion: @escaping @MainActor @Sendable (URL) -> Void) {
-        guard captureProcess == nil else { return }
         let url = QuickActionsLogic.screenshotURL(in: FileManager.default.temporaryDirectory, at: Date())
+        runScreencapture(arguments + ["-x", url.path], output: url, isTemporary: true,
+                         failureMessage: "Nie udało się uruchomić zrzutu ekranu", completion)
+    }
+
+    /// Jeden `screencapture` naraz. Po zakończeniu `completion` dostaje plik (może go nie być po Esc).
+    /// Gdy moduł wyłączono w trakcie, nic nie przekazujemy; plik tymczasowy jest wtedy kasowany.
+    private func runScreencapture(_ arguments: [String], output url: URL, isTemporary: Bool, failureMessage: String,
+                                  _ completion: @escaping @MainActor @Sendable (URL) -> Void) {
+        guard captureProcess == nil else { return }
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/usr/sbin/screencapture")
-        process.arguments = arguments + ["-x", url.path]
+        process.arguments = arguments
         process.terminationHandler = { [weak self] finished in
             Task { @MainActor in
-                // Moduł wyłączony w trakcie zaznaczania: nic nie przekazujemy, tylko sprzątamy.
                 guard let self, self.captureProcess === finished else {
-                    try? FileManager.default.removeItem(at: url)
+                    if isTemporary { try? FileManager.default.removeItem(at: url) }
                     return
                 }
                 self.captureProcess = nil
@@ -316,7 +310,7 @@ public final class QuickActionsModule: IslandModule {
             captureProcess = process
         } catch {
             log.error("screencapture: \(error.localizedDescription, privacy: .public)")
-            show("Nie udało się uruchomić zrzutu ekranu")
+            show(failureMessage)
         }
     }
 
@@ -419,13 +413,7 @@ public final class QuickActionsModule: IslandModule {
         return true
     }
 
-    private func show(_ message: String) {
-        withAnimation { feedback = message }
-        feedbackTask?.cancel()
-        feedbackTask = Task { [weak self] in
-            try? await Task.sleep(for: Self.feedbackDisplay)
-            guard !Task.isCancelled else { return }
-            withAnimation { self?.feedback = nil }
-        }
+    private func show(_ text: String) {
+        message.show(text, for: Self.feedbackDisplay)
     }
 }
