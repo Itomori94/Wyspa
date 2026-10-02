@@ -66,6 +66,13 @@ public final class ModuleRegistry {
         privacy = PrivacyState(mode: { [settings] in settings.privacyMode })
     }
 
+    /// Wywoływane raz przy starcie aplikacji (testy nie rejestrują się w serwerze okien).
+    public func startPrivacyObservation() {
+        if !privacy.observeCaptureChanges() {
+            Log.logger("privacy").error("Brak zdarzeń o przechwytywaniu ekranu — tryb prywatny sprawdza stan tylko przy rozwinięciu i nowych kartach")
+        }
+    }
+
     public var entries: [ModuleEntry] {
         catalog.map { type in
             let id = type.descriptor.id

@@ -235,6 +235,7 @@ APP=$PWD/build/Wyspa.app/Contents
 | `KeyboardBrightnessClient` (CoreBrightness) | `KeyboardBacklightControl` | klasa/selektory mogą się zmienić | `responds(to:)`; brak → klawisze do systemu |
 | `IOBluetoothDevice.batteryPercent*` | `BluetoothMonitor` | selektory mogą zniknąć | `responds(to:)`; brak → urządzenie bez poziomu baterii |
 | `SACLockScreenImmediate` (login.framework) | `QuickActionsModule.lockScreen` | symbol może zniknąć | `pmset displaysleepnow` (blokuje, gdy hasło jest wymagane od razu po uśpieniu) |
+| `SLSRegisterNotifyProc` typy 1502/1503 (SkyLight) | `ScreenCaptureDetector.observe` | numery typów ustalone eksperymentem na 27.2, mogą się zmienić | rejestracja nieudana → sprawdzanie przy rozwinięciu, nowej karcie i zmianie aplikacji; ustawienia to pokazują |
 | `SLSIsScreenWatcherPresent` (SkyLight) | `ScreenCaptureDetector` (tryb prywatny) | symbol może zniknąć | `isAvailable == false` → tryb automatyczny nic nie chowa, ustawienia to mówią; tryb „Zawsze” działa |
 | Drzewo Dostępności banerów NotificationCenter (nieudokumentowane) | `NotificationBannerWatcher` | nowy macOS zmieni subrolę/identyfikatory | baner nie zostaje rozpoznany ani schowany — powiadomienia działają systemowo |
 

@@ -194,8 +194,8 @@ jako pierścień postępu z procentem; kilka pobierań naraz — łączny postę
 
 Przy udostępnianiu albo nagrywaniu ekranu (Zoom, Teams, Meet, nagranie ekranu) wyspa chowa treść: karta powiadomienia
 pokazuje tylko aplikację, historia schowka jest ukryta, a po zakończeniu pracy Claude nie ma podglądu odpowiedzi.
-Ustawienia → Wyspa → Tryb prywatny: przy udostępnianiu (domyślnie) / zawsze / nigdy. Stan sprawdzany jest, gdy wyspa ma
-coś pokazać i przy zmianie aktywnej aplikacji — bez odpytywania. (macOS domyślnie i tak wstrzymuje banery powiadomień
+Ustawienia → Wyspa → Tryb prywatny: przy udostępnianiu (domyślnie) / zawsze / nigdy. Wyspa dostaje od systemu zdarzenie
+o początku i końcu przechwytywania ekranu, więc treść znika od razu, także przy rozwiniętej wyspie — bez odpytywania. (macOS domyślnie i tak wstrzymuje banery powiadomień
 podczas udostępniania ekranu.)
 
 ### Pogoda

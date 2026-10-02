@@ -26,6 +26,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         )
         self.registry = registry
         let privacy = registry.privacy
+        registry.startPrivacyObservation()
         privacy.refresh()
         privacyObserver = NSWorkspace.shared.notificationCenter.addObserver(
             forName: NSWorkspace.didActivateApplicationNotification, object: nil, queue: .main
