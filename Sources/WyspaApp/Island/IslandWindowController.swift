@@ -100,6 +100,7 @@ final class IslandWindowController {
             }
             panel.acceptsKeyboard = next.phase == .expanded
             if next.phase != .expanded { model.standaloneModuleID = nil }
+            if next.phase == .expanded { registry.privacy.refresh() }
             if previous.phase == .expanded, panel.isKeyWindow { returnKeyboard() }
         }
         if next.selectedTab != model.selectedTab {

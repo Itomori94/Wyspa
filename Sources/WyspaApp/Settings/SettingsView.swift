@@ -100,6 +100,15 @@ private struct IslandSettingsView: View {
                 .pickerStyle(.segmented)
                 Toggle("Haptyka gładzika przy rozwinięciu", isOn: $settings.hapticsEnabled)
             }
+            Section("Tryb prywatny") {
+                Picker("Ukrywaj powiadomienia, schowek i odpowiedzi Claude", selection: $settings.privacyMode) {
+                    ForEach(PrivacyState.Mode.allCases, id: \.self) { Text($0.displayName).tag($0) }
+                }
+                Text(ScreenCaptureDetector.isAvailable
+                     ? "Przy udostępnianiu albo nagrywaniu ekranu (Zoom, Teams, Meet, nagranie) karty pokazują tylko nazwę aplikacji."
+                     : "Ta wersja macOS nie pozwala wykryć udostępniania ekranu — działa tylko tryb „Zawsze”.")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
         }
         .formStyle(.grouped)
     }

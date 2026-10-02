@@ -64,7 +64,7 @@ public final class NotificationsModule: IslandModule {
                 Image(systemName: "bell.fill").font(.system(size: 11)).foregroundStyle(.white.opacity(0.6))
             }
         } detail: {
-            NotificationCardView(card: card, icon: icon,
+            NotificationCardView(card: card, icon: icon, isPrivate: context.privacy.isActive,
                                  hover: { [weak self] in self?.setPaused($0) },
                                  open: { [weak self] in self?.open(card) },
                                  close: { [weak self] in self?.next() })
@@ -77,6 +77,7 @@ public final class NotificationsModule: IslandModule {
     // MARK: - Kolejka
 
     private func receive(_ card: NotificationCard) {
+        context.privacy.refresh()
         let wasEmpty = queue.current == nil
         withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) { queue = queue.enqueueing(card) }
         if wasEmpty { scheduleDismiss() }

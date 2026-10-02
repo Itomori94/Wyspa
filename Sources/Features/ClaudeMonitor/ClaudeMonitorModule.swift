@@ -118,7 +118,7 @@ public final class ClaudeMonitorModule: IslandModule {
             let trailing = {
                 Text(justFinished.projectName).font(.system(size: 10.5, weight: .semibold)).lineLimit(1).foregroundStyle(.green)
             }
-            guard let preview = MessagePreview.make(justFinished.lastMessage) else {
+            guard !context.privacy.isActive, let preview = MessagePreview.make(justFinished.lastMessage) else {
                 return LiveActivity(id: "claude.finished", priority: .alert, accent: .green, wingWidth: 56,
                                     leading: leading, trailing: trailing)
             }
@@ -298,6 +298,7 @@ public final class ClaudeMonitorModule: IslandModule {
     }
 
     private func showFinished(_ session: ClaudeSession) {
+        context.privacy.refresh()
         withAnimation { justFinished = session }
         scheduleFinishedDismiss()
     }

@@ -110,12 +110,16 @@ public struct ModuleContext {
     public let requestExpand: @MainActor () -> Void
     /// Przekazuje elementy do strefy innego modułu (np. zrzut ekranu na Półkę). `false`, gdy ten moduł nie działa.
     public let deliver: @MainActor (_ providers: [NSItemProvider], _ zoneID: String) -> Bool
+    /// Tryb prywatny wspólny dla wszystkich modułów (chowanie treści przy udostępnianiu ekranu).
+    public let privacy: PrivacyState
 
     public init(settings: ModuleSettings, requestExpand: @escaping @MainActor () -> Void,
-                deliver: @escaping @MainActor ([NSItemProvider], String) -> Bool = { _, _ in false }) {
+                deliver: @escaping @MainActor ([NSItemProvider], String) -> Bool = { _, _ in false },
+                privacy: PrivacyState = PrivacyState(mode: { .off })) {
         self.settings = settings
         self.requestExpand = requestExpand
         self.deliver = deliver
+        self.privacy = privacy
     }
 }
 

@@ -5,6 +5,8 @@ import WyspaUI
 struct NotificationCardView: View {
     let card: NotificationCard
     let icon: NSImage
+    /// Ekran udostępniany: bez tytułu i treści, tylko aplikacja.
+    let isPrivate: Bool
     let hover: (Bool) -> Void
     let open: () -> Void
     let close: () -> Void
@@ -23,8 +25,11 @@ struct NotificationCardView: View {
                             .help("Ukryj")
                     }
                 }
-                Text(card.title).font(.system(size: 12.5, weight: .semibold)).lineLimit(1)
-                if let line = [card.subtitle, card.body].compactMap({ $0 }).joined(separator: " — ").nilIfEmpty {
+                Text(isPrivate ? "Nowe powiadomienie" : card.title).font(.system(size: 12.5, weight: .semibold)).lineLimit(1)
+                if isPrivate {
+                    Label("Treść ukryta — ekran jest udostępniany", systemImage: "eye.slash")
+                        .font(.system(size: 11.5)).foregroundStyle(.white.opacity(0.6))
+                } else if let line = [card.subtitle, card.body].compactMap({ $0 }).joined(separator: " — ").nilIfEmpty {
                     Text(line).font(.system(size: 11.5)).foregroundStyle(.white.opacity(0.75)).lineLimit(2)
                 }
             }

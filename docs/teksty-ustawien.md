@@ -17,6 +17,8 @@ zaktualizuj też ten plik. Karty okna: **Ogólne · Wyspa · Moduły · Układ**
 - **Wygląd** (karta Wyspa)
   - Rozmiar rozwiniętej wyspy: Mała / Średnia / Duża
   - Haptyka gładzika przy rozwinięciu
+- **Tryb prywatny**: „Ukrywaj powiadomienia, schowek i odpowiedzi Claude”: Przy udostępnianiu i nagrywaniu ekranu / Zawsze / Nigdy
+  - „Przy udostępnianiu albo nagrywaniu ekranu (Zoom, Teams, Meet, nagranie) karty pokazują tylko nazwę aplikacji.”
 
 ## Moduły
 

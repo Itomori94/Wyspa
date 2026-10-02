@@ -50,6 +50,9 @@ public final class ModuleRegistry {
     private var problems: [String: String] = [:]
     private var pending: Set<String> = []
 
+    /// Tryb prywatny dla modułów i wyspy.
+    public let privacy: PrivacyState
+
     public init(
         catalog: [any IslandModule.Type],
         settings: SettingsStore,
@@ -60,6 +63,7 @@ public final class ModuleRegistry {
         self.settings = settings
         self.permissions = permissions
         self.requestExpand = requestExpand
+        privacy = PrivacyState(mode: { [settings] in settings.privacyMode })
     }
 
     public var entries: [ModuleEntry] {
@@ -301,7 +305,8 @@ public final class ModuleRegistry {
         let moduleID = descriptor.id
         let context = ModuleContext(settings: settings.moduleSettings(for: descriptor.id),
                                     requestExpand: { [weak self] in self?.requestExpand(moduleID) },
-                                    deliver: { [weak self] providers, zoneID in self?.deliver(providers, toZone: zoneID) ?? false })
+                                    deliver: { [weak self] providers, zoneID in self?.deliver(providers, toZone: zoneID) ?? false },
+                                    privacy: privacy)
         let module = type.init(context: context)
         do {
             try await module.activate()

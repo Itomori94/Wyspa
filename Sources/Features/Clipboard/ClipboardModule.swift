@@ -28,6 +28,9 @@ public final class ClipboardModule: IslandModule {
     @ObservationIgnored private var timer: Timer?
     @ObservationIgnored private var lastChangeCount = NSPasteboard.general.changeCount
 
+    /// Tryb prywatny: przy udostępnianiu ekranu lista jest ukryta.
+    var isPrivate: Bool { context.privacy.isActive }
+
     public required init(context: ModuleContext) {
         self.context = context
         history = ClipboardHistory(limit: context.settings.value(Self.limitKey, default: ClipboardHistory.defaultLimit))

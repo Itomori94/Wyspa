@@ -180,6 +180,14 @@ i ostatnie narzędzia. Kilka sesji naraz.
 - **Kliknięcie sesji** przenosi do jej terminala: właściwa karta w Terminalu i iTerm2, właściwe okno w VS Code i Cursor;
   w innych terminalach aplikacja przechodzi na wierzch.
 
+### Tryb prywatny
+
+Przy udostępnianiu albo nagrywaniu ekranu (Zoom, Teams, Meet, nagranie ekranu) wyspa chowa treść: karta powiadomienia
+pokazuje tylko aplikację, historia schowka jest ukryta, a po zakończeniu pracy Claude nie ma podglądu odpowiedzi.
+Ustawienia → Wyspa → Tryb prywatny: przy udostępnianiu (domyślnie) / zawsze / nigdy. Stan sprawdzany jest, gdy wyspa ma
+coś pokazać i przy zmianie aktywnej aplikacji — bez odpytywania. (macOS domyślnie i tak wstrzymuje banery powiadomień
+podczas udostępniania ekranu.)
+
 ### Pogoda
 
 Temperatura, opis i prognoza na 4 dni dla Twojej okolicy z Open-Meteo (darmowy serwis bez konta). Wymaga zgody na

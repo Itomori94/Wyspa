@@ -13,6 +13,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var hotkey: HotkeyController?
     private var terminationSignal: DispatchSourceSignal?
     private var accessibilityObserver: NSObjectProtocol?
+    /// Zmiana aktywnej aplikacji (np. start udostępniania w Zoomie) — moment na sprawdzenie trybu prywatnego.
+    private var privacyObserver: NSObjectProtocol?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         handleTerminationSignal()
@@ -23,6 +25,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             requestExpand: { [weak self] moduleID in self?.screens?.expandUnderPointer(opening: moduleID) }
         )
         self.registry = registry
+        let privacy = registry.privacy
+        privacy.refresh()
+        privacyObserver = NSWorkspace.shared.notificationCenter.addObserver(
+            forName: NSWorkspace.didActivateApplicationNotification, object: nil, queue: .main
+        ) { _ in MainActor.assumeIsolated { _ = privacy.refresh() } }
+        observeChanges({ [settings] in _ = settings.privacyMode }) { _ = privacy.refresh() }
 
         let settingsWindow = SettingsWindowController(
             settings: settings, registry: registry, permissions: permissions
