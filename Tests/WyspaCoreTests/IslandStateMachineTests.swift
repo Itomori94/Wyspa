@@ -161,4 +161,23 @@ struct IslandStateMachineTests {
         let result = reduce(state, .swipe(.up))
         #expect(result.state.phase == .collapsed && !result.state.isEditing)
     }
+
+    @Test("Karta pod notchem: najechanie i kliknięcie jej nie rozwijają wyspy, skrót tak")
+    func cardBlocksHoverExpand() {
+        let card = IslandState(phase: .collapsed, hasActivity: true, hasCard: true)
+        let hovered = reduce(card, .pointerEntered)
+        #expect(hovered.state.phase == .peek && hovered.effects.isEmpty)
+        #expect(reduce(hovered.state, .clicked).state.phase == .peek)
+        #expect(reduce(hovered.state, .timerFired(.expand)).state.phase == .peek)
+        #expect(reduce(hovered.state, .toggleRequested).state.phase == .expanded)
+    }
+
+    @Test("Karta pojawia się pod kursorem: zaplanowane rozwinięcie zostaje anulowane; znika — wraca")
+    func cardAppearsAndGoes() {
+        let peek = reduce(IslandState(phase: .collapsed), .pointerEntered).state
+        let withCard = reduce(peek, .cardChanged(true))
+        #expect(withCard.state.hasCard && withCard.effects == [.cancel(.expand)])
+        let without = reduce(withCard.state, .cardChanged(false))
+        #expect(!without.state.hasCard && without.effects == [.schedule(.expand, after: config.hoverDelay)])
+    }
 }

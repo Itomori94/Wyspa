@@ -66,6 +66,7 @@ final class IslandWindowController {
         layout()
         // Tryb wirtualnego notcha mógł się zmienić: przelicz fazę spoczynku.
         send(.activityChanged(hasActivity: registry.currentActivity != nil))
+        send(.cardChanged(registry.currentActivity?.detail != nil))
     }
 
     func send(_ event: IslandEvent) {
@@ -188,6 +189,8 @@ final class IslandWindowController {
         let hasActivity = registry.currentActivity != nil
         let tabCount = registry.pages.count
         if hasActivity != state.hasActivity { send(.activityChanged(hasActivity: hasActivity)) }
+        let hasCard = registry.currentActivity?.detail != nil
+        if hasCard != state.hasCard { send(.cardChanged(hasCard)) }
         if tabCount != state.tabCount { send(.tabCountChanged(tabCount)) }
         updateInteractiveRect()
     }

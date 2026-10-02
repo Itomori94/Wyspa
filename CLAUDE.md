@@ -206,8 +206,10 @@ APP=$PWD/build/Wyspa.app/Contents
 - Budowa banera (macOS 27.2): grupa o subroli `AXNotificationCenterBanner`, `Identifier` = UUID (deduplikacja),
   `Description` = „aplikacja, tytuł, podtytuł, treść”, dzieci `AXStaticText` z identyfikatorami `title`/`subtitle`/`body`.
   Parsowanie w czystym `BannerParser` (testy).
-- Chowanie oryginału: przesunięcie okna banera poza ekran (`kAXPositionAttribute`), tylko dla okien ≤ 400 pt wysokości
-  (otwartego Centrum powiadomień nigdy nie ruszamy). Powiadomienie zostaje w Centrum powiadomień.
+- Chowanie oryginału: przesunięcie okna banerów poza ekran (`kAXPositionAttribute`). Na macOS 27.2 to okno ma rozmiar
+  całego ekranu i otwiera się w nim też Centrum powiadomień, więc gdy banerów już nie ma (`AXUIElementDestroyed`),
+  okno wraca na zapamiętane miejsce. Akcja banera „Zamknij” odrzucona: może usuwać powiadomienie z Centrum.
+- Karta pod notchem (`IslandState.hasCard`): najechanie i kliknięcie nie rozwijają wyspy — klik obsługuje karta.
 - Karta: `LiveActivity` z `detail` (karta pod skrzydełkami, `IslandLayout.detailWidth`/`maxDetailHeight`), priorytet `.alert`,
   kolejka `NotificationQueue` (niemutowalna, limit 10 czekających), najechanie wstrzymuje odliczanie.
 - Diagnostyka: `open -n build/Wyspa.app --args --dump-notification-ax` (60 s, `~/Library/Logs/Wyspa/notification-ax.txt`,

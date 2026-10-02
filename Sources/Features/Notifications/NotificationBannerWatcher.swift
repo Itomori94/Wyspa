@@ -9,8 +9,6 @@ import WyspaCore
 @MainActor
 final class NotificationBannerWatcher {
     static let bundleID = "com.apple.notificationcenterui"
-    /// Okno banera jest niskie; wysokie okno to otwarte Centrum powiadomień — tego nigdy nie chowamy.
-    static let maxBannerWindowHeight: CGFloat = 400
     private static let seenLimit = 200
 
     private let onBanner: @MainActor (NotificationCard) -> Void
@@ -18,6 +16,9 @@ final class NotificationBannerWatcher {
     private var observer: AXObserver?
     private var pid: pid_t = 0
     private var seen: [String] = []
+    /// Okno banerów przesunięte poza ekran i jego pierwotne położenie — wraca, gdy banerów już nie ma.
+    /// (Na macOS 27 to okno ma rozmiar całego ekranu i to w nim otwiera się Centrum powiadomień.)
+    private var hiddenWindow: (window: AXUIElement, origin: CGPoint)?
     private var launchObserver: NSObjectProtocol?
     private let log = Log.logger("notifications")
 
@@ -40,6 +41,7 @@ final class NotificationBannerWatcher {
     }
 
     func stop() {
+        restoreHiddenWindow()
         detach()
         if let launchObserver { NSWorkspace.shared.notificationCenter.removeObserver(launchObserver) }
         launchObserver = nil
@@ -64,7 +66,8 @@ final class NotificationBannerWatcher {
         }
         let element = AXUIElementCreateApplication(pid)
         let refcon = Unmanaged.passUnretained(self).toOpaque()
-        for name in [kAXWindowCreatedNotification, kAXCreatedNotification, kAXLayoutChangedNotification] {
+        for name in [kAXWindowCreatedNotification, kAXCreatedNotification, kAXLayoutChangedNotification,
+                     kAXUIElementDestroyedNotification] {
             AXObserverAddNotification(created, element, name as CFString, refcon)
         }
         CFRunLoopAddSource(CFRunLoopGetMain(), AXObserverGetRunLoopSource(created), .defaultMode)
@@ -81,9 +84,11 @@ final class NotificationBannerWatcher {
     /// Przegląda okna Centrum powiadomień i zgłasza banery, których jeszcze nie widzieliśmy.
     private func scan() {
         let app = AXUIElementCreateApplication(pid)
+        var anyBanner = false
         for window in AX.children(app, kAXWindowsAttribute) {
             let banners = findBanners(in: window, depth: 0)
             guard !banners.isEmpty else { continue }
+            anyBanner = true
             var foundNew = false
             for banner in banners {
                 let identifier = AX.string(banner, kAXIdentifierAttribute)
@@ -101,15 +106,26 @@ final class NotificationBannerWatcher {
             }
             if foundNew, hidesOriginal() { hide(window) }
         }
+        // Banery zniknęły: okno wraca na miejsce, żeby Centrum powiadomień otwierało się normalnie.
+        if !anyBanner { restoreHiddenWindow() }
     }
 
     /// Chowa baner, przesuwając jego okno poza ekran — powiadomienie zostaje w Centrum powiadomień.
     private func hide(_ window: AXUIElement) {
-        guard let size = AX.size(window), size.height <= Self.maxBannerWindowHeight else { return }
+        if hiddenWindow == nil, let origin = AX.position(window) { hiddenWindow = (window, origin) }
         var offscreen = CGPoint(x: -20_000, y: -20_000)
         guard let value = AXValueCreate(.cgPoint, &offscreen) else { return }
         let result = AXUIElementSetAttributeValue(window, kAXPositionAttribute as CFString, value)
         if result != .success { log.error("Nie udało się schować banera: \(result.rawValue)") }
+    }
+
+    private func restoreHiddenWindow() {
+        guard let (window, origin) = hiddenWindow else { return }
+        hiddenWindow = nil
+        var point = origin
+        guard let value = AXValueCreate(.cgPoint, &point) else { return }
+        let result = AXUIElementSetAttributeValue(window, kAXPositionAttribute as CFString, value)
+        if result != .success { log.error("Nie udało się przywrócić okna banerów: \(result.rawValue)") }
     }
 
     private func findBanners(in element: AXUIElement, depth: Int) -> [AXUIElement] {
@@ -133,12 +149,12 @@ enum AX {
         return (value as? [AXUIElement]) ?? []
     }
 
-    static func size(_ element: AXUIElement) -> CGSize? {
+    static func position(_ element: AXUIElement) -> CGPoint? {
         var value: CFTypeRef?
-        guard AXUIElementCopyAttributeValue(element, kAXSizeAttribute as CFString, &value) == .success,
+        guard AXUIElementCopyAttributeValue(element, kAXPositionAttribute as CFString, &value) == .success,
               let value, CFGetTypeID(value) == AXValueGetTypeID()
         else { return nil }
-        var size = CGSize.zero
-        return AXValueGetValue(value as! AXValue, .cgSize, &size) ? size : nil
+        var point = CGPoint.zero
+        return AXValueGetValue(value as! AXValue, .cgPoint, &point) ? point : nil
     }
 }
