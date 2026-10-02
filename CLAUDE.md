@@ -55,6 +55,12 @@ binarka ma `minos 14.0` dla obu architektur (sprawdź: `vtool -arch x86_64 -show
   Podświetlenie strefy: `@Environment(\.islandDropTarget)`. Po upuszczeniu `resyncPointer()` przywraca śledzenie
   kursora (AppKit wstrzymuje je podczas przeciągania). `IslandDragSession.isDraggingOut` blokuje upuszczenie
   elementów wyciąganych z wyspy z powrotem na nią.
+- **Klawiatura po skrócie**: `HotkeyController` → `toggleWithKeyboard()` (`makeKey` + `makeFirstResponder(nil)`); lokalny
+  monitor `keyDown` filtrowany do panelu → czysty `IslandKeyRouter` (←→ `.tabStepped`, Esc, ↑↓ Enter Backspace i pisanie
+  do modułów `IslandKeyboardHandling` widocznej strony; pisanie → `typedTextModuleID`, czyli schowek). W polu tekstowym
+  (`firstResponder is NSTextView`) do modułu idą tylko ↑↓ Enter. Zasłonięte moduły nie dostają klawiszy.
+- **Zwinięcie na prośbę modułu**: `ModuleContext.requestCollapse` → `ScreenCoordinator.collapseAll()` → `.collapseRequested`
+  (zwija też w trakcie pisania). Po zwinięciu klawiatura wraca do aplikacji pod spodem — na tym opiera się wklejanie.
 - **Gesty**: lokalny monitor `scrollWheel` filtrowany do panelu → `SwipeRecognizer` (jeden kierunek na gest).
 - **Skrót globalny**: Carbon `RegisterEventHotKey` (bez Accessibility).
 - **Panel**: poziom `mainMenu + 3`, `canJoinAllSpaces`, `fullScreenAuxiliary`, `nonactivatingPanel`.
@@ -164,11 +170,12 @@ APP=$PWD/build/Wyspa.app/Contents
 |---|---|---|---|
 | Kalendarz | `WyspaCalendar` | Kalendarze | `UpcomingEventPolicy`: aktywność od 10 min przed startem do 5 min po; jedno zaplanowane wybudzenie na następną granicę albo północ |
 | Przypomnienia | `WyspaReminders` | Przypomnienia | zaległe + dziś, odhaczanie `EKEventStore.save` |
-| Timer | `WyspaTimer` | — | niemutowalna `TimerSession` liczona z dat (przetrwa restart), jedno zadanie do końca odliczania, Pomodoro 25/5/15 × 4 |
+| Timer | `WyspaTimer` | — | niemutowalna `TimerSession` liczona z dat (przetrwa restart), jedno zadanie do końca odliczania, Pomodoro 25/5/15 × 4; uruchomiona faza skupienia (`isFocusing`) ustawia wspólne `ModuleContext.focus` (`FocusHold` w WyspaCore), a Powiadomienia wstrzymują wtedy karty (`FocusDigest`: limit 50, po sesji podsumowanie + najnowsze karty do kolejki) |
 | Notatka | `WyspaNotes` | — | plik `Application Support/Wyspa/Notes/notatka.md`, autozapis po 0,6 s, zapis przy wyłączeniu |
-| Historia schowka | `WyspaClipboard` | — | `changeCount` co 0,75 s tylko gdy włączony (zaakceptowany wyjątek); pomija Concealed/Transient; limit 10–500; tylko w pamięci; wyszukiwanie z „ł”→„l” |
+| Historia schowka | `WyspaClipboard` | — | `changeCount` co 0,75 s tylko gdy włączony (zaakceptowany wyjątek); pomija Concealed/Transient; limit 10–500 (przypięte poza limitem, najwyżej 50, zostają po „Wyczyść”); tylko w pamięci; wyszukiwanie z „ł”→„l”; kliknięcie = kopiuj + `requestCollapse` + po 180 ms ⌘V przez `CGEvent` (tylko z Dostępnością, inaczej samo kopiowanie) |
 | Skróty | `WyspaShortcuts` | — | `/usr/bin/shortcuts list/run`, nazwy jako argumenty procesu (bez powłoki), ulubione w ustawieniach |
 | Lusterko | `WyspaMirror` | Kamera | sesja AVCapture tylko gdy widok zakładki jest w oknie |
+| Szybkie akcje | `WyspaQuickActions` | Nagrywanie ekranu (przy pierwszym zrzucie) | zrzut `screencapture -i`; „Tekst ze zrzutu” = Vision `VNRecognizeTextRequest` (accurate, pl-PL + en-US, poza głównym wątkiem) → schowek, plik kasowany; nowe akcje dopisywać na końcu enuma przed istniejącymi tylko wtedy, gdy rawValue się nie zmienia (zapis skrótów) |
 
 ## Monitor Claude Code (etap 6, moduł `WyspaClaudeMonitor`)
 
@@ -199,6 +206,27 @@ APP=$PWD/build/Wyspa.app/Contents
 - Instalator rozpoznaje wpisy po nazwie pliku `wyspa-hook` (dokładnie), odrzuca nieoczekiwaną strukturę `hooks`,
   zapisuje przez dowiązania, zachowuje prawa pliku, trzyma 5 ostatnich kopii; zmiana czasu decyzji zapisuje hooki po 0,8 s.
 - Sesje znikają po zakończeniu procesu Claude Code (`DispatchSource.makeProcessSource(.exit)`), bez odpytywania.
+
+## Mikrofon (moduł `WyspaMicrophone`)
+
+- CoreAudio, domyślne wejście: `Mute` (zakres wejścia), a bez niego `VolumeScalar` (element główny albo kanały 1…n)
+  ustawiane na 0; głośność sprzed wyciszenia zapamiętana per UID urządzenia (`restoreVolumes`), przy braku — 75%.
+- Zmiany urządzenia, wyciszenia i głośności przez `AudioObjectAddPropertyListenerBlock` na kolejce głównej (bez odpytywania).
+  Nie czytamy dźwięku, więc bez `NSMicrophoneUsageDescription` i zgody TCC.
+- Aktywność „wyciszony” ma priorytet 52 (nad mediami i spotkaniem, pod pobieraniem i timerem); przełączenie pokazuje
+  na 1,5 s komunikat z priorytetem `.alert`. Skrót domyślny ⌃⌥M (`StoredShortcut` odróżnia „bez skrótu” od domyślnego).
+
+## Skrypty (moduł `WyspaScripts`)
+
+- Adresy `wyspa://notify|progress|done` (Info.plist `CFBundleURLTypes`) → `AppDelegate.application(_:open:)` →
+  czysty parser `ScriptCommand(url:)` w WyspaCore → `ScriptCommandCenter.shared` (jeden odbiorca, bufor 5 poleceń sprzed
+  startu modułu) → `ScriptsModule`. Stan to niemutowalny `ScriptsState` (kolejka kart, limit postępów, przedawnienie 15 min).
+- Adres może otworzyć każda aplikacja i strona WWW: polecenia wyłącznie pokazują tekst (bez plików, procesów, skutków
+  ubocznych), teksty bez znaków sterujących i przycięte, identyfikatory tylko `[A-Za-z0-9._-]`, karta podpisana „Skrypt”.
+- Komenda `wyspa` = `Resources/wyspa` (POSIX sh, kodowanie procentowe przez `/usr/bin/perl`, `open -g`, ciche wyjście 0
+  bez działającej Wyspy) w `Contents/Resources` (nie w `Helpers` — skrypt nie ma własnego podpisu). `CommandInstaller`
+  kopiuje ją do `~/.local/bin/wyspa` tylko na przycisk; plik bez znacznika `wyspa-cli` nigdy nie jest nadpisywany ani usuwany.
+- Bez zegarów w spoczynku: jedno zadanie na kartę, jedno na najbliższe przedawnienie, jedno na znikające „Gotowe”.
 
 ## Powiadomienia
 

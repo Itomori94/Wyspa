@@ -61,6 +61,9 @@ struct NotificationsSettingsView: View {
                 ForEach(NotificationsModule.durations, id: \.self) { Text("\($0) s").tag($0) }
             }
             .fixedSize()
+            Text("Podczas skupienia Pomodoro (Timer → „Wstrzymuj powiadomienia podczas skupienia”) karty czekają "
+                 + "i przychodzą po sesji z podsumowaniem.")
+                .font(.caption).foregroundStyle(.secondary)
             Text("Przyciski z powiadomień (np. „Odpowiedz”) działają tylko w systemowym banerze — kliknięcie karty otwiera aplikację. "
                  + "Gdy nowa wersja macOS zmieni budowę banerów, moduł przestanie je widzieć, a powiadomienia działają zwyczajnie.")
                 .font(.caption).foregroundStyle(.secondary)

@@ -7,13 +7,15 @@ struct QuickActionsView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            let columns = Array(repeating: GridItem(.flexible(), spacing: 8), count: compact ? 2 : 4)
+            let columns = Array(repeating: GridItem(.flexible(), spacing: 8), count: compact ? 3 : 5)
             LazyVGrid(columns: columns, spacing: 8) {
-                ActionTile(symbol: "camera.viewfinder", title: "Zrzut na Półkę", tint: .blue, compact: compact,
+                ActionTile(symbol: "camera.viewfinder", title: compact ? "Zrzut" : "Zrzut na Półkę", tint: .blue, compact: compact,
                            action: module.captureToShelf)
-                ActionTile(symbol: "eyedropper", title: "Pipeta koloru", tint: .pink, compact: compact,
+                ActionTile(symbol: "text.viewfinder", title: compact ? "Tekst" : "Tekst ze zrzutu", tint: .green, compact: compact,
+                           action: module.captureText)
+                ActionTile(symbol: "eyedropper", title: compact ? "Pipeta" : "Pipeta koloru", tint: .pink, compact: compact,
                            action: module.pickColor)
-                ActionTile(symbol: "lock.fill", title: "Zablokuj ekran", tint: .gray, compact: compact,
+                ActionTile(symbol: "lock.fill", title: compact ? "Blokada" : "Zablokuj ekran", tint: .gray, compact: compact,
                            action: module.lockScreen)
                 ActionTile(symbol: module.isKeepingAwake ? "cup.and.saucer.fill" : "cup.and.saucer",
                            title: module.isKeepingAwake ? "Nie usypia" : "Nie usypiaj", tint: .orange, compact: compact,

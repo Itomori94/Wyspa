@@ -44,6 +44,7 @@ public final class ModuleRegistry {
     @ObservationIgnored private let permissions: PermissionProviding
     /// Prośba o rozwinięcie wyspy na stronie danego modułu (nil = bez wskazania modułu).
     @ObservationIgnored private let requestExpand: @MainActor (_ moduleID: String?) -> Void
+    @ObservationIgnored private let requestCollapse: @MainActor () -> Void
     @ObservationIgnored private let log = Log.logger("modules")
 
     private var instances: [String: any IslandModule] = [:]
@@ -52,17 +53,21 @@ public final class ModuleRegistry {
 
     /// Tryb prywatny dla modułów i wyspy.
     public let privacy: PrivacyState
+    /// Sesja skupienia wspólna dla modułów (Timer → Powiadomienia).
+    public let focus = FocusHold()
 
     public init(
         catalog: [any IslandModule.Type],
         settings: SettingsStore,
         permissions: PermissionProviding,
-        requestExpand: @escaping @MainActor (_ moduleID: String?) -> Void
+        requestExpand: @escaping @MainActor (_ moduleID: String?) -> Void,
+        requestCollapse: @escaping @MainActor () -> Void = {}
     ) {
         self.catalog = catalog
         self.settings = settings
         self.permissions = permissions
         self.requestExpand = requestExpand
+        self.requestCollapse = requestCollapse
         privacy = PrivacyState(mode: { [settings] in settings.privacyMode })
     }
 
@@ -256,6 +261,25 @@ public final class ModuleRegistry {
         activeModules.compactMap { $0 as? any IslandDropHandling }
     }
 
+    // MARK: - Klawiatura
+
+    /// Moduł, do którego trafia pisanie w rozwiniętej wyspie (pierwszy działający, który je przyjmuje).
+    public var typedTextModuleID: String? {
+        activeModules.compactMap { $0 as? any IslandKeyboardHandling }
+            .first { type(of: $0).receivesTypedText }
+            .map { type(of: $0).descriptor.id }
+    }
+
+    /// Klawisz dla modułów widocznej strony; `true`, gdy któryś go obsłużył.
+    /// Zasłonięty moduł (tryb prywatny) klawiatury nie dostaje.
+    public func handleKey(_ key: IslandKey, moduleIDs: [String], whileEditingText: Bool = false) -> Bool {
+        for id in moduleIDs where !isMasked(id) {
+            if let module = instances[id] as? any IslandKeyboardHandling,
+               module.handleKey(key, whileEditingText: whileEditingText) { return true }
+        }
+        return false
+    }
+
     public func settingsView(for id: String) -> AnyView? {
         instances[id]?.makeSettingsView()
     }
@@ -327,8 +351,10 @@ public final class ModuleRegistry {
         let moduleID = descriptor.id
         let context = ModuleContext(settings: settings.moduleSettings(for: descriptor.id),
                                     requestExpand: { [weak self] in self?.requestExpand(moduleID) },
+                                    requestCollapse: { [weak self] in self?.requestCollapse() },
                                     deliver: { [weak self] providers, zoneID in self?.deliver(providers, toZone: zoneID) ?? false },
-                                    privacy: privacy)
+                                    privacy: privacy,
+                                    focus: focus)
         let module = type.init(context: context)
         do {
             try await module.activate()

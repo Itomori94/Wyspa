@@ -25,6 +25,8 @@ public enum IslandEvent: Equatable, Sendable {
     case clicked
     case swipe(SwipeDirection)
     case toggleRequested
+    /// Zwinięcie na prośbę modułu (np. po wybraniu wpisu schowka do wklejenia); zwinięta wyspa bez zmian.
+    case collapseRequested
     /// Rozwinięcie na żądanie (moduł prosi o uwagę, kliknięcie aktywności) — działa też, gdy wisi karta.
     case expandRequested
     /// Przeciąganie weszło nad wyspę; `preferredTab` = zakładka modułu przyjmującego upuszczenia.
@@ -36,6 +38,8 @@ public enum IslandEvent: Equatable, Sendable {
     case cardChanged(Bool)
     case tabCountChanged(Int)
     case tabSelected(Int)
+    /// Poprzednia/następna strona z klawiatury (zawija się, bez haptyki).
+    case tabStepped(Int)
     /// Pole tekstowe w wyspie dostało albo straciło klawiaturę.
     case editingChanged(Bool)
 }
@@ -121,6 +125,8 @@ public enum IslandStateMachine {
             return swipe(state, direction, config: config)
         case .expandRequested:
             return state.phase == .expanded ? (state, [.cancel(.collapse)]) : expand(state)
+        case .collapseRequested:
+            return state.phase == .expanded ? collapse(state, config: config) : (state, [])
         case .toggleRequested:
             return state.phase == .expanded ? collapse(state, config: config) : expand(state)
         case .dragEntered(let preferredTab):
@@ -151,6 +157,10 @@ public enum IslandStateMachine {
         case .tabSelected(let index):
             guard state.tabCount > 0, (0..<state.tabCount).contains(index) else { return (state, []) }
             return (state.with(selectedTab: index), [])
+        case .tabStepped(let step):
+            guard state.phase == .expanded, state.tabCount > 1 else { return (state, []) }
+            let next = ((state.selectedTab + step) % state.tabCount + state.tabCount) % state.tabCount
+            return (state.with(selectedTab: next), [])
         case .editingChanged(let editing):
             // Koniec pisania przy kursorze poza wyspą zgłasza kontroler osobnym `pointerExited`.
             return (state.with(isEditing: editing), editing ? [.cancel(.collapse)] : [])

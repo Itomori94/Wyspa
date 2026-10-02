@@ -51,6 +51,13 @@ Przy pierwszym podpisie macOS może zapytać, czy `codesign` może użyć klucza
 - **⌃⌥W** (domyślnie, do zmiany w ustawieniach): rozwija lub zwija wyspę na ekranie z kursorem.
 - Ikona w pasku menu: ustawienia i zamknięcie aplikacji.
 
+### Klawiatura po skrócie
+
+Skrót wyspy (domyślnie ⌃⌥W) rozwija ją od razu z klawiaturą, bez zabierania fokusu aplikacji, w której pracujesz:
+**← →** zmieniają strony, **pisanie** przechodzi do Historii schowka i szuka, **↑ ↓** wybierają wpis, **Enter** go wkleja
+(wyspa się zwija, a tekst trafia tam, gdzie był kursor), **Esc** zwija wyspę. W polu tekstowym (np. Notatka) klawisze
+należą do pola.
+
 ## Uprawnienia
 
 Każdy moduł wymagający uprawnienia jest domyślnie wyłączony i prosi o nie dopiero przy pierwszym włączeniu.
@@ -156,7 +163,9 @@ zwinięta wyspa pokazuje odliczanie. Przypomnienia: zaległe i na dziś, odhacza
 Minutnik (gotowe 1–60 min albo dowolny czas), stoper i Pomodoro (25 min skupienia, 5 min przerwy, 15 min co 4 sesje).
 Odliczanie widać w zwiniętej wyspie; koniec sygnalizuje dźwięk i rozwinięcie wyspy. Timer przetrwa restart aplikacji.
 W trybie Pomodoro widać dzisiejszy wynik: kropki ukończonych sesji skupienia i minuty (liczą się tylko fazy
-dobiegnięte do końca); dzienny cel ustawiasz w ustawieniach modułu.
+dobiegnięte do końca); dzienny cel ustawiasz w ustawieniach modułu. Podczas fazy skupienia karty powiadomień
+(moduł Powiadomienia) czekają, a po jej końcu przychodzi podsumowanie („Po skupieniu: 7 powiadomień”, z listą aplikacji)
+i najnowsze karty po kolei; pauza i przerwa kończą wstrzymanie. Do wyłączenia w ustawieniach Timera.
 
 ### Notatka
 
@@ -165,9 +174,11 @@ klawiaturę poprzedniej aplikacji.
 
 ### Historia schowka
 
-Ostatnie teksty, pliki i obrazy z wyszukiwaniem (bez rozróżniania polskich znaków). Kliknięcie kopiuje ponownie.
-Hasła z menedżerów haseł (oznaczone jako poufne) i treści tymczasowe nie są zapisywane. Historia jest tylko w pamięci —
-znika po wyłączeniu modułu albo aplikacji.
+Ostatnie teksty, pliki i obrazy z wyszukiwaniem (bez rozróżniania polskich znaków). Kliknięcie wkleja wpis prosto do
+aplikacji, w której piszesz (wyspa się zwija, Wyspa wysyła ⌘V — wymaga uprawnienia Dostępność; bez niego albo po
+wyłączeniu tej opcji kliknięcie tylko kopiuje). Pinezka przy wpisie go przypina: przypięte są na górze, nie wypadają
+z historii przez limit i zostają po „Wyczyść”. Hasła z menedżerów haseł (oznaczone jako poufne) i treści tymczasowe
+nie są zapisywane. Historia, także przypięta, jest tylko w pamięci — znika po wyłączeniu modułu albo aplikacji.
 
 ### Skróty i Lusterko
 
@@ -179,7 +190,8 @@ kamera działa tylko, gdy zakładka Lusterka jest widoczna.
 Wyłączony domyślnie, wymaga Dostępności. Powiadomienia macOS pojawiają się jako karta pod notchem: ikona i nazwa
 aplikacji, tytuł, treść. Karta znika po kilku sekundach (czas w ustawieniach), najechanie ją zatrzymuje, kliknięcie
 otwiera aplikację, kolejne powiadomienia czekają w kolejce („+2”). Systemowy baner jest domyślnie chowany
-(do wyłączenia w ustawieniach) — powiadomienie i tak zostaje w Centrum powiadomień.
+(do wyłączenia w ustawieniach) — powiadomienie i tak zostaje w Centrum powiadomień. Podczas skupienia Pomodoro karty
+czekają do końca sesji (patrz Timer).
 
 ### Claude Code
 
@@ -212,10 +224,35 @@ Pobierany plik (Safari, Chrome i inne przeglądarki pokazujące postęp na ikoni
 jako pierścień postępu z procentem; kilka pobierań naraz — łączny postęp. Po zakończeniu plik trafia na Półkę
 (do wyłączenia). Bez odpytywania: wyspa odbiera postęp publikowany przez przeglądarkę, odświeża się co pełny procent.
 
+### Mikrofon
+
+Globalny skrót (domyślnie ⌃⌥M, do zmiany w ustawieniach modułu) wycisza i włącza domyślne wejście dźwięku; kliknięcie
+widżetu robi to samo. Wyciszony mikrofon to czerwona ikona w zwiniętej wyspie (ważniejsza niż odtwarzanie i spotkanie,
+mniej ważna niż timer i prośby Claude). Mikrofony bez przełącznika wyciszenia są wyciszane głośnością wejścia
+ustawioną na zero — po włączeniu wraca poprzednia. Bez zgody na mikrofon: Wyspa nie słucha dźwięku, zmienia tylko
+ustawienie urządzenia (publiczne CoreAudio, zmiany z Ustawień systemowych widać od razu, bez odpytywania).
+
+### Skrypty (komenda `wyspa`)
+
+Karty i paski postępu z dowolnego skryptu, Skrótu albo crona. Ustawienia → Moduły → Skrypty → *Zainstaluj w ~/.local/bin*
+kopiuje komendę `wyspa` (skrypt `sh`, cudzego pliku o tej nazwie nie nadpisuje):
+
+```bash
+wyspa notify "Backup gotowy" "42 GB w 12 min"     # karta pod notchem na 5 s
+wyspa progress 0.4 "Build" --id build             # pasek postępu (0–1 albo 40%, „-” = nieokreślony)
+wyspa done build                                   # znacznik „Gotowe” i koniec
+open -g "wyspa://notify?title=Gotowe"              # to samo bez komendy, np. w Skrócie (Otwórz URL)
+```
+
+Gdy Wyspa nie działa, komenda kończy się po cichu z kodem 0. Adres `wyspa://` może otworzyć każda aplikacja i strona WWW
+(przeglądarka najpierw pyta), dlatego polecenia tylko pokazują tekst: karta jest podpisana „Skrypt”, teksty są przycinane
+i oczyszczane, a postęp bez aktualizacji znika po 15 minutach. Cron i Skróty nie czytają `~/.zshrc` — tam podawaj pełną
+ścieżkę `~/.local/bin/wyspa`.
+
 ### Tryb prywatny
 
 Przy udostępnianiu albo nagrywaniu ekranu (Zoom, Teams, Meet, nagranie ekranu) wyspa zasłania wszystkie moduły
-z osobistą treścią: Półkę, Kalendarz, Przypomnienia, Notatkę, Historię schowka, Powiadomienia, Claude Code i Pobierania.
+z osobistą treścią: Półkę, Kalendarz, Przypomnienia, Notatkę, Historię schowka, Powiadomienia, Claude Code, Pobierania i Skrypty.
 Karta powiadomienia pokazuje tylko aplikację, a prośba Claude o zgodę — tylko nazwę narzędzia (bez polecenia i zmian
 w kodzie), więc nadal można zdecydować. Każdy moduł musi zadeklarować, czy jego treść jest osobista.
 Ustawienia → Wyspa → Tryb prywatny: przy udostępnianiu (domyślnie) / zawsze / nigdy. Wyspa dostaje od systemu zdarzenie
@@ -231,9 +268,11 @@ w zwiniętej wyspie (domyślnie wyłączona).
 
 ### Szybkie akcje
 
-Strona albo widżet z czterema przyciskami:
+Strona albo widżet z pięcioma przyciskami:
 - **Zrzut na Półkę**: zaznaczasz obszar ekranu, zrzut ląduje na Półce (gdy Półka jest wyłączona — w schowku).
   Przy pierwszym użyciu macOS zapyta o zgodę na nagrywanie ekranu dla Wyspy.
+- **Tekst ze zrzutu**: zaznaczasz obszar, rozpoznany tekst (polski i angielski) trafia do schowka. Rozpoznawanie działa
+  na Macu (Vision), nic nie wychodzi do sieci, zrzut jest od razu kasowany.
 - **Pipeta koloru**: systemowa pipeta, kod HEX koloru trafia do schowka.
 - **Zablokuj ekran**: od razu blokuje Maca.
 - **Nie usypiaj**: Mac i ekran nie zasypiają (jak `caffeinate -d`), dopóki nie klikniesz ponownie albo nie wyłączysz modułu.
@@ -246,7 +285,7 @@ tylko przy włączonym module.
 1. Ustawienia → Moduły → Claude Code → *Odinstaluj…* (usuwa hooki i linię statusu Wyspy z `~/.claude/settings.json`;
    kopie zapasowe zostają obok pliku).
 2. Zamknij Wyspę i usuń `Wyspa.app`.
-3. Opcjonalnie: `rm -rf ~/.local/share/wyspa ~/Library/Application\ Support/Wyspa` oraz certyfikat „Wyspa Development”
+3. Opcjonalnie: `rm -f ~/.local/bin/wyspa` (albo *Usuń komendę* w module Skrypty), `rm -rf ~/.local/share/wyspa ~/Library/Application\ Support/Wyspa` oraz certyfikat „Wyspa Development”
    z Pęku kluczy.
 
 Hooki wskazują na pośrednika `~/.local/share/wyspa/bin/wyspa-hook`, który po usunięciu aplikacji kończy się po cichu —

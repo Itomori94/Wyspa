@@ -19,6 +19,7 @@ final class IslandWindowController {
     private var timers: [IslandTimer: Task<Void, Never>] = [:]
     private var swipeRecognizer = SwipeRecognizer()
     private var scrollMonitor: Any?
+    private var keyMonitor: Any?
     private var keyObservers: [NSObjectProtocol] = []
     /// Aplikacja, która miała klawiaturę, zanim wyspa ją przejęła (do oddania po zakończeniu pisania).
     private var appBeforeEditing: NSRunningApplication?
@@ -55,6 +56,7 @@ final class IslandWindowController {
         layout()
         panel.orderFrontRegardless()
         installScrollMonitor()
+        installKeyMonitor()
         observeKeyboardFocus()
         observeModules()
         syncModuleState()
@@ -83,6 +85,8 @@ final class IslandWindowController {
         timers = [:]
         if let scrollMonitor { NSEvent.removeMonitor(scrollMonitor) }
         scrollMonitor = nil
+        if let keyMonitor { NSEvent.removeMonitor(keyMonitor) }
+        keyMonitor = nil
         keyObservers.forEach(NotificationCenter.default.removeObserver)
         keyObservers = []
         panel.orderOut(nil)
@@ -180,6 +184,66 @@ final class IslandWindowController {
             guard self?.state.phase == .expanded else { return }
             self?.send(.toggleRequested)
         }
+    }
+
+    /// Skrót globalny: rozwinięta wyspa od razu przyjmuje klawiaturę (strzałki, pisanie, Enter, Esc).
+    /// Panel nie aktywuje Wyspy, więc aplikacja pod spodem zostaje na pierwszym planie i po zwinięciu odzyskuje klawiaturę.
+    func toggleWithKeyboard() {
+        send(.toggleRequested)
+        guard state.phase == .expanded else { return }
+        panel.acceptsKeyboard = true
+        panel.makeKey()
+        // Bez fokusu w polu tekstowym: strzałki zmieniają strony, a pisanie trafia do wyszukiwania schowka.
+        panel.makeFirstResponder(nil)
+    }
+
+    private func installKeyMonitor() {
+        keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
+            let handled = MainActor.assumeIsolated { self?.handleKey(event) ?? false }
+            return handled ? nil : event
+        }
+    }
+
+    /// `true` = klawisz obsłużony (nie trafia do pola tekstowego ani dalej).
+    private func handleKey(_ event: NSEvent) -> Bool {
+        guard event.window === panel, state.phase == .expanded else { return false }
+        let flags = event.modifierFlags
+        var modifiers: IslandKeyRouter.Modifiers = []
+        if flags.contains(.command) { modifiers.insert(.command) }
+        if flags.contains(.control) { modifiers.insert(.control) }
+        if flags.contains(.option) { modifiers.insert(.option) }
+        if flags.contains(.shift) { modifiers.insert(.shift) }
+        // Edytor pola tekstowego SwiftUI to NSTextView (edytor pola okna).
+        let isEditingText = panel.firstResponder is NSTextView
+        switch IslandKeyRouter.route(keyCode: event.keyCode, characters: event.characters,
+                                     modifiers: modifiers, isEditingText: isEditingText) {
+        case .pass:
+            return false
+        case .collapse:
+            send(.toggleRequested)
+            return true
+        case .stepTab(let step):
+            model.standaloneModuleID = nil
+            send(.tabStepped(step))
+            return true
+        case .forward(let key):
+            return registry.handleKey(key, moduleIDs: visibleModuleIDs, whileEditingText: isEditingText)
+        case .typeToSearch(let text):
+            guard let moduleID = registry.typedTextModuleID else { return false }
+            // Pełna strona modułu ma pierwszeństwo przed jego widżetem (tam widać pole i wyniki).
+            let isShowing = model.standaloneModuleID.map { $0 == moduleID }
+                ?? (registry.pageIndex(for: moduleID) == state.selectedTab)
+            if !isShowing { open(moduleID) }
+            return registry.handleKey(.text(text), moduleIDs: [moduleID])
+        }
+    }
+
+    /// Moduły widocznej strony (albo moduł pokazany doraźnie).
+    private var visibleModuleIDs: [String] {
+        if let standalone = model.standaloneModuleID { return [standalone] }
+        let pages = registry.pages
+        guard !pages.isEmpty else { return [] }
+        return pages[min(state.selectedTab, pages.count - 1)].moduleIDs
     }
 
     private func editingEnded() {

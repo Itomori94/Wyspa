@@ -36,8 +36,17 @@ final class ScreenCoordinator {
         islandUnderPointer()?.send(.toggleRequested)
     }
 
+    /// Skrót globalny: rozwinięcie z klawiaturą (strzałki, pisanie, Enter, Esc).
+    func toggleWithKeyboardUnderPointer() {
+        islandUnderPointer()?.toggleWithKeyboard()
+    }
+
     func expandUnderPointer(opening moduleID: String? = nil) {
         islandUnderPointer()?.open(moduleID)
+    }
+
+    func collapseAll() {
+        islands.values.forEach { $0.send(.collapseRequested) }
     }
 
     private func islandUnderPointer() -> IslandWindowController? {

@@ -6,12 +6,14 @@ import WyspaDownloads
 import WyspaCore
 import WyspaHUD
 import WyspaMedia
+import WyspaMicrophone
 import WyspaMirror
 import WyspaNotes
 import WyspaNotifications
 import WyspaPower
 import WyspaQuickActions
 import WyspaReminders
+import WyspaScripts
 import WyspaShelf
 import WyspaShortcuts
 import WyspaTimer
@@ -32,8 +34,10 @@ public enum ModuleCatalog {
         NotesModule.self,
         ClipboardModule.self,
         ShortcutsModule.self,
+        ScriptsModule.self,
         QuickActionsModule.self,
         MirrorModule.self,
+        MicrophoneModule.self,
         ClaudeMonitorModule.self,
         NotificationsModule.self,
         HUDModule.self,

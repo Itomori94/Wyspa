@@ -144,18 +144,26 @@ public struct ModuleContext {
     public let settings: ModuleSettings
     /// Prośba o rozwinięcie wyspy na ekranie pod kursorem (np. przy nowym zdarzeniu).
     public let requestExpand: @MainActor () -> Void
+    /// Prośba o zwinięcie rozwiniętej wyspy (np. przed wklejeniem do aplikacji pod spodem).
+    public let requestCollapse: @MainActor () -> Void
     /// Przekazuje elementy do strefy innego modułu (np. zrzut ekranu na Półkę). `false`, gdy ten moduł nie działa.
     public let deliver: @MainActor (_ providers: [NSItemProvider], _ zoneID: String) -> Bool
     /// Tryb prywatny wspólny dla wszystkich modułów (chowanie treści przy udostępnianiu ekranu).
     public let privacy: PrivacyState
+    /// Trwa sesja skupienia (Pomodoro) — wspólna dla wszystkich modułów.
+    public let focus: FocusHold
 
     public init(settings: ModuleSettings, requestExpand: @escaping @MainActor () -> Void,
+                requestCollapse: @escaping @MainActor () -> Void = {},
                 deliver: @escaping @MainActor ([NSItemProvider], String) -> Bool = { _, _ in false },
-                privacy: PrivacyState = PrivacyState(mode: { .off })) {
+                privacy: PrivacyState = PrivacyState(mode: { .off }),
+                focus: FocusHold = FocusHold()) {
         self.settings = settings
         self.requestExpand = requestExpand
+        self.requestCollapse = requestCollapse
         self.deliver = deliver
         self.privacy = privacy
+        self.focus = focus
     }
 }
 

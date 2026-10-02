@@ -4,14 +4,14 @@ import SwiftUI
 import UniformTypeIdentifiers
 import WyspaCore
 
-/// Szybkie akcje: zrzut zaznaczenia na Półkę, pipeta koloru, blokada ekranu, „nie usypiaj Maca”.
+/// Szybkie akcje: zrzut zaznaczenia na Półkę, tekst ze zrzutu (OCR), pipeta koloru, blokada ekranu, „nie usypiaj Maca”.
 @MainActor
 @Observable
 public final class QuickActionsModule: IslandModule {
     public static let descriptor = ModuleDescriptor(
         id: "quickactions",
         name: "Szybkie akcje",
-        summary: "Zrzut zaznaczenia prosto na Półkę, pipeta koloru (kopiuje HEX), blokada ekranu i „nie usypiaj Maca”.",
+        summary: "Zrzut zaznaczenia prosto na Półkę, tekst ze zrzutu do schowka, pipeta koloru (kopiuje HEX), blokada ekranu i „nie usypiaj Maca”.",
         symbol: "bolt.circle.fill",
         content: .neutral,
         widgetMinWidth: 150
@@ -21,11 +21,12 @@ public final class QuickActionsModule: IslandModule {
     private static let shortcutsKey = "shortcuts"
 
     public enum Action: String, CaseIterable, Codable, Sendable {
-        case capture, pickColor, lock, keepAwake
+        case capture, captureText, pickColor, lock, keepAwake
 
         public var displayName: String {
             switch self {
             case .capture: "Zrzut na Półkę"
+            case .captureText: "Tekst ze zrzutu"
             case .pickColor: "Pipeta koloru"
             case .lock: "Zablokuj ekran"
             case .keepAwake: "Nie usypiaj (przełącz)"
@@ -87,6 +88,7 @@ public final class QuickActionsModule: IslandModule {
     func perform(_ action: Action) {
         switch action {
         case .capture: captureToShelf()
+        case .captureText: captureText()
         case .pickColor: pickColor()
         case .lock: lockScreen()
         case .keepAwake:
@@ -115,6 +117,16 @@ public final class QuickActionsModule: IslandModule {
 
     /// Zaznaczenie obszaru systemowym `screencapture`; plik trafia na Półkę, a bez Półki — do schowka.
     func captureToShelf() {
+        startCapture { [weak self] url in self?.screenshotFinished(url) }
+    }
+
+    /// Zaznaczenie obszaru → tekst rozpoznany na urządzeniu (Vision, polski i angielski) → schowek.
+    func captureText() {
+        startCapture { [weak self] url in self?.recognizeText(in: url) }
+    }
+
+    /// Zaznaczenie obszaru; `completion` dostaje plik (może go nie być po Esc) i odpowiada za jego usunięcie.
+    private func startCapture(_ completion: @escaping @MainActor @Sendable (URL) -> Void) {
         guard captureProcess == nil else { return }
         let url = QuickActionsLogic.screenshotURL(in: FileManager.default.temporaryDirectory, at: Date())
         let process = Process()
@@ -128,7 +140,7 @@ public final class QuickActionsModule: IslandModule {
                     return
                 }
                 self.captureProcess = nil
-                self.screenshotFinished(url)
+                completion(url)
             }
         }
         do {
@@ -153,6 +165,29 @@ public final class QuickActionsModule: IslandModule {
             NSPasteboard.general.clearContents()
             NSPasteboard.general.writeObjects([image])
             show("Półka wyłączona — zrzut w schowku")
+        }
+    }
+
+    private func recognizeText(in url: URL) {
+        // Esc w trakcie zaznaczania: pliku nie ma, nic nie robimy.
+        guard FileManager.default.fileExists(atPath: url.path) else { return }
+        show("Rozpoznawanie tekstu…")
+        Task { [weak self] in
+            defer { try? FileManager.default.removeItem(at: url) }
+            do {
+                let lines = try await TextRecognition.lines(inImageAt: url)
+                guard let self else { return }
+                guard let text = QuickActionsLogic.recognizedText(lines: lines) else {
+                    self.show("Nie znaleziono tekstu")
+                    return
+                }
+                NSPasteboard.general.clearContents()
+                NSPasteboard.general.setString(text, forType: .string)
+                self.show(QuickActionsLogic.copiedLinesMessage(text.split(separator: "\n").count))
+            } catch {
+                self?.log.error("OCR: \(error.localizedDescription, privacy: .public)")
+                self?.show("Nie udało się rozpoznać tekstu")
+            }
         }
     }
 

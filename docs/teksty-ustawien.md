@@ -38,7 +38,9 @@ zaktualizuj też ten plik. Karty okna: **Ogólne · Wyspa · Moduły · Układ**
 | Notatka | Szybka notatka z autozapisem. Kliknij w tekst, żeby pisać; Esc zwija wyspę. |
 | Historia schowka | Ostatnio kopiowane teksty, pliki i obrazy z wyszukiwaniem. Hasła z menedżerów haseł są pomijane. Historia jest tylko w pamięci. |
 | Skróty | Uruchamia wybrane Skróty macOS jednym kliknięciem z wyspy. |
-| Szybkie akcje | Zrzut zaznaczenia prosto na Półkę, pipeta koloru (kopiuje HEX), blokada ekranu i „nie usypiaj Maca”. |
+| Skrypty | Komenda wyspa i adresy wyspa:// — karty („Backup gotowy”) i paski postępu ze skryptów, Skrótów i crona. |
+| Szybkie akcje | Zrzut zaznaczenia prosto na Półkę, tekst ze zrzutu do schowka, pipeta koloru (kopiuje HEX), blokada ekranu i „nie usypiaj Maca”. |
+| Mikrofon | Wycisza mikrofon globalnym skrótem (domyślnie ⌃⌥M). Wyciszony mikrofon to czerwona ikona w zwiniętej wyspie. |
 | Lusterko | Podgląd z kamery przed rozmową wideo. Kamera włącza się tylko, gdy zakładka jest widoczna; obraz nie jest zapisywany. |
 | Powiadomienia | Pokazuje powiadomienia macOS w wyspie zamiast w rogu ekranu. Najechanie zatrzymuje kartę, kliknięcie otwiera aplikację. |
 | HUD głośności i jasności | Zamiast systemowego okienka pokazuje głośność, jasność ekranu i podświetlenie klawiatury w wyspie. |
@@ -71,6 +73,8 @@ zaktualizuj też ten plik. Karty okna: **Ogólne · Wyspa · Moduły · Układ**
   - „Niedostępne: brak podświetlanej klawiatury albo CoreBrightness w tej wersji macOS.”
 - **Powiadomienia**
   - „Chowaj systemowy baner (zostaje w Centrum powiadomień)” · Pokazuj przez: 3 / 5 / 8 / 10 / 15 s
+  - „Podczas skupienia Pomodoro (Timer → „Wstrzymuj powiadomienia podczas skupienia”) karty czekają i przychodzą
+    po sesji z podsumowaniem.”
   - „Przyciski z powiadomień (np. „Odpowiedz”) działają tylko w systemowym banerze — kliknięcie karty otwiera
     aplikację. Gdy nowa wersja macOS zmieni budowę banerów, moduł przestanie je widzieć, a powiadomienia działają
     zwyczajnie.”
@@ -88,12 +92,23 @@ zaktualizuj też ten plik. Karty okna: **Ogólne · Wyspa · Moduły · Układ**
   - „Dźwięk, gdy sesja czeka albo kończy” · „Bez dźwięku, gdy terminal sesji jest na wierzchu”
 - **Pobierania** — „Po zakończeniu odkładaj plik na Półkę” · „Działa z Safari, Chrome i innymi przeglądarkami, które
   pokazują postęp na ikonie pliku w Finderze. Na Półkę trafia odnośnik do pliku w Pobranych (wymaga włączonej Półki).”
-- **Historia schowka** — „Zapamiętuj … wpisów” · „Wyczyść historię”
-- **Timer** — „Dzienny cel Pomodoro: brak / … sesji”
+- **Skrypty** — „Komenda wyspa zainstalowana w ~/.local/bin” + „Usuń komendę” / „Komenda wyspa jest starsza niż aplikacja” +
+  „Zaktualizuj” / „Komenda wyspa nie jest zainstalowana.” + „Zainstaluj w ~/.local/bin” / „~/.local/bin/wyspa to inny program —
+  Wyspa go nie nadpisze.” · podpowiedź o PATH, przykłady poleceń · „Gdy Wyspa nie działa, komenda kończy się po cichu z kodem 0. …”
+- **Mikrofon** — „Wycisz / włącz mikrofon” (skrót) · „„…” nie pozwala się wyciszyć ani zmienić głośności wejścia.” ·
+  „Wyciszenie działa dla domyślnego wejścia z Ustawień systemowych → Dźwięk. Gdy mikrofon nie ma przełącznika wyciszenia,
+  Wyspa ustawia głośność wejścia na zero i przywraca ją po włączeniu. Wyspa nie słucha dźwięku z mikrofonu.”
+- **Historia schowka** — „Zapamiętuj … wpisów” · „Wyczyść historię” · „Kliknięcie wkleja do aktywnej aplikacji” ·
+  „Wklejanie wymaga uprawnienia Dostępność — bez niego kliknięcie tylko kopiuje.” + „Otwórz: Dostępność” ·
+  „Przypięte wpisy (pinezka przy wpisie) nie wypadają z historii i zostają po „Wyczyść”. Cała historia, także przypięta,
+  jest tylko w pamięci i znika po zamknięciu Wyspy.”
+- **Timer** — „Dzienny cel Pomodoro: brak / … sesji” · „Wstrzymuj powiadomienia podczas skupienia” · „Gdy trwa faza
+  skupienia Pomodoro, karty powiadomień w wyspie czekają i przychodzą po jej końcu z podsumowaniem. Działa z włączonym
+  modułem Powiadomienia; systemowy baner jest wtedy chowany.”
 - **Pogoda** — „Temperatura w zwiniętej wyspie” · „Dane z Open-Meteo (bez konta). Wysyłane są tylko współrzędne
   zaokrąglone do ok. 1 km; odświeżanie przy otwarciu wyspy, gdy dane mają ponad 15 minut. Kliknięcie pogody otwiera
   aplikację Pogoda.”
-- **Szybkie akcje** — skróty: Zrzut na Półkę / Pipeta koloru / Zablokuj ekran / Nie usypiaj (przełącz) · „Skróty
+- **Szybkie akcje** — skróty: Zrzut na Półkę / Tekst ze zrzutu / Pipeta koloru / Zablokuj ekran / Nie usypiaj (przełącz) · „Skróty
   działają w całym systemie, także przy zwiniętej wyspie.”
 - **Skróty** — „Nie masz jeszcze żadnych skrótów. Utwórz je w aplikacji Skróty.” · „Ulubione (pokazywane w wyspie;
   bez ulubionych widać wszystkie)” · „Uruchom skrót „…”” · „Odśwież”

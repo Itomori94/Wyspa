@@ -13,7 +13,7 @@ private final class NoPermissions: PermissionProviding {
 @MainActor
 struct PrivacyCoverageTests {
     /// Moduły pokazujące osobistą treść. Nowy moduł musi świadomie trafić tu albo nie (deklaracja w opisie jest obowiązkowa).
-    static let personal: Set<String> = ["shelf", "calendar", "reminders", "notes", "clipboard", "notifications", "claude", "downloads"]
+    static let personal: Set<String> = ["shelf", "calendar", "reminders", "notes", "clipboard", "notifications", "claude", "downloads", "scripts"]
 
     @Test("Każdy moduł z katalogu ma świadomie przypisaną treść")
     func classification() {

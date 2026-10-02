@@ -16,6 +16,17 @@ struct TimerSessionTests {
         #expect(session.remaining(at: t0.addingTimeInterval(999)) == 0)
     }
 
+    @Test("Skupienie trwa tylko w uruchomionej fazie skupienia Pomodoro")
+    func focusing() {
+        let focus = TimerSession(kind: .pomodoro(phase: .focus, completedFocus: 0, config: .standard))
+        #expect(!focus.isFocusing, "nieuruchomiona")
+        #expect(focus.started(at: t0).isFocusing)
+        #expect(!focus.started(at: t0).paused(at: t0.addingTimeInterval(60)).isFocusing)
+        let rest = focus.started(at: t0).nextPomodoroPhase(at: t0.addingTimeInterval(1500))
+        #expect(rest?.isFocusing == false, "przerwa")
+        #expect(!TimerSession(kind: .countdown(duration: 60)).started(at: t0).isFocusing)
+    }
+
     @Test("Pauza zatrzymuje czas, wznowienie przesuwa koniec")
     func pauseResume() {
         let paused = TimerSession(kind: .countdown(duration: 300)).started(at: t0).paused(at: t0.addingTimeInterval(100))

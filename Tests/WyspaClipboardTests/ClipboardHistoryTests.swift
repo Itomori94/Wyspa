@@ -46,6 +46,52 @@ struct ClipboardHistoryTests {
         #expect(history.cleared().limit == history.limit)
     }
 
+    @Test("Przypięte: na górze, poza limitem, zostają po „Wyczyść”, znikają przy wyłączeniu modułu")
+    func pinned() {
+        var history = ClipboardHistory(limit: 10).adding(text("ważne"))
+        history = history.togglingPin(history.entries[0].id)
+        for index in 0..<15 { history = history.adding(text("\(index)")) }
+        #expect(history.entries.first?.searchableText == "ważne" && history.entries.first?.isPinned == true)
+        #expect(history.entries.count == 11, "10 zwykłych + przypięty")
+        #expect(history.cleared().entries.map(\.searchableText) == ["ważne"])
+        #expect(history.clearedAll().entries.isEmpty)
+    }
+
+    @Test("Ponowne skopiowanie przypiętego zostawia go przypiętym, bez duplikatu")
+    func pinnedCopiedAgain() {
+        var history = ClipboardHistory().adding(text("a")).adding(text("b"))
+        history = history.togglingPin(history.entries.first { $0.searchableText == "a" }!.id)
+        history = history.adding(text("c")).adding(text("a"))
+        #expect(history.entries.map(\.searchableText) == ["a", "c", "b"])
+        #expect(history.entries.filter(\.isPinned).map(\.searchableText) == ["a"])
+    }
+
+    @Test("Odpięcie wraca między zwykłe wpisy według daty")
+    func unpin() {
+        let early = ClipboardEntry(content: .text("stary"), copiedAt: Date(timeIntervalSince1970: 10))
+        let late = ClipboardEntry(content: .text("nowy"), copiedAt: Date(timeIntervalSince1970: 30))
+        let middle = ClipboardEntry(content: .text("środek"), copiedAt: Date(timeIntervalSince1970: 20))
+        var history = ClipboardHistory().adding(early).adding(middle).adding(late)
+        history = history.togglingPin(middle.id)
+        #expect(history.entries.map(\.searchableText) == ["środek", "nowy", "stary"])
+        history = history.togglingPin(middle.id)
+        #expect(history.entries.map(\.searchableText) == ["nowy", "środek", "stary"])
+        #expect(history.entries.allSatisfy { !$0.isPinned })
+    }
+
+    @Test("Wybór strzałkami: od pierwszego wpisu, bez zawijania; Enter bez wyboru = pierwszy")
+    func keyboardSelection() {
+        #expect(ClipboardSelection.moved(nil, by: 1, count: 3) == 0)
+        #expect(ClipboardSelection.moved(nil, by: -1, count: 3) == 0)
+        #expect(ClipboardSelection.moved(1, by: 1, count: 3) == 2)
+        #expect(ClipboardSelection.moved(2, by: 1, count: 3) == 2)
+        #expect(ClipboardSelection.moved(0, by: -1, count: 3) == 0)
+        #expect(ClipboardSelection.moved(0, by: 1, count: 0) == nil)
+        #expect(ClipboardSelection.chosen(nil, count: 2) == 0)
+        #expect(ClipboardSelection.chosen(5, count: 2) == 1)
+        #expect(ClipboardSelection.chosen(nil, count: 0) == nil)
+    }
+
     @Test("Pliki i obrazy mają czytelny opis")
     func descriptions() {
         let files = ClipboardEntry(content: .files([URL(fileURLWithPath: "/tmp/raport.pdf")]), copiedAt: now)
