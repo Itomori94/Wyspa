@@ -16,7 +16,7 @@ public final class HUDModule: IslandModule {
     )
 
     static let displayDuration: Duration = .milliseconds(1600)
-    private static let wingWidth: CGFloat = 70
+    private static let wingWidth: CGFloat = IslandLayout.maxWingWidth
 
     public private(set) var reading: HUDReading?
     public private(set) var hasBrightnessControl = false
@@ -66,9 +66,9 @@ public final class HUDModule: IslandModule {
     public var liveActivity: LiveActivity? {
         guard let reading else { return nil }
         return LiveActivity(id: "hud", priority: .hud, wingWidth: Self.wingWidth) {
-            HUDIcon(reading: reading)
+            HUDLeadingWing(reading: reading)
         } trailing: {
-            HUDLevelBar(reading: reading)
+            HUDTrailingWing(reading: reading)
         }
     }
 

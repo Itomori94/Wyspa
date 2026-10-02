@@ -30,6 +30,8 @@ Przy pierwszym podpisie macOS może zapytać, czy `codesign` może użyć klucza
 - **Przesunięcie w poziomie** w rozwiniętej wyspie: zmienia zakładkę modułu.
 - **⌃⌥W** (domyślnie, do zmiany w ustawieniach): rozwija lub zwija wyspę na ekranie z kursorem.
 - Ikona w pasku menu: ustawienia i zamknięcie aplikacji.
+- **Wygląd** (Ustawienia → Ogólne): rozmiar rozwiniętej wyspy i tło — czarne albo Liquid Glass (macOS 26+).
+  Szkło pojawia się po rozwinięciu i w kartach; zwinięta wyspa zostaje czarna, żeby zlewać się z notchem.
 
 ## Uprawnienia
 
@@ -83,7 +85,8 @@ albo na pole AirDrop, żeby od razu wysłać.
 ### HUD głośności i jasności
 
 Klawisze głośności, wyciszenia, jasności ekranu i podświetlenia klawiatury pokazują poziom w wyspie zamiast
-systemowego okienka. ⇧⌥ z klawiszem zmienia poziom drobniejszymi krokami, sam ⌥ otwiera ustawienia systemowe jak zwykle.
+systemowego okienka: ikona po lewej, procent po prawej, a pasek biegnie symetrycznie przez notch, więc
+jego środek wypada na środku ekranu. ⇧⌥ z klawiszem zmienia poziom drobniejszymi krokami, sam ⌥ otwiera ustawienia systemowe jak zwykle.
 Każdy rodzaj można wyłączyć osobno w ustawieniach modułu. Urządzenia audio bez regulacji głośności (np. część
 wyjść HDMI) zostają obsługiwane przez system.
 

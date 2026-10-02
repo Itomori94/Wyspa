@@ -18,8 +18,8 @@ public struct IslandView: View {
     public var body: some View {
         let size = model.islandSize
         ZStack(alignment: .top) {
-            IslandShape(topRadius: topRadius, bottomRadius: bottomRadius)
-                .fill(Color.black.opacity(model.phase == .hidden ? Self.hiddenAlpha : 1))
+            IslandBackground(shape: IslandShape(topRadius: topRadius, bottomRadius: bottomRadius),
+                             glass: usesGlass, hiddenAlpha: model.phase == .hidden ? Self.hiddenAlpha : 1)
                 .shadow(color: .black.opacity(model.phase == .expanded ? 0.5 : 0), radius: 20, y: 10)
                 .contentShape(IslandShape(topRadius: topRadius, bottomRadius: bottomRadius))
                 .onTapGesture {
@@ -48,6 +48,11 @@ public struct IslandView: View {
         .onExitCommand(perform: model.onEscape)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .environment(\.colorScheme, .dark)
+    }
+
+    private var usesGlass: Bool {
+        model.material.usesGlass(phase: model.phase, showsCard: model.activity?.detail != nil,
+                                 systemSupportsGlass: IslandMaterial.isGlassAvailable)
     }
 
     /// Ukryta wyspa musi mieć niezerową przezroczystość, inaczej okno nie dostanie zdarzeń myszy.
@@ -126,4 +131,23 @@ struct CollapsedActivityView: View {
 enum ActivityGeometryID {
     static func leading(_ activity: LiveActivity) -> String { "activity.\(activity.id).leading" }
     static func trailing(_ activity: LiveActivity) -> String { "activity.\(activity.id).trailing" }
+}
+
+/// Tło wyspy: czarne albo Liquid Glass. Czarna warstwa przenika się ze szkłem, więc zmiana nie przeskakuje.
+struct IslandBackground: View {
+    let shape: IslandShape
+    let glass: Bool
+    let hiddenAlpha: Double
+
+    var body: some View {
+        ZStack {
+            if #available(macOS 26, *), glass {
+                // Przyciemnione szkło: biała treść modułów musi być czytelna także nad jasną tapetą.
+                Color.clear.glassEffect(.regular.tint(.black.opacity(0.45)), in: shape)
+                    .transition(.opacity)
+            }
+            shape.fill(Color.black.opacity(glass ? 0 : hiddenAlpha))
+        }
+        .animation(.easeInOut(duration: 0.25), value: glass)
+    }
 }

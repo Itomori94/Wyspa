@@ -97,6 +97,15 @@ private struct IslandSettingsView: View {
                     ForEach(IslandSize.allCases, id: \.self) { Text($0.displayName).tag($0) }
                 }
                 .pickerStyle(.segmented)
+                Picker("Tło wyspy", selection: $settings.islandMaterial) {
+                    ForEach(IslandMaterial.allCases, id: \.self) { Text($0.displayName).tag($0) }
+                }
+                .pickerStyle(.segmented)
+                .disabled(!IslandMaterial.isGlassAvailable && settings.islandMaterial == .black)
+                Text(IslandMaterial.isGlassAvailable
+                     ? "Szkło pojawia się po rozwinięciu i w kartach (powiadomienia); zwinięta wyspa zostaje czarna, żeby zlewać się z notchem."
+                     : "Liquid Glass wymaga macOS 26 lub nowszego.")
+                    .font(.caption).foregroundStyle(.secondary)
                 Toggle("Haptyka gładzika przy rozwinięciu", isOn: $settings.hapticsEnabled)
             }
         }
