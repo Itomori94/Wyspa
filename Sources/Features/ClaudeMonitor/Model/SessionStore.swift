@@ -96,6 +96,9 @@ public struct SessionStore: Equatable, Sendable {
             next = nil
         case "SessionStart":
             next = current.with(state: .idle, at: date, envelope: envelope)
+        case "SubagentStop" where !current.isBusy:
+            // Claude Code kończy też agentów w tle (np. podsumowania) już po Stop — to nie wznawia pracy sesji.
+            next = current.with(at: date, envelope: envelope)
         case "UserPromptSubmit", "PostToolUse", "PostToolUseFailure", "SubagentStop":
             next = current.with(state: .working, at: date, envelope: envelope)
         case "PreToolUse":

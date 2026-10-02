@@ -120,6 +120,16 @@ struct SessionStoreTests {
         #expect(store.interrupting("brak", at: t0) == store)
     }
 
+    @Test("Agent w tle kończący się po Stop nie wznawia „pracuje”; w trakcie pracy — tak")
+    func subagentAfterStop() {
+        var (store, _) = SessionStore().applying(envelope("Stop"), at: t0)
+        (store, _) = store.applying(envelope("SubagentStop"), at: t0)
+        #expect(store.sessions["s1"]?.state == .finished)
+        (store, _) = store.applying(envelope("PreToolUse", tool: "Agent", input: [:]), at: t0)
+        (store, _) = store.applying(envelope("SubagentStop"), at: t0)
+        #expect(store.sessions["s1"]?.state == .working)
+    }
+
     @Test("Przypomnienie o bezczynności po zakończeniu nie zapala „czeka”")
     func idleReminder() {
         var (store, _) = SessionStore().applying(envelope("Stop"), at: t0)
