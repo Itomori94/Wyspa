@@ -199,12 +199,15 @@ private struct PageChip: View {
         HStack(spacing: 6) {
             Image(systemName: symbol)
             Text(title.count > 32 ? title.prefix(31) + "…" : title).lineLimit(1)
-            if isHovered {
-                Button(action: remove) { Image(systemName: "xmark.circle.fill") }
-                    .buttonStyle(.plain)
-                    .foregroundStyle(.secondary)
-                    .help("Usuń stronę")
-            }
+            // Miejsce na krzyżyk jest zawsze zarezerwowane: gdyby karta poszerzała się po najechaniu,
+            // pasek stron mógłby przenieść ją do następnego wiersza, spod kursora.
+            Button(action: remove) { Image(systemName: "xmark.circle.fill") }
+                .buttonStyle(.plain)
+                .foregroundStyle(.secondary)
+                .help("Usuń stronę")
+                .opacity(isHovered ? 1 : 0)
+                .allowsHitTesting(isHovered)
+                .accessibilityHidden(!isHovered)
         }
         .font(.callout)
         .padding(.horizontal, 10)
