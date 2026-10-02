@@ -16,7 +16,9 @@ public final class HUDModule: IslandModule {
     )
 
     static let displayDuration: Duration = .milliseconds(1600)
-    private static let wingWidth: CGFloat = IslandLayout.maxWingWidth
+    private static let wingWidth: CGFloat = 46
+    /// Wysokość paska pod notchem: jeden pasek na środku ekranu, nie przecięty notchem.
+    private static let barHeight: CGFloat = 20
 
     public private(set) var reading: HUDReading?
     public private(set) var hasBrightnessControl = false
@@ -65,10 +67,12 @@ public final class HUDModule: IslandModule {
 
     public var liveActivity: LiveActivity? {
         guard let reading else { return nil }
-        return LiveActivity(id: "hud", priority: .hud, wingWidth: Self.wingWidth) {
-            HUDLeadingWing(reading: reading)
+        return LiveActivity(id: "hud", priority: .hud, wingWidth: Self.wingWidth, detailHeight: Self.barHeight) {
+            HUDIcon(reading: reading)
         } trailing: {
-            HUDTrailingWing(reading: reading)
+            HUDPercent(reading: reading)
+        } detail: {
+            HUDLevelBar(reading: reading)
         }
     }
 

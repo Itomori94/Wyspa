@@ -26,13 +26,10 @@ public struct HUDReading: Equatable, Sendable {
         self.isMuted = isMuted
     }
 
-    /// Pasek jest przecięty notchem na dwie połowy: lewa wypełnia się do 50%, prawa od 50% do 100%.
-    public var halfFills: (left: CGFloat, right: CGFloat) {
-        let level = CGFloat(min(max(level, 0), 1))
-        return (min(level * 2, 1), max(level * 2 - 1, 0))
-    }
+    /// Poziom przycięty do 0…1 (szerokość wypełnienia paska).
+    public var clampedLevel: CGFloat { CGFloat(min(max(level, 0), 1)) }
 
-    public var percentText: String { "\(Int((min(max(level, 0), 1) * 100).rounded()))%" }
+    public var percentText: String { "\(Int((clampedLevel * 100).rounded()))%" }
 
     /// Symbol SF z wartością zmienną (wypełnienie fal/promieni zależy od poziomu).
     public var symbol: String {

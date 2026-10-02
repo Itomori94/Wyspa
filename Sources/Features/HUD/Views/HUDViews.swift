@@ -1,66 +1,52 @@
 import SwiftUI
 
-/// Lewe skrzydło: ikona i lewa połowa paska. Razem z prawym skrzydłem pasek biegnie symetrycznie przez notch,
-/// więc jego środek wypada na środku ekranu.
-struct HUDLeadingWing: View {
+/// Lewe skrzydło: ikona rodzaju (głośność, jasność, klawiatura).
+struct HUDIcon: View {
     let reading: HUDReading
 
     var body: some View {
-        HStack(spacing: 6) {
-            Image(systemName: reading.symbol, variableValue: Double(reading.level))
-                .font(.system(size: 13, weight: .semibold))
-                .foregroundStyle(.white)
-                .contentTransition(.symbolEffect(.replace))
-                .frame(width: HUDWing.labelWidth)
-            HalfBar(fill: reading.halfFills.left, isMuted: reading.isMuted)
-        }
-        .padding(.leading, 2)
-        .accessibilityElement()
-        .accessibilityLabel(reading.kind.displayName)
-        .accessibilityValue("\(reading.percentText)")
+        Image(systemName: reading.symbol, variableValue: Double(reading.level))
+            .font(.system(size: 13, weight: .semibold))
+            .foregroundStyle(.white)
+            .contentTransition(.symbolEffect(.replace))
+            .accessibilityLabel(reading.kind.displayName)
     }
 }
 
-/// Prawe skrzydło: prawa połowa paska i procent.
-struct HUDTrailingWing: View {
+/// Prawe skrzydło: poziom w procentach.
+struct HUDPercent: View {
     let reading: HUDReading
 
     var body: some View {
-        HStack(spacing: 6) {
-            HalfBar(fill: reading.halfFills.right, isMuted: reading.isMuted)
-            Text(reading.percentText)
-                .font(.system(size: 10.5, weight: .semibold, design: .rounded))
-                .monospacedDigit()
-                .foregroundStyle(.white.opacity(reading.isMuted ? 0.45 : 0.85))
-                .contentTransition(.numericText())
-                .frame(width: HUDWing.labelWidth, alignment: .trailing)
-        }
-        .padding(.trailing, 2)
-        .accessibilityHidden(true)
+        Text(reading.percentText)
+            .font(.system(size: 11, weight: .semibold, design: .rounded))
+            .monospacedDigit()
+            .foregroundStyle(.white.opacity(reading.isMuted ? 0.45 : 0.85))
+            .contentTransition(.numericText())
+            .accessibilityHidden(true)
     }
 }
 
-enum HUDWing {
-    /// Ikona i procent mają tę samą szerokość, żeby obie połowy paska były równe.
-    static let labelWidth: CGFloat = 30
-}
-
-/// Połowa paska; przy wyciszeniu przygaszona.
-private struct HalfBar: View {
-    let fill: CGFloat
-    let isMuted: Bool
+/// Jeden pasek poziomu pod notchem, wyśrodkowany na ekranie; przy wyciszeniu przygaszony.
+struct HUDLevelBar: View {
+    let reading: HUDReading
 
     var body: some View {
         GeometryReader { proxy in
             ZStack(alignment: .leading) {
                 Capsule().fill(.white.opacity(0.2))
                 Capsule()
-                    .fill(.white.opacity(isMuted ? 0.35 : 1))
-                    .frame(width: proxy.size.width * fill)
+                    .fill(.white.opacity(reading.isMuted ? 0.35 : 1))
+                    .frame(width: max(5, proxy.size.width * reading.clampedLevel))
             }
         }
         .frame(height: 5)
-        .animation(.spring(response: 0.22, dampingFraction: 0.9), value: fill)
+        .padding(.horizontal, 6)
+        .frame(maxHeight: .infinity)
+        .animation(.spring(response: 0.22, dampingFraction: 0.9), value: reading.level)
+        .accessibilityElement()
+        .accessibilityLabel(reading.kind.displayName)
+        .accessibilityValue(reading.percentText)
     }
 }
 

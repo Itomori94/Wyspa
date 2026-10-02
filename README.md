@@ -83,8 +83,8 @@ albo na pole AirDrop, żeby od razu wysłać.
 ### HUD głośności i jasności
 
 Klawisze głośności, wyciszenia, jasności ekranu i podświetlenia klawiatury pokazują poziom w wyspie zamiast
-systemowego okienka: ikona po lewej, procent po prawej, a pasek biegnie symetrycznie przez notch, więc
-jego środek wypada na środku ekranu. ⇧⌥ z klawiszem zmienia poziom drobniejszymi krokami, sam ⌥ otwiera ustawienia systemowe jak zwykle.
+systemowego okienka: ikona po lewej stronie notcha, procent po prawej, a jeden pasek poziomu wysuwa się
+wyśrodkowany tuż pod notchem. ⇧⌥ z klawiszem zmienia poziom drobniejszymi krokami, sam ⌥ otwiera ustawienia systemowe jak zwykle.
 Każdy rodzaj można wyłączyć osobno w ustawieniach modułu. Urządzenia audio bez regulacji głośności (np. część
 wyjść HDMI) zostają obsługiwane przez system.
 

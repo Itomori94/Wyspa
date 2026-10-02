@@ -101,21 +101,13 @@ struct HUDKeyRouterTests {
     }
 }
 
-@Suite("Pasek HUD przecięty notchem")
-struct HUDHalfBarTests {
-    @Test("Lewa połowa do 50%, prawa od 50% do 100%")
-    func halves() {
-        #expect(HUDReading(kind: .volume, level: 0).halfFills == (0, 0))
-        #expect(HUDReading(kind: .volume, level: 0.25).halfFills == (0.5, 0))
-        #expect(HUDReading(kind: .volume, level: 0.5).halfFills == (1, 0))
-        #expect(HUDReading(kind: .volume, level: 0.75).halfFills == (1, 0.5))
-        #expect(HUDReading(kind: .volume, level: 1).halfFills == (1, 1))
-    }
-
+@Suite("Pasek HUD")
+struct HUDLevelTests {
     @Test("Poziom spoza zakresu jest przycinany, procent zaokrąglony")
     func clamped() {
-        #expect(HUDReading(kind: .volume, level: 1.3).halfFills == (1, 1))
-        #expect(HUDReading(kind: .volume, level: -0.2).halfFills == (0, 0))
+        #expect(HUDReading(kind: .volume, level: 1.3).clampedLevel == 1)
+        #expect(HUDReading(kind: .volume, level: -0.2).clampedLevel == 0)
         #expect(HUDReading(kind: .volume, level: 0.637).percentText == "64%")
+        #expect(HUDReading(kind: .volume, level: 1.3).percentText == "100%")
     }
 }
