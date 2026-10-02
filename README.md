@@ -13,9 +13,7 @@ Prywatny projekt, dystrybucja poza App Store.
 ```bash
 git clone <repo> Wyspa && cd Wyspa
 scripts/dev-cert.sh        # jednorazowo, lokalny certyfikat do podpisu
-scripts/build-app.sh       # buduje build/Wyspa.app
-cp -R build/Wyspa.app /Applications/
-open /Applications/Wyspa.app
+scripts/install.sh         # buduje i instaluje /Applications/Wyspa.app, uruchamia ją
 ```
 
 `dev-cert.sh` tworzy samopodpisany certyfikat „Wyspa Development” w pęku kluczy logowania.

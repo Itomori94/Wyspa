@@ -34,6 +34,7 @@ cp "$BIN_DIR/Wyspa" "$APP/Contents/MacOS/Wyspa"
 # Hook Claude Code uruchamiany przez Claude Code (ścieżka wpisywana do ~/.claude/settings.json przy instalacji).
 cp "$BIN_DIR/wyspa-hook" "$APP/Contents/Helpers/wyspa-hook"
 cp Resources/Info.plist "$APP/Contents/Info.plist"
+cp Resources/AppIcon.icns "$APP/Contents/Resources/AppIcon.icns"
 
 # mediaremote-adapter: framework ładowany przez /usr/bin/perl (nie linkowany), skrypt, klient testowy, licencja.
 cp -R "$ADAPTER_OUT/MediaRemoteAdapter.framework" "$APP/Contents/Frameworks/"
