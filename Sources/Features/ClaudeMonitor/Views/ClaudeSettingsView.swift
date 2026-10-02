@@ -24,7 +24,8 @@ struct ClaudeSettingsView: View {
                 }
             }
             Text("Instalacja dopisuje wpisy Wyspy do ~/.claude/settings.json (z kopią zapasową obok pliku). "
-                 + "Twoje inne hooki i ustawienia zostają. Gdy Wyspa nie działa, hook kończy się od razu i nic nie zmienia.")
+                 + "Twoje inne hooki i ustawienia zostają. Gdy Wyspa nie działa albo została usunięta, hook kończy się "
+                 + "od razu i nic nie zmienia. Przed usunięciem aplikacji kliknij „Odinstaluj…”.")
                 .font(.caption).foregroundStyle(.secondary)
             Stepper("Czas na decyzję w wyspie: \(module.decisionMinutes) min", value: $module.decisionMinutes,
                     in: ClaudeMonitorModule.decisionMinutesRange)
@@ -58,7 +59,7 @@ struct ClaudeSettingsView: View {
     private var status: some View {
         switch module.hookStatus {
         case .installed: Label("Hooki zainstalowane", systemImage: "checkmark.circle.fill").foregroundStyle(.green)
-        case .outdatedPath: Label("Hooki wskazują inną kopię Wyspy", systemImage: "exclamationmark.circle.fill").foregroundStyle(.orange)
+        case .outdatedPath: Label("Hooki wymagają aktualizacji", systemImage: "exclamationmark.circle.fill").foregroundStyle(.orange)
         case .notInstalled: Label("Hooki niezainstalowane", systemImage: "circle.dashed").foregroundStyle(.secondary)
         case .unknown: Label("Sprawdzanie…", systemImage: "hourglass").foregroundStyle(.secondary)
         }

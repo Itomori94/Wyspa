@@ -170,7 +170,8 @@ i ostatnie narzędzia. Kilka sesji naraz.
 
 - **Instalacja**: Ustawienia → Moduły → Claude Code → *Zainstaluj hooki*. Wyspa dopisuje swoje wpisy do
   `~/.claude/settings.json`, robiąc obok kopię zapasową; Twoje inne hooki zostają. *Odinstaluj* usuwa tylko wpisy Wyspy.
-  Po przeniesieniu aplikacji (np. do /Applications) kliknij *Zaktualizuj ścieżkę*.
+  Hooki wskazują stałego pośrednika poza aplikacją, więc przeniesienie Wyspy ich nie psuje (starsze instalacje:
+  *Zaktualizuj ścieżkę*).
 - **Zgody z wyspy**: prośba o uprawnienie rozwija wyspę i pokazuje narzędzie z podglądem (polecenie, diff edycji,
   początek nowego pliku). *Zezwól*, *Odrzuć* albo *W terminalu*. Brak decyzji w ustalonym czasie (domyślnie 5 min)
   albo wyłączona Wyspa = zwykły prompt w terminalu, jak bez Wyspy.
@@ -218,6 +219,17 @@ Strona albo widżet z czterema przyciskami:
 
 Każdej akcji możesz przypisać globalny skrót klawiszowy w ustawieniach modułu (domyślnie brak); skróty działają
 tylko przy włączonym module.
+
+### Odinstalowanie
+
+1. Ustawienia → Moduły → Claude Code → *Odinstaluj…* (usuwa hooki i linię statusu Wyspy z `~/.claude/settings.json`;
+   kopie zapasowe zostają obok pliku).
+2. Zamknij Wyspę i usuń `Wyspa.app`.
+3. Opcjonalnie: `rm -rf ~/.local/share/wyspa ~/Library/Application\ Support/Wyspa` oraz certyfikat „Wyspa Development”
+   z Pęku kluczy.
+
+Hooki wskazują na pośrednika `~/.local/share/wyspa/bin/wyspa-hook`, który po usunięciu aplikacji kończy się po cichu —
+nawet bez kroku 1 Claude Code nie zgłasza błędów, a hooki po prostu nic nie robią.
 
 ## Znane ograniczenia
 

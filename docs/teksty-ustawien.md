@@ -75,10 +75,11 @@ zaktualizuj też ten plik. Karty okna: **Ogólne · Wyspa · Moduły · Układ**
     aplikację. Gdy nowa wersja macOS zmieni budowę banerów, moduł przestanie je widzieć, a powiadomienia działają
     zwyczajnie.”
 - **Claude Code**
-  - Hooki zainstalowane / Hooki niezainstalowane / Hooki wskazują inną kopię Wyspy / Sprawdzanie…
+  - Hooki zainstalowane / Hooki niezainstalowane / Hooki wymagają aktualizacji / Sprawdzanie…
   - Zainstaluj hooki · Zaktualizuj ścieżkę · Odinstaluj… → „Usuń hooki Wyspy” / „Anuluj”
   - „Instalacja dopisuje wpisy Wyspy do ~/.claude/settings.json (z kopią zapasową obok pliku). Twoje inne hooki
-    i ustawienia zostają. Gdy Wyspa nie działa, hook kończy się od razu i nic nie zmienia.”
+    i ustawienia zostają. Gdy Wyspa nie działa albo została usunięta, hook kończy się od razu i nic nie zmienia. Przed usunięciem
+    aplikacji kliknij „Odinstaluj…”.”
   - „Czas na decyzję w wyspie: … min” — „Po tym czasie (albo gdy Wyspa nie odpowie) decyzja wraca do zwykłego promptu
     w terminalu.”
   - „Limity planu (5 h i tydzień)”: Pokazuj limity / Wyłącz / „Masz własną linię statusu” — „Limity przekazuje linia

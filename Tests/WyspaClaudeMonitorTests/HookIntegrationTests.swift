@@ -138,6 +138,43 @@ struct HookIntegrationTests {
         #expect(offline.output == "5h 50%\n")
     }
 
+    @Test("Pośrednik: bez aplikacji kończy się po cichu (kod 0, bez wyjścia); z aplikacją przekazuje argumenty")
+    func shim() async throws {
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent("wyspa-shim-\(UUID().uuidString)")
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let missing = directory.appendingPathComponent("brak/wyspa-hook")
+        try HookShim.install(helperPath: "/Applications/Usunięta Wyspa's.app/Contents/Helpers/wyspa-hook", at: missing)
+        let silent = try runShell(missing.path, arguments: ["--statusline"], input: #"{"rate_limits":{}}"#)
+        #expect(silent.status == 0 && silent.output.isEmpty)
+        let mode = try FileManager.default.attributesOfItem(atPath: missing.path)[.posixPermissions] as? Int
+        #expect(mode == 0o700)
+
+        let helper = try #require(HelperLocator.helperURL)
+        let working = directory.appendingPathComponent("ok/wyspa-hook")
+        try HookShim.install(helperPath: helper.path, at: working)
+        let input = #"{"session_id":"s","rate_limits":{"five_hour":{"used_percentage":12,"resets_at":1738425600}}}"#
+        let passed = try runShell(working.path, arguments: ["--statusline"], input: input,
+                                  environment: ["WYSPA_SOCKET_PATH": "/tmp/wyspa-brak-\(UUID().uuidString.prefix(6)).sock"])
+        #expect(passed.status == 0 && passed.output == "5h 12%\n")
+    }
+
+    private func runShell(_ path: String, arguments: [String], input: String,
+                          environment: [String: String] = [:]) throws -> (status: Int32, output: String) {
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: path)
+        process.arguments = arguments
+        process.environment = environment
+        let stdin = Pipe(), stdout = Pipe()
+        process.standardInput = stdin
+        process.standardOutput = stdout
+        try process.run()
+        stdin.fileHandleForWriting.write(Data(input.utf8))
+        try stdin.fileHandleForWriting.close()
+        let output = stdout.fileHandleForReading.readDataToEndOfFile()
+        process.waitUntilExit()
+        return (process.terminationStatus, String(decoding: output, as: UTF8.self))
+    }
+
     @Test("Odmowa z wyspy przekazuje powód do Claude Code")
     func denyFromIsland() async throws {
         let path = socketPath()

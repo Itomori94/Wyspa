@@ -194,6 +194,8 @@ APP=$PWD/build/Wyspa.app/Contents
   użytkownik), limit 64 połączeń; połączenia mają rosnące identyfikatory (decyzja nie trafi do innego hooka przy
   ponownym użyciu numeru fd). Hook sprawdza, że gniazdo jest gniazdem tego użytkownika, i czeka ≤ 2 s na potwierdzenie
   (`{"ack":true}`) wysyłane z głównego wątku Wyspy — zawieszona aplikacja oddaje decyzję terminalowi po 2 s.
+- Hooki i linia statusu wskazują `HookShim` (`~/.local/share/wyspa/bin/wyspa-hook`, bez spacji): `exec` pomocnika z bieżącej
+  Wyspa.app albo ciche wyjście 0, gdy aplikacji nie ma. Wyspa odświeża pośrednika przy każdym starcie modułu.
 - Instalator rozpoznaje wpisy po nazwie pliku `wyspa-hook` (dokładnie), odrzuca nieoczekiwaną strukturę `hooks`,
   zapisuje przez dowiązania, zachowuje prawa pliku, trzyma 5 ostatnich kopii; zmiana czasu decyzji zapisuje hooki po 0,8 s.
 - Sesje znikają po zakończeniu procesu Claude Code (`DispatchSource.makeProcessSource(.exit)`), bez odpytywania.

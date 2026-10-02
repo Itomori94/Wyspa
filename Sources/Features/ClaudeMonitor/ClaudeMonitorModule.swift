@@ -84,6 +84,7 @@ public final class ClaudeMonitorModule: IslandModule {
         )
         try server.start()
         self.server = server
+        _ = updateShim()
         refreshHookStatus()
     }
 
@@ -179,12 +180,30 @@ public final class ClaudeMonitorModule: IslandModule {
         Bundle.main.bundleURL.appendingPathComponent("Contents/Helpers/wyspa-hook").path
     }
 
+    /// Ścieżka wpisywana do ustawień Claude Code: stały pośrednik poza aplikacją.
+    var shimPath: String { HookShim.url.path }
+
+    /// Pośrednik zawsze wskazuje bieżącą kopię aplikacji (także po jej przeniesieniu).
+    private func updateShim() -> Bool {
+        guard FileManager.default.isExecutableFile(atPath: helperPath) else {
+            problem = "Brak programu wyspa-hook w pakiecie aplikacji. Zbuduj aplikację skryptem scripts/build-app.sh."
+            return false
+        }
+        do {
+            try HookShim.install(helperPath: helperPath)
+            return true
+        } catch {
+            problem = "Nie udało się zapisać pośrednika hooków: \(error.localizedDescription)"
+            return false
+        }
+    }
+
     func refreshHookStatus() {
         do {
             let settings = try HookInstaller.read()
             statusLineState = HookInstaller.statusLineState(in: settings)
             if HookInstaller.isInstalled(in: settings) {
-                hookStatus = Self.installedPaths(in: settings).allSatisfy { $0 == helperPath } ? .installed : .outdatedPath
+                hookStatus = Self.installedPaths(in: settings).allSatisfy { $0 == shimPath } ? .installed : .outdatedPath
             } else {
                 hookStatus = .notInstalled
             }
@@ -206,14 +225,15 @@ public final class ClaudeMonitorModule: IslandModule {
     }
 
     func installHooks() {
-        guard FileManager.default.isExecutableFile(atPath: helperPath) else {
-            problem = "Brak programu wyspa-hook w pakiecie aplikacji. Zbuduj aplikację skryptem scripts/build-app.sh."
-            return
-        }
+        guard updateShim() else { return }
         do {
             let settings = try HookInstaller.read()
-            try HookInstaller.write(try HookInstaller.installing(into: settings, helperPath: helperPath,
+            try HookInstaller.write(try HookInstaller.installing(into: settings, helperPath: shimPath,
                                                                  decisionTimeout: decisionMinutes * 60))
+            if statusLineState == .ours {
+                try HookInstaller.write(try HookInstaller.installingStatusLine(
+                    into: HookInstaller.uninstallingStatusLine(from: try HookInstaller.read()), helperPath: shimPath))
+            }
             refreshHookStatus()
         } catch {
             problem = error.localizedDescription
@@ -222,7 +242,8 @@ public final class ClaudeMonitorModule: IslandModule {
 
     func installStatusLine() {
         do {
-            try HookInstaller.write(try HookInstaller.installingStatusLine(into: try HookInstaller.read(), helperPath: helperPath))
+            guard updateShim() else { return }
+            try HookInstaller.write(try HookInstaller.installingStatusLine(into: try HookInstaller.read(), helperPath: shimPath))
             refreshHookStatus()
         } catch {
             problem = error.localizedDescription
