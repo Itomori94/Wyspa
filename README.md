@@ -71,7 +71,7 @@ W Ustawieniach → Moduły → Teraz odtwarzane wybierasz:
 - **Źródło danych**: adapter MediaRemote albo AppleScript. Tam też widać, które źródło jest aktywne i dlaczego.
 
 Przy utworze z Apple Music w odtwarzaczu jest przycisk **AirPlay**: wybór głośników (MacBook, Apple TV, HomePod),
-jednego lub kilku naraz.
+dźwięk przechodzi wyłącznie na wybrany głośnik.
 
 Muzyka grająca przez AirPlay (np. na Apple TV) nie jest widoczna dla MediaRemote — wtedy wyspa bierze dane wprost
 z aplikacji Muzyka (AppleScript, bez odpytywania). Przy pierwszym razie macOS zapyta o zgodę na sterowanie Muzyką.

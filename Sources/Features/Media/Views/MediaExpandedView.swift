@@ -46,7 +46,7 @@ private struct TrackInfo: View {
     }
 }
 
-/// Wybór głośników AirPlay Muzyki (jeden lub kilka naraz, jak w samej Muzyce).
+/// Wybór głośnika AirPlay Muzyki: dźwięk gra tylko na wybranym.
 private struct AirPlayMenu: View {
     let module: MediaModule
 
@@ -57,7 +57,7 @@ private struct AirPlayMenu: View {
             }
             ForEach(module.airPlayDevices) { device in
                 Button {
-                    module.toggleAirPlay(device)
+                    module.selectAirPlay(device)
                 } label: {
                     Label(device.name, systemImage: device.isSelected ? "checkmark" : device.symbol)
                 }

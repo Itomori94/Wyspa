@@ -14,11 +14,10 @@ struct AirPlayTests {
         #expect(AirPlayScript.parse("").isEmpty && AirPlayScript.parse("zepsute").isEmpty)
     }
 
-    @Test("Przełączanie: dodaje, usuwa, ale nie zostawia pustego wyboru")
-    func toggle() {
-        let devices = AirPlayScript.parse(output)
-        #expect(AirPlayScript.toggling("MacBook Pro", in: devices) == ["Salon", "MacBook Pro"])
-        #expect(AirPlayScript.toggling("Salon", in: devices) == ["Salon"])
+    @Test("Wybór głośnika przełącza dźwięk tylko na niego")
+    func select() {
+        #expect(AirPlayScript.selecting("MacBook Pro") == ["MacBook Pro"])
+        #expect(AirPlayScript.selectScript(AirPlayScript.selecting("Salon")) == #"tell application "Music" to set current AirPlay devices to {AirPlay device "Salon"}"#)
     }
 
     @Test("Nazwy w skrypcie są bezpiecznie cytowane")

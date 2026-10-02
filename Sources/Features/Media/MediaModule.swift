@@ -137,8 +137,8 @@ public final class MediaModule: IslandModule {
         }
     }
 
-    public func toggleAirPlay(_ device: AirPlayDevice) {
-        let names = AirPlayScript.toggling(device.name, in: airPlayDevices)
+    public func selectAirPlay(_ device: AirPlayDevice) {
+        let names = AirPlayScript.selecting(device.name)
         Task {
             _ = await airPlayRunner.run(AirPlayScript.selectScript(names))
             refreshAirPlay()

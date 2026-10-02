@@ -47,11 +47,9 @@ public enum AirPlayScript {
         }
     }
 
-    /// Nowy zestaw zaznaczonych po kliknięciu głośnika: przełącza go, ale nigdy nie zostawia pustego wyboru.
-    public static func toggling(_ name: String, in devices: [AirPlayDevice]) -> [String] {
-        let selected = devices.filter(\.isSelected).map(\.name)
-        let next = selected.contains(name) ? selected.filter { $0 != name } : selected + [name]
-        return next.isEmpty ? selected : next
+    /// Kliknięcie głośnika przełącza dźwięk wyłącznie na niego (jak wybór wyjścia w systemie), reszta milknie.
+    public static func selecting(_ name: String) -> [String] {
+        [name]
     }
 
     /// Ustawia zaznaczone głośniki. Nazwy są cytowane bezpiecznie (cudzysłów i ukośnik wsteczny).
