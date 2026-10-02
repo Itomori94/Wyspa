@@ -138,17 +138,44 @@ struct IslandBackground: View {
     let shape: IslandShape
     let glass: Bool
     let hiddenAlpha: Double
+    @State private var preference = SystemGlassPreference.shared
 
     var body: some View {
         ZStack {
             if #available(macOS 26, *), glass {
-                // Zwykłe szkło systemowe, bez własnego zabarwienia: przezroczystość wynika z ustawień macOS
-                // (Wygląd → Liquid Glass: Przezroczyste/Zabarwione, Dostępność → Zmniejsz przezroczystość).
-                Color.clear.glassEffect(.regular, in: shape)
+                // Przezroczystość wynika z ustawień macOS (Wygląd → Liquid Glass: Przezroczyste/Zabarwione);
+                // „Zmniejsz przezroczystość” system stosuje do szkła sam.
+                Color.clear.glassEffect(preference.variant == .clear ? .clear : .regular, in: shape)
                     .transition(.opacity)
             }
             shape.fill(Color.black.opacity(glass ? 0 : hiddenAlpha))
         }
         .animation(.easeInOut(duration: 0.25), value: glass)
     }
+}
+
+/// Obserwuje wybór Liquid Glass w Ustawieniach systemowych (KVO na globalnej preferencji, bez odpytywania).
+@MainActor
+@Observable
+final class SystemGlassPreference {
+    static let shared = SystemGlassPreference()
+
+    private(set) var variant: GlassVariant
+    @ObservationIgnored private var observation: NSKeyValueObservation?
+
+    private init() {
+        variant = Self.read()
+        observation = UserDefaults.standard.observe(\.NSGlassTintAmount, options: [.new]) { _, _ in
+            Task { @MainActor in SystemGlassPreference.shared.variant = Self.read() }
+        }
+    }
+
+    private nonisolated static func read() -> GlassVariant {
+        GlassVariant.forSystemTint(UserDefaults.standard.object(forKey: GlassVariant.systemTintKey) as? Double)
+    }
+}
+
+private extension UserDefaults {
+    /// Nazwa musi odpowiadać kluczowi preferencji, żeby działało KVO.
+    @objc dynamic var NSGlassTintAmount: Double { double(forKey: GlassVariant.systemTintKey) }
 }

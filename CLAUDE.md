@@ -220,6 +220,7 @@ APP=$PWD/build/Wyspa.app/Contents
 | `DisplayServicesGet/SetBrightness` (DisplayServices) | `DisplayBrightnessControl` | symbol może zniknąć | `make()` → nil, klawisze jasności wracają do systemu |
 | `KeyboardBrightnessClient` (CoreBrightness) | `KeyboardBacklightControl` | klasa/selektory mogą się zmienić | `responds(to:)`; brak → klawisze do systemu |
 | `IOBluetoothDevice.batteryPercent*` | `BluetoothMonitor` | selektory mogą zniknąć | `responds(to:)`; brak → urządzenie bez poziomu baterii |
+| Preferencja `NSGlassTintAmount` (globalna, nieudokumentowana) | `SystemGlassPreference` (`IslandView.swift`) | Apple zmieni nazwę/znaczenie klucza | brak klucza → zwykłe (zaszronione) szkło |
 | Drzewo Dostępności banerów NotificationCenter (nieudokumentowane) | `NotificationBannerWatcher` | nowy macOS zmieni subrolę/identyfikatory | baner nie zostaje rozpoznany ani schowany — powiadomienia działają systemowo |
 
 Ładowanie funkcji C wyłącznie przez `PrivateSymbol.load` (dlopen/dlsym, log przy braku). Selektory Objective-C zawsze

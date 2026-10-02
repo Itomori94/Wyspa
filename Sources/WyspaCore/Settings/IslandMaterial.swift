@@ -27,3 +27,20 @@ public enum IslandMaterial: String, CaseIterable, Codable, Sendable {
         }
     }
 }
+
+/// Wariant szkła zgodny z wyborem w Ustawieniach systemowych → Wygląd → Liquid Glass.
+public enum GlassVariant: Equatable, Sendable {
+    /// „Przezroczyste”: szkło bez szronu.
+    case clear
+    /// „Zabarwione” albo brak informacji: zwykłe, zaszronione szkło.
+    case regular
+
+    /// Klucz globalnych preferencji, pod którym macOS zapisuje wybór (0 = przezroczyste). Nieudokumentowany:
+    /// gdy zniknie, zostaje zwykłe szkło.
+    public static let systemTintKey = "NSGlassTintAmount"
+
+    public static func forSystemTint(_ amount: Double?) -> GlassVariant {
+        guard let amount else { return .regular }
+        return amount <= 0.01 ? .clear : .regular
+    }
+}

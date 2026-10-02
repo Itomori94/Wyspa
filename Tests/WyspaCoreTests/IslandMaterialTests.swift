@@ -32,3 +32,14 @@ struct IslandMaterialTests {
         #expect(SettingsStore(defaults: defaults).islandMaterial == .liquidGlass)
     }
 }
+
+@Suite("Wariant szkła z ustawień systemu")
+struct GlassVariantTests {
+    @Test("Przezroczyste w systemie (0) daje szkło bez szronu, zabarwione i brak klucza — zwykłe")
+    func mapping() {
+        #expect(GlassVariant.forSystemTint(0) == .clear)
+        #expect(GlassVariant.forSystemTint(0.5) == .regular)
+        #expect(GlassVariant.forSystemTint(1) == .regular)
+        #expect(GlassVariant.forSystemTint(nil) == .regular)
+    }
+}
