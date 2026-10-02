@@ -9,7 +9,7 @@ public final class MediaModule: IslandModule {
     public static let descriptor = ModuleDescriptor(
         id: "media",
         name: "Teraz odtwarzane",
-        summary: "Okładka, tytuł, pasek przewijania i sterowanie odtwarzaniem z całego systemu.",
+        summary: "Okładka, tytuł, pasek przewijania i sterowanie odtwarzaniem — z całego systemu albo tylko z Apple Music.",
         symbol: "music.note",
         widgetMinWidth: 150
     )

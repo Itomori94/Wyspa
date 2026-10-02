@@ -234,3 +234,4 @@ tylko przy włączonym module.
 ## Rozwój
 
 Szczegóły architektury i komendy: [CLAUDE.md](CLAUDE.md).
+Spis tekstów okna ustawień: [docs/teksty-ustawien.md](docs/teksty-ustawien.md).

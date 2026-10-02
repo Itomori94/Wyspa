@@ -11,7 +11,7 @@ struct ModulesSettingsView: View {
             ContentUnavailableView(
                 "Brak modułów",
                 systemImage: "square.grid.2x2",
-                description: Text("Moduły funkcji dochodzą w kolejnych etapach. Fundament wyspy działa bez nich.")
+                description: Text("Ta wersja Wyspy nie zawiera żadnych modułów.")
             )
         } else {
             Form {
