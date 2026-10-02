@@ -7,11 +7,17 @@ struct QuickActionsView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            let columns = Array(repeating: GridItem(.flexible(), spacing: 8), count: min(module.visibleActions.count, 4))
-            LazyVGrid(columns: columns, spacing: 8) {
-                ForEach(module.visibleActions, id: \.self) { action in
-                    tile(action)
+            // Kratka dopasowana do szerokości: w wąskim widżecie 2 kolumny, w szerszym więcej (najwyżej 4).
+            GeometryReader { proxy in
+                let columns = Self.columnCount(width: proxy.size.width, compact: compact, tiles: module.visibleActions.count)
+                ScrollView {
+                    LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: columns), spacing: 8) {
+                        ForEach(module.visibleActions, id: \.self) { action in
+                            tile(action)
+                        }
+                    }
                 }
+                .scrollIndicators(.never)
             }
             if let feedback = module.feedback {
                 Text(feedback)
@@ -22,6 +28,13 @@ struct QuickActionsView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .onAppear(perform: module.refreshSystemState)
+    }
+
+    /// Ile kolumn mieści się w danej szerokości (kafelek najmniej 64 pt w widżecie, 110 pt na pełnej stronie).
+    static func columnCount(width: CGFloat, compact: Bool, tiles: Int) -> Int {
+        let minimum: CGFloat = compact ? 64 : 110
+        let fitting = Int((width + 8) / (minimum + 8))
+        return max(1, min(fitting, 4, tiles))
     }
 
     @ViewBuilder

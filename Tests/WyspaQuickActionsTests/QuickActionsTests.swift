@@ -133,3 +133,16 @@ struct QuickActionsSelectionTests {
         #expect(QuickActionsLogic.recordingURL(in: home, at: Date()).pathExtension == "mov")
     }
 }
+
+@Suite("Kratka szybkich akcji")
+struct QuickActionsGridTests {
+    @Test("Liczba kolumn rośnie z szerokością, najwyżej 4 i nie więcej niż kafelków")
+    func columns() {
+        #expect(QuickActionsView.columnCount(width: 150, compact: true, tiles: 8) == 2)
+        #expect(QuickActionsView.columnCount(width: 230, compact: true, tiles: 8) == 3)
+        #expect(QuickActionsView.columnCount(width: 600, compact: true, tiles: 8) == 4)
+        #expect(QuickActionsView.columnCount(width: 600, compact: true, tiles: 2) == 2)
+        #expect(QuickActionsView.columnCount(width: 40, compact: true, tiles: 8) == 1)
+        #expect(QuickActionsView.columnCount(width: 532, compact: false, tiles: 8) == 4)
+    }
+}

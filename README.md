@@ -18,6 +18,7 @@ Projekt open source (licencja MIT), dystrybucja poza App Store — budujesz i in
 | ![Claude Code](docs/screenshots/claude-code.png) Claude Code z limitami planu | ![Pomodoro](docs/screenshots/pomodoro.png) Pomodoro i cel dnia |
 | ![Pogoda](docs/screenshots/pogoda.png) Pogoda | ![Schowek](docs/screenshots/schowek.png) Historia schowka |
 | ![Szybkie akcje](docs/screenshots/szybkie-akcje.png) Szybkie akcje | ![Bluetooth](docs/screenshots/bluetooth.png) Bluetooth |
+| ![Szybkie akcje obok odtwarzacza](docs/screenshots/szybkie-akcje-widzet.png) Szybkie akcje obok odtwarzacza | |
 
 Zrzuty powstają z danych demonstracyjnych (`scripts/screenshots.sh`), więc nie zawierają prywatnych treści.
 

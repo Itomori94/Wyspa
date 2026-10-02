@@ -215,7 +215,13 @@ struct ScreenshotTests {
             board = try board.inserting(moduleID: id, intoPage: page, at: .max, minimum: { _ in WidgetWidth(units: 30) })
         }
         for id in ["claude", "timer", "weather", "clipboard", "quick", "bluetooth"] { board = board.addingModulePage(id) }
-        let tabs = ["media": 0, "widgets": 1, "claude": 2, "timer": 3, "weather": 4, "clipboard": 5, "quick": 6, "bluetooth": 7]
+        let (withQuick, quickPage) = board.addingWidgetPage()
+        board = withQuick
+        for id in ["media", "quick"] {
+            board = try board.inserting(moduleID: id, intoPage: quickPage, at: .max, minimum: { _ in WidgetWidth(units: 30) })
+        }
+        let tabs = ["media": 0, "widgets": 1, "claude": 2, "timer": 3, "weather": 4, "clipboard": 5, "quick": 6, "bluetooth": 7,
+                    "quick-widget": 8]
         return (board, tabs)
     }
 
@@ -272,6 +278,7 @@ struct ScreenshotTests {
         try await render("pogoda", phase: .expanded, tab: "weather")
         try await render("schowek", phase: .expanded, tab: "clipboard")
         try await render("szybkie-akcje", phase: .expanded, tab: "quick")
+        try await render("szybkie-akcje-widzet", phase: .expanded, tab: "quick-widget")
         try await render("bluetooth", phase: .expanded, tab: "bluetooth")
     }
 }
