@@ -148,7 +148,9 @@ final class IslandWindowController {
     // MARK: - Geometria
 
     private func layout() {
-        let size = IslandLayout.panelSize(expanded: settings.islandSize.expandedSize, shadowMargin: Self.shadowMargin)
+        let size = IslandLayout.panelSize(
+            expanded: settings.islandSize.expandedSize, notch: screen.notch.size, shadowMargin: Self.shadowMargin
+        )
         panel.setFrame(IslandPlacement.topCentered(size, in: screen.frame), display: true)
         updateInteractiveRect()
     }

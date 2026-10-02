@@ -91,8 +91,41 @@ struct IslandLayoutTests {
 
     @Test("Panel mieści rozwiniętą wyspę z marginesem na cień")
     func panelSize() {
-        let size = IslandLayout.panelSize(expanded: CGSize(width: 600, height: 230), shadowMargin: 30)
+        let size = IslandLayout.panelSize(expanded: CGSize(width: 600, height: 230), notch: notch, shadowMargin: 30)
         #expect(size == CGSize(width: 660, height: 260))
+    }
+
+    /// Szerokości skrzydeł używane przez moduły (media/domyślna, zasilanie/Bluetooth, HUD) i granica.
+    static let activityWings: [CGFloat?] = [nil, IslandLayout.wingWidth, 46, 70, IslandLayout.maxWingWidth]
+    static let notches = [CGSize(width: 185, height: 32), CGSize(width: 200, height: 38), CGSize(width: 300, height: 38)]
+    static var activityPairs: [(CGFloat?, CGFloat?)] {
+        activityWings.flatMap { first in activityWings.map { (first, $0) } }
+    }
+
+    @Test("Każda para aktywności (stan przed i po zmianie) mieści się w ramie panelu", arguments: activityPairs)
+    func everyActivityPairFitsPanel(pair: (CGFloat?, CGFloat?)) {
+        for islandSize in IslandSize.allCases {
+            for notch in Self.notches {
+                let panel = IslandLayout.panelSize(expanded: islandSize.expandedSize, notch: notch, shadowMargin: 0)
+                for phase in [IslandPhase.collapsed, .peek, .expanded] {
+                    for wing in [pair.0, pair.1] {
+                        let island = IslandLayout.size(for: phase, notch: notch, activityWingWidth: wing, expanded: islandSize.expandedSize)
+                        #expect(island.width <= panel.width, "\(phase) \(islandSize) notch \(notch.width) skrzydło \(String(describing: wing))")
+                        #expect(island.height <= panel.height)
+                    }
+                }
+            }
+        }
+    }
+
+    @Test("Rama rośnie z szerokim notchem i małą wyspą")
+    func panelFollowsNotch() {
+        let wide = CGSize(width: 420, height: 38)
+        let panel = IslandLayout.panelSize(expanded: IslandSize.small.expandedSize, notch: wide, shadowMargin: 0)
+        let widest = IslandLayout.size(for: .peek, notch: wide, activityWingWidth: IslandLayout.maxWingWidth,
+                                       expanded: IslandSize.small.expandedSize)
+        #expect(panel.width >= widest.width)
+        #expect(panel.width > IslandSize.small.expandedSize.width)
     }
 }
 

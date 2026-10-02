@@ -23,8 +23,14 @@ public enum IslandSize: String, CaseIterable, Codable, Sendable {
 
 /// Wymiary wyspy w każdej fazie. Czysta funkcja, testowana jednostkowo.
 public enum IslandLayout {
-    /// Szerokość jednego „skrzydła” live activity po boku notcha.
+    /// Domyślna szerokość jednego „skrzydła” live activity po boku notcha.
     public static let wingWidth: CGFloat = 40
+    /// Górna granica szerokości skrzydła; z niej liczona jest rama panelu, więc żadna aktywność nie wyjdzie poza okno.
+    public static let maxWingWidth: CGFloat = 96
+
+    public static func clampedWingWidth(_ width: CGFloat) -> CGFloat {
+        min(max(width, 0), maxWingWidth)
+    }
     /// Wklęsłe górne rogi, którymi wyspa wtapia się w pasek menu.
     public static let collapsedTopRadius: CGFloat = 6
     public static let expandedTopRadius: CGFloat = 14
@@ -53,8 +59,14 @@ public enum IslandLayout {
         }
     }
 
-    /// Okno musi pomieścić największy stan i cień.
-    public static func panelSize(expanded: CGSize, shadowMargin: CGFloat) -> CGSize {
-        CGSize(width: expanded.width + shadowMargin * 2, height: expanded.height + shadowMargin)
+    /// Okno musi pomieścić największy możliwy stan i cień: rozwiniętą wyspę albo podgląd
+    /// z najszerszymi dopuszczalnymi skrzydłami przy tym notchu.
+    public static func panelSize(expanded: CGSize, notch: CGSize, shadowMargin: CGFloat) -> CGSize {
+        let widest = [IslandPhase.peek, .expanded].map {
+            size(for: $0, notch: notch, activityWingWidth: maxWingWidth, expanded: expanded)
+        }
+        let width = widest.map(\.width).max() ?? expanded.width
+        let height = widest.map(\.height).max() ?? expanded.height
+        return CGSize(width: width + shadowMargin * 2, height: height + shadowMargin)
     }
 }

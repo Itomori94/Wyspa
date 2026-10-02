@@ -39,7 +39,7 @@ public struct LiveActivity {
     public let id: String
     public let priority: ActivityPriority
     public let accent: Color?
-    /// Szerokość każdego skrzydła; szersze dla treści typu pasek poziomu albo tekst.
+    /// Szerokość każdego skrzydła; szersze dla treści typu pasek poziomu albo tekst (najwyżej `IslandLayout.maxWingWidth`).
     public let wingWidth: CGFloat
     public let leading: AnyView
     public let trailing: AnyView
@@ -55,7 +55,7 @@ public struct LiveActivity {
         self.id = id
         self.priority = priority
         self.accent = accent
-        self.wingWidth = wingWidth
+        self.wingWidth = IslandLayout.clampedWingWidth(wingWidth)
         self.leading = AnyView(leading())
         self.trailing = AnyView(trailing())
     }

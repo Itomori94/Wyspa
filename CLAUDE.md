@@ -122,7 +122,12 @@ APP=$PWD/build/Wyspa.app/Contents
   i powiadomienia o rozłączeniu per urządzenie; poziom baterii odświeżany raz po 2 s od połączenia.
 - `ModuleRegistry.retryInactiveModules()` po powiadomieniu `com.apple.accessibility.api` — HUD startuje sam po nadaniu
   Dostępności, bez ponownego przełączania modułu.
-- `LiveActivity.wingWidth`: szersze skrzydła dla pasków i procentów (HUD 70, zasilanie/Bluetooth 46).
+- `LiveActivity.wingWidth`: szersze skrzydła dla pasków i procentów (HUD 70, zasilanie/Bluetooth 46),
+  przycinane do `IslandLayout.maxWingWidth`. Rama panelu liczona z najszerszego możliwego stanu
+  (`panelSize(expanded:notch:shadowMargin:)` z maksymalnym skrzydłem), więc żadna aktywność nie wyjdzie poza okno.
+- Skrzydła w zwiniętej wyspie wypełniają bieżącą, animowaną szerokość (`maxWidth: .infinity`), zawartość wyspy jest
+  przycinana do `IslandShape`, a zmiana aktywności to nowy widok (`.id(activity.id)`) z wygaszeniem. Identyfikatory
+  `matchedGeometryEffect` zawierają id aktywności (`ActivityGeometryID`), żeby nie dopasowywać różnych aktywności.
 
 ## Prywatne API — rejestr
 

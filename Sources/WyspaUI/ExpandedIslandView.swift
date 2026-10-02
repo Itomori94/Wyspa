@@ -32,7 +32,7 @@ struct ExpandedIslandView: View {
         HStack(spacing: 10) {
             if let activity = model.activity {
                 activity.leading
-                    .matchedGeometryEffect(id: "activity.leading", in: namespace)
+                    .matchedGeometryEffect(id: ActivityGeometryID.leading(activity), in: namespace)
                     .frame(width: activity.wingWidth)
             }
             ClockLabel()
@@ -43,7 +43,7 @@ struct ExpandedIslandView: View {
             }
             if let activity = model.activity {
                 activity.trailing
-                    .matchedGeometryEffect(id: "activity.trailing", in: namespace)
+                    .matchedGeometryEffect(id: ActivityGeometryID.trailing(activity), in: namespace)
                     .frame(width: activity.wingWidth)
             }
         }

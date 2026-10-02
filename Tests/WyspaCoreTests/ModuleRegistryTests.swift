@@ -93,6 +93,36 @@ final class DropModule: IslandModule, IslandDropHandling {
 }
 
 @MainActor
+@Observable
+final class MediaLikeModule: IslandModule {
+    static let descriptor = ModuleDescriptor(id: "media-like", name: "Media", summary: "", symbol: "music.note")
+    static var playing = false
+    init(context: ModuleContext) {}
+    func activate() async throws {}
+    func deactivate() {}
+    var liveActivity: LiveActivity? {
+        Self.playing ? LiveActivity(id: "media", priority: .media, leading: { EmptyView() }, trailing: { EmptyView() }) : nil
+    }
+    func makeExpandedView() -> AnyView? { nil }
+}
+
+@MainActor
+@Observable
+final class HUDLikeModule: IslandModule {
+    static let descriptor = ModuleDescriptor(id: "hud-like", name: "HUD", summary: "", symbol: "speaker")
+    static var showing = false
+    init(context: ModuleContext) {}
+    func activate() async throws {}
+    func deactivate() {}
+    var liveActivity: LiveActivity? {
+        Self.showing
+            ? LiveActivity(id: "hud", priority: .hud, wingWidth: 70, leading: { EmptyView() }, trailing: { EmptyView() })
+            : nil
+    }
+    func makeExpandedView() -> AnyView? { nil }
+}
+
+@MainActor
 @Suite("Rejestr modułów", .serialized)
 struct ModuleRegistryTests {
     private func makeSettings() -> SettingsStore {
@@ -245,5 +275,33 @@ struct ModuleRegistryTests {
         await registry.retryInactiveModules()
         #expect(registry.entries.first { $0.id == "camera" }?.isActive == true)
         #expect(permissions.requested.isEmpty)
+    }
+
+    @Test("Arbiter: HUD zastępuje media na czas wyświetlania, potem media wracają")
+    func hudReplacesMediaTemporarily() async {
+        MediaLikeModule.playing = true
+        HUDLikeModule.showing = false
+        let registry = ModuleRegistry(
+            catalog: [MediaLikeModule.self, HUDLikeModule.self], settings: makeSettings(),
+            permissions: FakePermissions(), requestExpand: {}
+        )
+        await registry.setEnabled("media-like", true)
+        await registry.setEnabled("hud-like", true)
+        #expect(registry.currentActivity?.id == "media")
+
+        HUDLikeModule.showing = true
+        #expect(registry.currentActivity?.id == "hud")
+        #expect(registry.currentActivity?.wingWidth == 70)
+
+        HUDLikeModule.showing = false
+        #expect(registry.currentActivity?.id == "media")
+        #expect(registry.currentActivity?.wingWidth == IslandLayout.wingWidth)
+        MediaLikeModule.playing = false
+    }
+
+    @Test("Szerokość skrzydła jest ograniczona do maksimum")
+    func wingWidthClamped() {
+        let activity = LiveActivity(id: "x", priority: .status, wingWidth: 500, leading: { EmptyView() }, trailing: { EmptyView() })
+        #expect(activity.wingWidth == IslandLayout.maxWingWidth)
     }
 }

@@ -29,6 +29,8 @@ public struct IslandView: View {
 
             content
                 .padding(.horizontal, model.phase == .expanded ? topRadius + Self.contentInset : topRadius)
+                // Zawartość nigdy nie wychodzi poza kształt wyspy, także w trakcie animacji szerokości.
+                .clipShape(IslandShape(topRadius: topRadius, bottomRadius: bottomRadius))
         }
         .frame(width: size.width, height: size.height)
         .backgroundPreferenceValue(DropZoneKey.self) { anchors in
@@ -70,7 +72,6 @@ public struct IslandView: View {
             if let activity = model.activity {
                 CollapsedActivityView(activity: activity, notchWidth: model.notch.size.width, namespace: namespace)
                     .frame(height: model.notch.size.height)
-                    .transition(.opacity)
             }
         case .expanded:
             ExpandedIslandView(model: model, namespace: namespace)
@@ -85,6 +86,9 @@ public struct IslandView: View {
 }
 
 /// Skrzydła live activity po obu stronach fizycznego notcha.
+///
+/// Skrzydła wypełniają bieżącą (animowaną) szerokość wyspy zamiast sztywnej `wingWidth`,
+/// więc przy zmianie aktywności rosną i maleją razem z kształtem.
 struct CollapsedActivityView: View {
     let activity: LiveActivity
     let notchWidth: CGFloat
@@ -93,12 +97,21 @@ struct CollapsedActivityView: View {
     var body: some View {
         HStack(spacing: 0) {
             activity.leading
-                .matchedGeometryEffect(id: "activity.leading", in: namespace)
-                .frame(width: activity.wingWidth)
+                .matchedGeometryEffect(id: ActivityGeometryID.leading(activity), in: namespace)
+                .frame(maxWidth: .infinity)
             Color.clear.frame(width: notchWidth)
             activity.trailing
-                .matchedGeometryEffect(id: "activity.trailing", in: namespace)
-                .frame(width: activity.wingWidth)
+                .matchedGeometryEffect(id: ActivityGeometryID.trailing(activity), in: namespace)
+                .frame(maxWidth: .infinity)
         }
+        // Inna aktywność = inny widok: stara wygasa, nowa się pojawia, zamiast natychmiastowej podmiany treści.
+        .id(activity.id)
+        .transition(.opacity)
     }
+}
+
+/// Identyfikatory dopasowania geometrii zawierają id aktywności, żeby nie łączyć różnych aktywności ze sobą.
+enum ActivityGeometryID {
+    static func leading(_ activity: LiveActivity) -> String { "activity.\(activity.id).leading" }
+    static func trailing(_ activity: LiveActivity) -> String { "activity.\(activity.id).trailing" }
 }
