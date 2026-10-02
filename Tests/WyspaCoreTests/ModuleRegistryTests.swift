@@ -160,7 +160,7 @@ struct ModuleRegistryTests {
         await registry.setEnabled("plain", true)
         #expect(Probe.activations == ["plain"])
         #expect(settings.isModuleEnabled("plain"))
-        #expect(registry.tabs.map(\.id) == ["plain"])
+        #expect(registry.pages.flatMap(\.moduleIDs) == ["plain"])
     }
 
     @Test("Wyłączenie zwalnia moduł")
@@ -169,7 +169,7 @@ struct ModuleRegistryTests {
         await registry.setEnabled("plain", true)
         await registry.setEnabled("plain", false)
         #expect(Probe.deactivations == ["plain"])
-        #expect(registry.tabs.isEmpty)
+        #expect(registry.pages.isEmpty)
         #expect(registry.entries.first { $0.id == "plain" }?.isActive == false)
     }
 
@@ -222,7 +222,7 @@ struct ModuleRegistryTests {
         await registry.setEnabled("camera", true)
         await registry.setEnabled("plain", true)
         #expect(registry.currentActivity?.id == "camera")
-        #expect(registry.tabs.count == 1)
+        #expect(registry.pages.count == 1)
     }
 
     @Test("Nieznany identyfikator jest ignorowany")
@@ -305,8 +305,8 @@ struct ModuleRegistryTests {
         #expect(activity.wingWidth == IslandLayout.maxWingWidth)
     }
 
-    @Test("Zakładki według kolejności z ustawień, ukryte nie trafiają do wyspy, ale moduł działa")
-    func tabOrderAndVisibility() async {
+    @Test("Strony z zapisanego układu: tylko działające moduły, puste strony pominięte")
+    func pagesFromBoard() async throws {
         let settings = makeSettings()
         let registry = ModuleRegistry(
             catalog: [PlainModule.self, DropModule.self], settings: settings,
@@ -314,14 +314,29 @@ struct ModuleRegistryTests {
         )
         await registry.setEnabled("plain", true)
         await registry.setEnabled("drop", true)
-        #expect(registry.tabs.map(\.id) == ["plain", "drop"])
+        // Bez zapisanego układu: strony startowe z działających modułów.
+        #expect(Set(registry.pages.flatMap(\.moduleIDs)) == ["plain", "drop"])
 
-        settings.setTabOrder(["drop", "plain"])
-        #expect(registry.tabs.map(\.id) == ["drop", "plain"])
+        let board = IslandBoard().addingModulePage("drop").addingModulePage("plain").addingModulePage("nieobecny")
+        registry.setBoard(board)
+        #expect(registry.pages.map(\.moduleIDs) == [["drop"], ["plain"]])
+        #expect(registry.dropTabIndex == 0)
 
-        settings.setTab("plain", visible: false)
-        #expect(registry.tabs.map(\.id) == ["drop"])
-        #expect(registry.allTabs.map(\.id) == ["drop", "plain"])
-        #expect(registry.entries.first { $0.id == "plain" }?.isActive == true)
+        await registry.setEnabled("drop", false)
+        #expect(registry.pages.map(\.moduleIDs) == [["plain"]])
     }
+
+    @Test("Włączony moduł spoza układu dostaje swoją stronę na końcu")
+    func newlyEnabledIsPlaced() async {
+        let settings = makeSettings()
+        let registry = ModuleRegistry(
+            catalog: [PlainModule.self, DropModule.self], settings: settings,
+            permissions: FakePermissions(), requestExpand: {}
+        )
+        await registry.setEnabled("plain", true)
+        registry.setBoard(IslandBoard().addingModulePage("plain"))
+        await registry.setEnabled("drop", true)
+        #expect(settings.board?.pages.map(\.content) == [.module("plain"), .module("drop")])
+    }
+
 }

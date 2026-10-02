@@ -10,7 +10,8 @@ public final class ShortcutsModule: IslandModule {
         id: "shortcuts",
         name: "Skróty",
         summary: "Uruchamia wybrane Skróty macOS jednym kliknięciem z wyspy.",
-        symbol: "square.stack.3d.up.fill"
+        symbol: "square.stack.3d.up.fill",
+        widgetMinWidth: 120
     )
 
     public enum RunState: Equatable { case idle, running, succeeded, failed(String) }
@@ -40,6 +41,7 @@ public final class ShortcutsModule: IslandModule {
     public var liveActivity: LiveActivity? { nil }
 
     public func makeExpandedView() -> AnyView? { AnyView(ShortcutsView(module: self)) }
+    public func makeWidgetView() -> AnyView? { AnyView(ShortcutsWidget(module: self)) }
     public func makeSettingsView() -> AnyView? { AnyView(ShortcutsSettingsView(module: self)) }
 
     /// W wyspie: ulubione, a gdy ich brak — wszystkie skróty.

@@ -11,7 +11,8 @@ public final class ShelfModule: IslandModule, IslandDropHandling {
         id: "shelf",
         name: "Półka",
         summary: "Przeciągnij plik nad notch, odłóż go na później i wyciągnij, kiedy będzie potrzebny. Z podglądem i AirDrop.",
-        symbol: "tray.full"
+        symbol: "tray.full",
+        widgetMinWidth: 110
     )
     public static let acceptedDropTypes: [UTType] = [.fileURL, .image, .url, .plainText, .data]
 
@@ -49,6 +50,10 @@ public final class ShelfModule: IslandModule, IslandDropHandling {
 
     public func makeExpandedView() -> AnyView? {
         AnyView(ShelfExpandedView(module: self))
+    }
+
+    public func makeWidgetView() -> AnyView? {
+        AnyView(ShelfWidget(module: self))
     }
 
     public func performDrop(_ providers: [NSItemProvider], zoneID: String?) -> Bool {

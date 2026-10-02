@@ -7,13 +7,22 @@ public struct ModuleDescriptor: Sendable, Identifiable {
     public let summary: String
     public let symbol: String
     public let permissions: Set<Permission>
+    /// Minimalna szerokość widżetu w punktach; nil = moduł nie ma widżetu.
+    public let widgetMinWidth: CGFloat?
+    /// Czy moduł ma pełny widok na osobnej stronie wyspy.
+    public let providesPage: Bool
 
-    public init(id: String, name: String, summary: String, symbol: String, permissions: Set<Permission> = []) {
+    public init(
+        id: String, name: String, summary: String, symbol: String, permissions: Set<Permission> = [],
+        widgetMinWidth: CGFloat? = nil, providesPage: Bool = true
+    ) {
         self.id = id
         self.name = name
         self.summary = summary
         self.symbol = symbol
         self.permissions = permissions
+        self.widgetMinWidth = widgetMinWidth
+        self.providesPage = providesPage
     }
 }
 
@@ -93,8 +102,11 @@ public protocol IslandModule: AnyObject, Observable {
     func makeExpandedView() -> AnyView?
     /// Szczegółowe ustawienia w oknie ustawień; nil, gdy moduł ich nie ma.
     func makeSettingsView() -> AnyView?
+    /// Kompaktowy widżet do strony z kilkoma modułami obok siebie; nil, gdy moduł go nie ma.
+    func makeWidgetView() -> AnyView?
 }
 
 extension IslandModule {
     public func makeSettingsView() -> AnyView? { nil }
+    public func makeWidgetView() -> AnyView? { nil }
 }

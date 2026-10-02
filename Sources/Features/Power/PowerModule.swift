@@ -10,7 +10,8 @@ public final class PowerModule: IslandModule {
         id: "power",
         name: "Zasilanie",
         summary: "Pokazuje podłączenie ładowarki, pełne naładowanie i niski poziom baterii.",
-        symbol: "battery.100percent.bolt"
+        symbol: "battery.100percent.bolt",
+        widgetMinWidth: 90
     )
 
     static let eventDuration: Duration = .seconds(3)
@@ -62,6 +63,10 @@ public final class PowerModule: IslandModule {
 
     public func makeExpandedView() -> AnyView? {
         AnyView(PowerExpandedView(state: state))
+    }
+
+    public func makeWidgetView() -> AnyView? {
+        AnyView(PowerWidget(state: state))
     }
 
     fileprivate func refresh() {

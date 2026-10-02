@@ -13,7 +13,8 @@ public final class ClipboardModule: IslandModule {
         id: "clipboard",
         name: "Historia schowka",
         summary: "Ostatnio kopiowane teksty, pliki i obrazy z wyszukiwaniem. Hasła z menedżerów haseł są pomijane. Historia jest tylko w pamięci.",
-        symbol: "doc.on.clipboard"
+        symbol: "doc.on.clipboard",
+        widgetMinWidth: 150
     )
 
     static let pollInterval: TimeInterval = 0.75
@@ -53,6 +54,10 @@ public final class ClipboardModule: IslandModule {
 
     public func makeExpandedView() -> AnyView? {
         AnyView(ClipboardView(module: self))
+    }
+
+    public func makeWidgetView() -> AnyView? {
+        AnyView(ClipboardWidget(module: self))
     }
 
     public func makeSettingsView() -> AnyView? {

@@ -97,11 +97,19 @@ Zakładka z poziomem baterii i szacowanym czasem ładowania albo pracy.
 Krótka aktywność po podłączeniu i odłączeniu urządzenia: ikona (AirPods, słuchawki, klawiatura, mysz…) i poziom baterii.
 Zakładka z listą połączonych urządzeń i baterią lewej i prawej słuchawki oraz etui.
 
-### Zakładki w wyspie
+### Układ wyspy
 
-Ustawienia → Zakładki: przeciągnij moduły, żeby ustalić kolejność, i wyłącz zakładki, których nie chcesz widzieć
-po najechaniu (moduł działa dalej, np. pokazuje aktywności w zwiniętej wyspie). Jeśli zakładek jest więcej, niż mieści
-nagłówek, pozostałe są w menu ⋯; zakładka wybrana z menu pojawia się w pasku.
+Ustawienia → Układ to graficzny edytor rozwiniętej wyspy, podobny do NotchNook:
+
+- **Strony**: wyspa ma jedną albo kilka stron. Strona z widżetami pokazuje kilka modułów obok siebie
+  (np. odtwarzacz, kalendarz i timer), a strona z pełnym widokiem — jeden moduł na całą szerokość (np. półka).
+  Między stronami przełączasz się przesunięciem w poziomie albo ikonami w nagłówku wyspy.
+- **Podgląd w skali**: edytor rysuje wyspę w Twoim rozmiarze, z zaznaczonym notchem i prawdziwymi widżetami.
+- **Przeciąganie**: moduł z listy poniżej przeciągnij na stronę; widżety przeciągaj, żeby zmienić kolejność albo
+  przenieść na inną stronę (upuść na nazwie strony u góry); przeciągnij widżet z powrotem na listę, żeby go usunąć.
+- **Szerokość**: przeciągnij uchwyt między widżetami albo wybierz szerokość z menu na widżecie
+  (¼, ⅓, ½, ⅔, ¾, całość). Edytor nie pozwoli ułożyć więcej, niż się zmieści.
+- Nowo włączony moduł pojawia się na końcu jako osobna strona — przenieś go, gdzie chcesz.
 
 ### Kalendarz i Przypomnienia
 

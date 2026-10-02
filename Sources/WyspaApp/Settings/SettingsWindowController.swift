@@ -11,7 +11,7 @@ final class SettingsUIState {
 
 @MainActor
 final class SettingsWindowController {
-    private static let size = NSSize(width: 560, height: 480)
+    private static let size = NSSize(width: 720, height: 620)
 
     private let uiState = SettingsUIState()
     private let settings: SettingsStore

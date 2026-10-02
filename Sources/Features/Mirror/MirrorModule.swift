@@ -12,13 +12,22 @@ public final class MirrorModule: IslandModule {
         name: "Lusterko",
         summary: "Podgląd z kamery przed rozmową wideo. Kamera włącza się tylko, gdy zakładka jest widoczna; obraz nie jest zapisywany.",
         symbol: "camera.fill",
-        permissions: [.camera]
+        permissions: [.camera],
+        widgetMinWidth: 110
     )
 
     public required init(context: ModuleContext) {}
     public func activate() async throws {}
     public func deactivate() {}
     public var liveActivity: LiveActivity? { nil }
+
+    public func makeWidgetView() -> AnyView? {
+        AnyView(
+            CameraPreview()
+                .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+        )
+    }
 
     public func makeExpandedView() -> AnyView? {
         AnyView(

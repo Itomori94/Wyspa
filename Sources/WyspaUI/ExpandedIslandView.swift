@@ -1,13 +1,13 @@
 import SwiftUI
 import WyspaCore
 
-/// Rozwinięta wyspa: nagłówek (aktywność, zegar, zakładki) i zawartość wybranej zakładki.
+/// Rozwinięta wyspa: nagłówek (aktywność, zegar, strony) i zawartość wybranej strony.
 struct ExpandedIslandView: View {
     @Bindable var model: IslandViewModel
     let namespace: Namespace.ID
 
     var body: some View {
-        let tabs = model.registry.tabs
+        let tabs = model.registry.pages
         VStack(alignment: .leading, spacing: 12) {
             header(tabs: tabs)
                 .frame(height: max(model.notch.size.height - 8, 24))
@@ -16,7 +16,7 @@ struct ExpandedIslandView: View {
                     EmptyModulesView(openSettings: model.onOpenSettings)
                 } else {
                     let index = min(model.selectedTab, tabs.count - 1)
-                    tabs[index].content
+                    PageContentView(page: tabs[index])
                         .id(tabs[index].id)
                         .transition(.opacity.combined(with: .offset(y: 6)))
                 }
@@ -31,7 +31,7 @@ struct ExpandedIslandView: View {
     ///
     /// Połowy mają szerokość wynikającą z wyspy; każda wybiera pierwszy wariant, który się mieści,
     /// a ostatni wariant mieści się zawsze. Dzięki temu nagłówek nigdy nie poszerza wyspy.
-    private func header(tabs: [ModuleTab]) -> some View {
+    private func header(tabs: [IslandPage]) -> some View {
         HStack(spacing: 0) {
             ViewThatFits(in: .horizontal) {
                 HStack(spacing: 10) { leadingWing; ClockLabel(style: .full) }
@@ -49,7 +49,7 @@ struct ExpandedIslandView: View {
     }
 
     /// Ile zakładek się mieści przy bieżącej szerokości wyspy (czysta funkcja, testowana w Core).
-    private func plan(for tabs: [ModuleTab]) -> TabStripPlan {
+    private func plan(for tabs: [IslandPage]) -> TabStripPlan {
         TabStripPlan.make(
             tabCount: tabs.count,
             selected: model.selectedTab,
@@ -86,7 +86,7 @@ struct ExpandedIslandView: View {
 /// Prawa połowa nagłówka według planu: zakładki, menu „⋯” z pozostałymi i skrzydło aktywności.
 private struct RightHeader<Wing: View>: View {
     let model: IslandViewModel
-    let tabs: [ModuleTab]
+    let tabs: [IslandPage]
     let plan: TabStripPlan
     @ViewBuilder let wing: () -> Wing
 
@@ -112,7 +112,7 @@ private struct RightHeader<Wing: View>: View {
 
 /// Zakładki, które nie zmieściły się w pasku.
 private struct OverflowMenu: View {
-    let tabs: [ModuleTab]
+    let tabs: [IslandPage]
     let indices: [Int]
     let select: (Int) -> Void
 
@@ -131,6 +131,54 @@ private struct OverflowMenu: View {
         .menuIndicator(.hidden)
         .fixedSize()
         .help("Więcej zakładek")
+    }
+}
+
+/// Zawartość strony: pełny widok modułu albo widżety obok siebie z cienkimi dzielnikami.
+public struct PageContentView: View {
+    let page: IslandPage
+
+    public init(page: IslandPage) {
+        self.page = page
+    }
+
+    public var body: some View {
+        switch page.content {
+        case .module(let view):
+            view
+        case .widgets(let widgets):
+            WidgetRow(widgets: widgets)
+        }
+    }
+}
+
+/// Widżety według ich szerokości w dwunastkach; wolne miejsce zostaje po prawej.
+public struct WidgetRow: View {
+    public static let dividerSpacing: CGFloat = 14
+
+    let widgets: [IslandPage.Widget]
+
+    public var body: some View {
+        GeometryReader { proxy in
+            let gaps = CGFloat(max(widgets.count - 1, 0)) * Self.dividerSpacing
+            let unit = max(0, proxy.size.width - gaps) / CGFloat(WidgetWidth.totalUnits)
+            HStack(spacing: 0) {
+                ForEach(Array(widgets.enumerated()), id: \.element.id) { index, widget in
+                    if index > 0 {
+                        Rectangle()
+                            .fill(.white.opacity(0.1))
+                            .frame(width: 1)
+                            .padding(.vertical, 6)
+                            .frame(width: Self.dividerSpacing)
+                    }
+                    widget.content
+                        .frame(width: unit * CGFloat(widget.width.units), alignment: .topLeading)
+                        .frame(maxHeight: .infinity, alignment: .top)
+                        .clipped()
+                }
+                Spacer(minLength: 0)
+            }
+        }
     }
 }
 

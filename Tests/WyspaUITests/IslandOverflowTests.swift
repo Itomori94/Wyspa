@@ -38,10 +38,11 @@ private class TabModuleBase {
     func activate() async throws {}
     func deactivate() {}
     func makeExpandedView() -> AnyView? { AnyView(WideContent()) }
+    func makeWidgetView() -> AnyView? { AnyView(WideContent()) }
 }
 
 @MainActor @Observable private final class Tab0: TabModuleBase, IslandModule {
-    static let descriptor = ModuleDescriptor(id: "t0", name: "T0", summary: "", symbol: "music.note")
+    static let descriptor = ModuleDescriptor(id: "t0", name: "T0", summary: "", symbol: "music.note", widgetMinWidth: 60)
     var liveActivity: LiveActivity? {
         Scenario.activityWing.map { wing in
             LiveActivity(id: "a", priority: .hud, wingWidth: wing) {
@@ -53,48 +54,48 @@ private class TabModuleBase {
     }
 }
 @MainActor @Observable private final class Tab1: TabModuleBase, IslandModule {
-    static let descriptor = ModuleDescriptor(id: "t1", name: "T1", summary: "", symbol: "tray.full")
+    static let descriptor = ModuleDescriptor(id: "t1", name: "T1", summary: "", symbol: "tray.full", widgetMinWidth: 60)
     var liveActivity: LiveActivity? { nil }
 }
 @MainActor @Observable private final class Tab2: TabModuleBase, IslandModule {
-    static let descriptor = ModuleDescriptor(id: "t2", name: "T2", summary: "", symbol: "bolt")
+    static let descriptor = ModuleDescriptor(id: "t2", name: "T2", summary: "", symbol: "bolt", widgetMinWidth: 60)
     var liveActivity: LiveActivity? { nil }
 }
 @MainActor @Observable private final class Tab3: TabModuleBase, IslandModule {
-    static let descriptor = ModuleDescriptor(id: "t3", name: "T3", summary: "", symbol: "headphones")
+    static let descriptor = ModuleDescriptor(id: "t3", name: "T3", summary: "", symbol: "headphones", widgetMinWidth: 60)
     var liveActivity: LiveActivity? { nil }
 }
 @MainActor @Observable private final class Tab4: TabModuleBase, IslandModule {
-    static let descriptor = ModuleDescriptor(id: "t4", name: "T4", summary: "", symbol: "calendar")
+    static let descriptor = ModuleDescriptor(id: "t4", name: "T4", summary: "", symbol: "calendar", widgetMinWidth: 60)
     var liveActivity: LiveActivity? { nil }
 }
 @MainActor @Observable private final class Tab5: TabModuleBase, IslandModule {
-    static let descriptor = ModuleDescriptor(id: "t5", name: "T5", summary: "", symbol: "timer")
+    static let descriptor = ModuleDescriptor(id: "t5", name: "T5", summary: "", symbol: "timer", widgetMinWidth: 60)
     var liveActivity: LiveActivity? { nil }
 }
 @MainActor @Observable private final class Tab6: TabModuleBase, IslandModule {
-    static let descriptor = ModuleDescriptor(id: "t6", name: "T6", summary: "", symbol: "note.text")
+    static let descriptor = ModuleDescriptor(id: "t6", name: "T6", summary: "", symbol: "note.text", widgetMinWidth: 60)
     var liveActivity: LiveActivity? { nil }
 }
 @MainActor @Observable private final class Tab7: TabModuleBase, IslandModule {
-    static let descriptor = ModuleDescriptor(id: "t7", name: "T7", summary: "", symbol: "doc.on.clipboard")
+    static let descriptor = ModuleDescriptor(id: "t7", name: "T7", summary: "", symbol: "doc.on.clipboard", widgetMinWidth: 60)
     var liveActivity: LiveActivity? { nil }
 }
 @MainActor @Observable private final class Tab8: TabModuleBase, IslandModule {
-    static let descriptor = ModuleDescriptor(id: "t8", name: "T8", summary: "", symbol: "square.stack.3d.up")
+    static let descriptor = ModuleDescriptor(id: "t8", name: "T8", summary: "", symbol: "square.stack.3d.up", widgetMinWidth: 60)
     var liveActivity: LiveActivity? { nil }
 }
 @MainActor @Observable private final class Tab9: TabModuleBase, IslandModule {
-    static let descriptor = ModuleDescriptor(id: "t9", name: "T9", summary: "", symbol: "camera")
+    static let descriptor = ModuleDescriptor(id: "t9", name: "T9", summary: "", symbol: "camera", widgetMinWidth: 60)
     var liveActivity: LiveActivity? { nil }
 }
 
 @MainActor @Observable private final class Tab10: TabModuleBase, IslandModule {
-    static let descriptor = ModuleDescriptor(id: "t10", name: "T10", summary: "", symbol: "checklist")
+    static let descriptor = ModuleDescriptor(id: "t10", name: "T10", summary: "", symbol: "checklist", widgetMinWidth: 60)
     var liveActivity: LiveActivity? { nil }
 }
 @MainActor @Observable private final class Tab11: TabModuleBase, IslandModule {
-    static let descriptor = ModuleDescriptor(id: "t11", name: "T11", summary: "", symbol: "headphones")
+    static let descriptor = ModuleDescriptor(id: "t11", name: "T11", summary: "", symbol: "headphones", widgetMinWidth: 60)
     var liveActivity: LiveActivity? { nil }
 }
 
@@ -110,21 +111,43 @@ struct IslandOverflowTests {
     nonisolated static let shadowMargin: CGFloat = 36
     nonisolated static let notch = NotchMetrics(size: CGSize(width: 200, height: 38), isPhysical: true)
 
+    enum Layout: Sendable {
+        /// N pełnych stron (sprawdza pasek stron w nagłówku).
+        case fullPages(Int)
+        /// Jedna strona z N widżetami po równo (sprawdza wiersz widżetów).
+        case widgets(Int)
+
+        var moduleCount: Int {
+            switch self {
+            case .fullPages(let count), .widgets(let count): count
+            }
+        }
+
+        var label: String {
+            switch self {
+            case .fullPages(let count): "strony:\(count)"
+            case .widgets(let count): "widżety:\(count)"
+            }
+        }
+    }
+
     struct Case: CustomTestStringConvertible, Sendable {
         let phase: IslandPhase
         let size: IslandSize
-        let tabCount: Int
+        let layout: Layout
         let wing: CGFloat?
-        var testDescription: String { "\(phase) \(size) zakładki:\(tabCount) skrzydło:\(wing.map { "\(Int($0))" } ?? "brak")" }
+        var testDescription: String { "\(phase) \(size) \(layout.label) skrzydło:\(wing.map { "\(Int($0))" } ?? "brak")" }
     }
 
     nonisolated static let cases: [Case] = {
         var result: [Case] = []
+        let layouts: [Layout] = [.fullPages(0), .fullPages(1), .fullPages(4), .fullPages(12),
+                                 .widgets(1), .widgets(2), .widgets(3), .widgets(4)]
         for phase in [IslandPhase.collapsed, .expanded] {
             for size in IslandSize.allCases {
-                for tabCount in [0, 1, 4, 12] {
+                for layout in layouts {
                     for wing in [nil, IslandLayout.wingWidth, 70, IslandLayout.maxWingWidth] as [CGFloat?] {
-                        result.append(Case(phase: phase, size: size, tabCount: tabCount, wing: wing))
+                        result.append(Case(phase: phase, size: size, layout: layout, wing: wing))
                     }
                 }
             }
@@ -136,10 +159,26 @@ struct IslandOverflowTests {
     func noContentOutsideIsland(_ scenario: Case) async throws {
         Scenario.activityWing = scenario.wing
         let defaults = UserDefaults(suiteName: "overflow.\(UUID())")!
-        let catalog = Array(allTabModules.prefix(max(scenario.tabCount, 1)))
+        let catalog = Array(allTabModules.prefix(max(scenario.layout.moduleCount, 1)))
         let registry = ModuleRegistry(catalog: catalog, settings: SettingsStore(defaults: defaults),
                                       permissions: AllGranted(), requestExpand: {})
         for type in catalog { await registry.setEnabled(type.descriptor.id, true) }
+        let ids = catalog.map { $0.descriptor.id }
+        switch scenario.layout {
+        case .fullPages(let count):
+            var board = IslandBoard()
+            for id in ids.prefix(count) { board = board.addingModulePage(id) }
+            registry.setBoard(board)
+        case .widgets(let count):
+            let (empty, page) = IslandBoard().addingWidgetPage()
+            var board = empty
+            // Wszystkie moduły testowe znoszą ćwiartkę wyspy.
+            let minimum: IslandBoard.Minimum = { _ in .quarter }
+            for id in ids.prefix(count) {
+                board = try board.inserting(moduleID: id, intoPage: page, at: .max, minimum: minimum)
+            }
+            registry.setBoard(board)
+        }
 
         let expanded = scenario.size.expandedSize
         let model = IslandViewModel(phase: scenario.phase, notch: Self.notch, expandedSize: expanded, registry: registry)

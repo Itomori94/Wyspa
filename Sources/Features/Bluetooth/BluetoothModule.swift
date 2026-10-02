@@ -10,7 +10,8 @@ public final class BluetoothModule: IslandModule {
         name: "Bluetooth",
         summary: "Pokazuje podłączenie słuchawek i innych urządzeń Bluetooth z poziomem ich baterii.",
         symbol: "headphones",
-        permissions: [.bluetooth]
+        permissions: [.bluetooth],
+        widgetMinWidth: 130
     )
 
     static let eventDuration: Duration = .seconds(4)
@@ -69,6 +70,10 @@ public final class BluetoothModule: IslandModule {
 
     public func makeExpandedView() -> AnyView? {
         AnyView(BluetoothExpandedView(devices: devices))
+    }
+
+    public func makeWidgetView() -> AnyView? {
+        AnyView(BluetoothWidget(devices: devices))
     }
 
     private func handle(_ newEvent: BluetoothEvent?) {

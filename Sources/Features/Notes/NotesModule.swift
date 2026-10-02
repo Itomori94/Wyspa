@@ -11,7 +11,8 @@ public final class NotesModule: IslandModule {
         id: "notes",
         name: "Notatka",
         summary: "Szybka notatka z autozapisem. Kliknij w tekst, żeby pisać; Esc zwija wyspę.",
-        symbol: "note.text"
+        symbol: "note.text",
+        widgetMinWidth: 150
     )
 
     static let autosaveDelay: Duration = .milliseconds(600)
@@ -52,6 +53,10 @@ public final class NotesModule: IslandModule {
         AnyView(NotesView(module: self))
     }
 
+    public func makeWidgetView() -> AnyView? {
+        AnyView(NotesView(module: self, compact: true))
+    }
+
     func revealFile() {
         NSWorkspace.shared.activateFileViewerSelecting([store.fileURL])
     }
@@ -80,6 +85,7 @@ public final class NotesModule: IslandModule {
 
 struct NotesView: View {
     @Bindable var module: NotesModule
+    var compact = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
@@ -97,7 +103,12 @@ struct NotesView: View {
             }
             .font(.system(size: 13))
             .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(.white.opacity(0.06)))
-            HStack(spacing: 8) {
+            if !compact { statusRow }
+        }
+    }
+
+    private var statusRow: some View {
+        HStack(spacing: 8) {
                 if let problem = module.problem {
                     Label(problem, systemImage: "exclamationmark.triangle.fill").foregroundStyle(.orange).lineLimit(1)
                 } else {
@@ -112,6 +123,5 @@ struct NotesView: View {
                     .foregroundStyle(.white.opacity(0.55))
             }
             .font(.system(size: 10.5, weight: .medium))
-        }
     }
 }

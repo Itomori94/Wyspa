@@ -15,10 +15,10 @@ struct SettingsView: View {
                 .tabItem { Label("Wyspa", systemImage: "capsule") }
             ModulesSettingsView(registry: registry, permissions: permissions)
                 .tabItem { Label("Moduły", systemImage: "square.grid.2x2") }
-            TabsSettingsView(settings: settings, registry: registry)
-                .tabItem { Label("Zakładki", systemImage: "rectangle.3.group") }
+            BoardEditorView(settings: settings, registry: registry)
+                .tabItem { Label("Układ", systemImage: "rectangle.3.group") }
         }
-        .frame(width: 560, height: 480)
+        .frame(width: 720, height: 620)
     }
 }
 

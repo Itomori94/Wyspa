@@ -177,7 +177,7 @@ final class IslandWindowController {
         observeChanges(
             { [weak self] in
                 _ = self?.registry.currentActivity
-                _ = self?.registry.tabs.count
+                _ = self?.registry.pages.count
             },
             isActive: { [weak self] in self?.isAlive ?? false },
             onChange: { [weak self] in self?.syncModuleState() }
@@ -186,7 +186,7 @@ final class IslandWindowController {
 
     private func syncModuleState() {
         let hasActivity = registry.currentActivity != nil
-        let tabCount = registry.tabs.count
+        let tabCount = registry.pages.count
         if hasActivity != state.hasActivity { send(.activityChanged(hasActivity: hasActivity)) }
         if tabCount != state.tabCount { send(.tabCountChanged(tabCount)) }
         updateInteractiveRect()

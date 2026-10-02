@@ -12,7 +12,8 @@ public final class RemindersModule: IslandModule {
         name: "Przypomnienia",
         summary: "Przypomnienia na dziś i zaległe; odhaczasz je jednym kliknięciem.",
         symbol: "checklist",
-        permissions: [.reminders]
+        permissions: [.reminders],
+        widgetMinWidth: 140
     )
 
     public private(set) var sections = ReminderSections.Grouped(overdue: [], today: [])
@@ -43,6 +44,7 @@ public final class RemindersModule: IslandModule {
     public var liveActivity: LiveActivity? { nil }
 
     public func makeExpandedView() -> AnyView? { AnyView(RemindersView(module: self)) }
+    public func makeWidgetView() -> AnyView? { AnyView(RemindersView(module: self, compact: true)) }
 
     func complete(_ item: ReminderItem) {
         guard let reminder = reminders[item.id] else { return }
@@ -98,6 +100,7 @@ private struct ReminderBox: @unchecked Sendable {
 
 struct RemindersView: View {
     let module: RemindersModule
+    var compact = false
 
     var body: some View {
         let sections = module.sections
@@ -109,13 +112,18 @@ struct RemindersView: View {
         } else {
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: 2) {
-                    if !sections.overdue.isEmpty {
-                        SectionTitle(text: "Zaległe", tint: .red)
-                        ForEach(sections.overdue) { ReminderRow(item: $0, complete: module.complete) }
-                    }
-                    if !sections.today.isEmpty {
-                        SectionTitle(text: "Dziś", tint: .white.opacity(0.5))
-                        ForEach(sections.today) { ReminderRow(item: $0, complete: module.complete) }
+                    if compact {
+                        SectionTitle(text: "Przypomnienia", tint: .white.opacity(0.5))
+                        ForEach(Array((sections.overdue + sections.today).prefix(5))) { ReminderRow(item: $0, complete: module.complete) }
+                    } else {
+                        if !sections.overdue.isEmpty {
+                            SectionTitle(text: "Zaległe", tint: .red)
+                            ForEach(sections.overdue) { ReminderRow(item: $0, complete: module.complete) }
+                        }
+                        if !sections.today.isEmpty {
+                            SectionTitle(text: "Dziś", tint: .white.opacity(0.5))
+                            ForEach(sections.today) { ReminderRow(item: $0, complete: module.complete) }
+                        }
                     }
                 }
             }

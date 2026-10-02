@@ -10,7 +10,8 @@ public final class TimerModule: IslandModule {
         id: "timer",
         name: "Timer",
         summary: "Minutnik, stoper i Pomodoro z odliczaniem widocznym w zwiniętej wyspie.",
-        symbol: "timer"
+        symbol: "timer",
+        widgetMinWidth: 110
     )
 
     public enum Mode: String, CaseIterable, Codable {
@@ -93,6 +94,10 @@ public final class TimerModule: IslandModule {
 
     public func makeExpandedView() -> AnyView? {
         AnyView(TimerExpandedView(module: self))
+    }
+
+    public func makeWidgetView() -> AnyView? {
+        AnyView(TimerWidget(module: self))
     }
 
     // MARK: - Akcje

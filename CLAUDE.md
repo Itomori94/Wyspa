@@ -136,9 +136,18 @@ APP=$PWD/build/Wyspa.app/Contents
 - Nagłówek rozwiniętej wyspy: lewa połowa | przerwa pod notchem | prawa połowa, każda połowa to `ViewThatFits`
   z wariantami od najbogatszego; ostatni wariant mieści się zawsze. Prawa połowa: zakładki ze skrzydłem →
   kompaktowe ze skrzydłem → same zakładki → przewijany pasek (zakładki mają pierwszeństwo przed ozdobnym skrzydłem).
-- **Zakładki**: kolejność i widoczność w `SettingsStore` (`tabOrder`, `hiddenTabs`), karta „Zakładki” w ustawieniach
-  (przeciąganie). Prawa połowa nagłówka według `TabStripPlan` (czysta funkcja): pełny pasek ze skrzydłem → kompaktowy →
-  bez skrzydła → część zakładek + menu „⋯”; wybrana zakładka zawsze widoczna. Bez przewijania.
+- **Układ wyspy** (`WyspaCore/Board/IslandBoard.swift`, niemutowalny, testowany): strony z widżetami obok siebie
+  albo pełnym widokiem modułu. Szerokości w dwunastkach wnętrza wyspy, stopnie ¼ ⅓ ½ ⅔ ¾ całość; minimalna szerokość
+  widżetu z `ModuleDescriptor.widgetMinWidth` (punkty → stopień przez `IslandBoard.minimumWidth`). Wstawianie bierze
+  wolne miejsce, a gdy go brak — równy podział; dzielnik przesuwa szerokości skokowo, suma pary bez zmian.
+  Zapis w `SettingsStore.board`; bez zapisu `ModuleRegistry.board` buduje układ startowy. Nowo włączony moduł
+  spoza układu dostaje stronę na końcu. `ModuleRegistry.pages` pomija wyłączone moduły i puste strony.
+- **Edytor układu** (`WyspaApp/Settings/BoardEditorView.swift`, karta „Układ”): podgląd wyspy w skali z prawdziwymi
+  widżetami (bez interakcji), przeciąganie z palety, między stronami i z powrotem na paletę (usuwa), uchwyty dzielników,
+  menu szerokości, strony przeciągane w pasku. Każda zmiana przez `apply { … }` — błąd `BoardError` jako komunikat.
+- Pasek stron w nagłówku: `TabStripPlan` (czysta funkcja) — pełny → kompaktowy → bez skrzydła → część + menu „⋯”.
+- **Pułapka kompilatora (Swift 6.4)**: ścieżka klucza do statycznej właściwości na `any IslandModule.Type`
+  (`catalog.map(\.descriptor.id)`) wywala `swift-frontend` (SILGen). Używaj zamknięcia `{ $0.descriptor.id }`.
 - Test wizualny `WyspaUITests/IslandOverflowTests`: renderuje wyspę poza ekranem (fazy × rozmiary × 0–10 zakładek ×
   szerokości skrzydeł) i wymaga braku jasnych pikseli poza kształtem. Podgląd klatek:
   `WYSPA_RENDER_DIR=/katalog swift test --filter IslandOverflowTests`.

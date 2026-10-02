@@ -12,12 +12,27 @@ public struct ModuleEntry: Identifiable {
     public var id: String { descriptor.id }
 }
 
-/// Zakładka rozwiniętej wyspy.
-public struct ModuleTab: Identifiable {
-    public let id: String
+/// Strona rozwiniętej wyspy gotowa do wyświetlenia.
+public struct IslandPage: Identifiable {
+    public struct Widget: Identifiable {
+        public let id: UUID
+        public let moduleID: String
+        public let name: String
+        public let width: WidgetWidth
+        public let content: AnyView
+    }
+
+    public enum Content {
+        case widgets([Widget])
+        case module(AnyView)
+    }
+
+    public let id: UUID
     public let name: String
     public let symbol: String
-    public let content: AnyView
+    public let content: Content
+    /// Moduły obecne na stronie (do kierowania upuszczeń).
+    public let moduleIDs: [String]
 }
 
 /// Tworzy, włącza i wyłącza moduły zgodnie z ustawieniami i uprawnieniami.
@@ -67,21 +82,66 @@ public final class ModuleRegistry {
             .max { $0.priority < $1.priority }
     }
 
-    /// Zakładki widoczne w wyspie, w kolejności z ustawień.
-    public var tabs: [ModuleTab] {
-        allTabs.filter { !settings.hiddenTabs.contains($0.id) }
+    /// Układ wyspy: zapisany albo startowy z bieżących modułów.
+    public var board: IslandBoard {
+        settings.board ?? IslandBoard.initial(
+            widgetModules: activeModules.filter { $0.makeWidgetView() != nil }.map { type(of: $0).descriptor.id }
+                .filter { !Self.preferredFullPages.contains($0) },
+            pageModules: activeModules.filter { type(of: $0).descriptor.providesPage }.map { type(of: $0).descriptor.id }
+                .filter { id in !activeModules.contains { type(of: $0).descriptor.id == id && $0.makeWidgetView() != nil }
+                    || Self.preferredFullPages.contains(id) },
+            minimum: minimumWidth(for:)
+        )
     }
 
-    /// Wszystkie zakładki działających modułów (także ukryte), w kolejności z ustawień — do edycji w ustawieniach.
-    public var allTabs: [ModuleTab] {
-        let tabs = activeModules.compactMap { module -> ModuleTab? in
+    /// Moduły, które w układzie startowym lepiej wyglądają na pełnej stronie niż w widżecie.
+    static let preferredFullPages: Set<String> = ["shelf", "clipboard"]
+
+    /// Strony do wyświetlenia: tylko działające moduły; puste strony są pomijane.
+    public var pages: [IslandPage] {
+        board.pages.compactMap(resolve)
+    }
+
+    public func setBoard(_ newBoard: IslandBoard) {
+        settings.setBoard(newBoard)
+    }
+
+    /// Minimalna szerokość widżetu modułu przy bieżącym rozmiarze wyspy.
+    public func minimumWidth(for moduleID: String) -> WidgetWidth {
+        let points = catalog.first { $0.descriptor.id == moduleID }?.descriptor.widgetMinWidth ?? 0
+        return IslandBoard.minimumWidth(points: points, innerWidth: settings.expandedInnerWidth)
+    }
+
+    public func descriptor(for moduleID: String) -> ModuleDescriptor? {
+        catalog.first { $0.descriptor.id == moduleID }?.descriptor
+    }
+
+    /// Widok widżetu działającego modułu (podgląd w edytorze).
+    public func widgetView(for moduleID: String) -> AnyView? {
+        instances[moduleID]?.makeWidgetView()
+    }
+
+    public func isActive(_ moduleID: String) -> Bool {
+        instances[moduleID] != nil
+    }
+
+    private func resolve(_ page: BoardPage) -> IslandPage? {
+        switch page.content {
+        case .module(let id):
+            guard let module = instances[id], let view = module.makeExpandedView() else { return nil }
             let descriptor = type(of: module).descriptor
-            return module.makeExpandedView().map {
-                ModuleTab(id: descriptor.id, name: descriptor.name, symbol: descriptor.symbol, content: $0)
+            return IslandPage(id: page.id, name: descriptor.name, symbol: descriptor.symbol, content: .module(view), moduleIDs: [id])
+        case .widgets(let widgets):
+            let resolved = widgets.compactMap { widget -> IslandPage.Widget? in
+                guard let module = instances[widget.moduleID], let view = module.makeWidgetView() else { return nil }
+                return IslandPage.Widget(id: widget.id, moduleID: widget.moduleID, name: type(of: module).descriptor.name,
+                                         width: widget.width, content: view)
             }
+            guard !resolved.isEmpty else { return nil }
+            let name = resolved.map(\.name).joined(separator: " · ")
+            return IslandPage(id: page.id, name: name, symbol: "rectangle.split.3x1", content: .widgets(resolved),
+                              moduleIDs: resolved.map(\.moduleID))
         }
-        let order = settings.orderedTabs(tabs.map(\.id))
-        return order.compactMap { id in tabs.first { $0.id == id } }
     }
 
     // MARK: - Przeciąganie
@@ -94,11 +154,16 @@ public final class ModuleRegistry {
             .filter { seen.insert($0).inserted }
     }
 
-    /// Zakładka modułu przyjmującego upuszczenia, pokazywana przy przeciąganiu nad wyspą.
+    /// Strona z modułem przyjmującym upuszczenia (najpierw pełny widok, potem widżet), pokazywana przy przeciąganiu.
     public var dropTabIndex: Int? {
         guard let first = dropModules.first else { return nil }
         let id = type(of: first).descriptor.id
-        return tabs.firstIndex { $0.id == id }
+        let pages = pages
+        let fullPage = pages.firstIndex { page in
+            if case .module = page.content { return page.moduleIDs == [id] }
+            return false
+        }
+        return fullPage ?? pages.firstIndex { $0.moduleIDs.contains(id) }
     }
 
     /// Kieruje upuszczenie do modułu właściciela strefy, a bez strefy do pierwszego modułu przyjmującego.
@@ -141,10 +206,25 @@ public final class ModuleRegistry {
         if enabled {
             settings.setModule(id, enabled: true)
             await activate(type, promptForPermissions: true)
+            placeNewlyEnabled(type)
         } else {
             settings.setModule(id, enabled: false)
             deactivate(id)
             problems = problems.filter { $0.key != id }
+        }
+    }
+
+    /// Nowo włączony moduł trafia do zapisanego układu jako pełna strona albo widżet na nowej stronie.
+    private func placeNewlyEnabled(_ type: any IslandModule.Type) {
+        let id = type.descriptor.id
+        guard instances[id] != nil, let saved = settings.board, !saved.contains(moduleID: id) else { return }
+        if type.descriptor.providesPage {
+            settings.setBoard(saved.addingModulePage(id))
+        } else if type.descriptor.widgetMinWidth != nil {
+            let (withPage, pageID) = saved.addingWidgetPage()
+            if let placed = try? withPage.inserting(moduleID: id, intoPage: pageID, at: 0, minimum: minimumWidth(for:)) {
+                settings.setBoard(placed)
+            }
         }
     }
 

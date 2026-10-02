@@ -12,7 +12,8 @@ public final class CalendarModule: IslandModule {
         name: "Kalendarz",
         summary: "Plan dnia i najbliższe spotkanie w zwiniętej wyspie na 10 minut przed startem, z przyciskiem „Dołącz”.",
         symbol: "calendar",
-        permissions: [.calendars]
+        permissions: [.calendars],
+        widgetMinWidth: 140
     )
 
     public private(set) var events: [DayEvent] = []
@@ -59,6 +60,10 @@ public final class CalendarModule: IslandModule {
 
     public func makeExpandedView() -> AnyView? {
         AnyView(DayView(events: events, highlighted: active?.id))
+    }
+
+    public func makeWidgetView() -> AnyView? {
+        AnyView(CalendarWidget(events: events))
     }
 
     private func reload() {

@@ -10,7 +10,8 @@ public final class MediaModule: IslandModule {
         id: "media",
         name: "Teraz odtwarzane",
         summary: "Okładka, tytuł, pasek przewijania i sterowanie odtwarzaniem z całego systemu.",
-        symbol: "music.note"
+        symbol: "music.note",
+        widgetMinWidth: 150
     )
 
     public enum SourceStatus: Equatable {
@@ -96,6 +97,10 @@ public final class MediaModule: IslandModule {
 
     public func makeSettingsView() -> AnyView? {
         AnyView(MediaSettingsView(module: self))
+    }
+
+    public func makeWidgetView() -> AnyView? {
+        AnyView(MediaWidget(module: self))
     }
 
     public func send(_ command: MediaCommand) {

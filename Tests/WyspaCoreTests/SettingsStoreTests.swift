@@ -84,35 +84,22 @@ struct SettingsStoreTests {
 }
 
 @MainActor
-@Suite("Kolejność i widoczność zakładek")
-struct TabOrderTests {
-    private func store() -> SettingsStore {
-        SettingsStore(defaults: UserDefaults(suiteName: "wyspa.tabs.\(UUID().uuidString)")!)
-    }
-
-    @Test("Bez zapisanej kolejności zostaje kolejność katalogu")
-    func defaultOrder() {
-        #expect(store().orderedTabs(["media", "shelf", "timer"]) == ["media", "shelf", "timer"])
-    }
-
-    @Test("Zapisana kolejność, nowe moduły na końcu")
-    func savedOrder() {
-        let settings = store()
-        settings.setTabOrder(["timer", "media"])
-        #expect(settings.orderedTabs(["media", "shelf", "timer", "notes"]) == ["timer", "media", "shelf", "notes"])
-    }
-
-    @Test("Duplikaty w kolejności są usuwane, ustawienia przetrwają restart")
+@Suite("Zapis układu wyspy")
+struct BoardPersistenceTests {
+    @Test("Układ przetrwa restart, brak układu = nil")
     func persistence() {
-        let defaults = UserDefaults(suiteName: "wyspa.tabs.\(UUID().uuidString)")!
-        let settings = SettingsStore(defaults: defaults)
-        settings.setTabOrder(["a", "b", "a"])
-        settings.setTab("b", visible: false)
-        let reloaded = SettingsStore(defaults: defaults)
-        #expect(reloaded.tabOrder == ["a", "b"])
-        #expect(reloaded.hiddenTabs == ["b"])
-        reloaded.setTab("b", visible: true)
-        #expect(reloaded.hiddenTabs.isEmpty)
+        let defaults = UserDefaults(suiteName: "wyspa.board.\(UUID().uuidString)")!
+        #expect(SettingsStore(defaults: defaults).board == nil)
+        let board = IslandBoard().addingModulePage("shelf")
+        SettingsStore(defaults: defaults).setBoard(board)
+        #expect(SettingsStore(defaults: defaults).board == board)
+    }
+
+    @Test("Wnętrze wyspy zależy od rozmiaru")
+    func innerWidth() {
+        let settings = SettingsStore(defaults: UserDefaults(suiteName: "wyspa.board.\(UUID().uuidString)")!)
+        settings.islandSize = .small
+        #expect(settings.expandedInnerWidth == 452)
     }
 }
 
