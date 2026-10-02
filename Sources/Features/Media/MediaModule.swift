@@ -66,6 +66,9 @@ public final class MediaModule: IslandModule {
     @ObservationIgnored private var artworkData: Data?
     @ObservationIgnored private let log = Log.logger("media")
     @ObservationIgnored private let airPlayRunner = ScriptRunner()
+    @ObservationIgnored private var artworkLookups: [String: Data?] = [:]
+    @ObservationIgnored private var artworkLookupsInFlight: Set<String> = []
+    private static let artworkLookupLimit = 50
 
     public required init(context: ModuleContext) {
         self.context = context
@@ -247,6 +250,30 @@ public final class MediaModule: IslandModule {
             }
         }
         nowPlaying = update
+        if let update, update.artwork == nil, artworkData == nil { lookUpArtwork(for: update) }
+    }
+
+    /// Okładka z katalogu iTunes, gdy Muzyka jej nie oddaje (subskrypcja przez AirPlay). Wynik — także brak —
+    /// zapamiętany dla utworu, więc jeden utwór to najwyżej jedno zapytanie.
+    private func lookUpArtwork(for track: NowPlaying) {
+        guard track.bundleIdentifier == ScriptablePlayer.music.rawValue else { return }
+        let key = [track.artist ?? "", track.title, track.album ?? ""].joined(separator: "\u{1F}")
+        if let cached = artworkLookups[key] {
+            if let cached { updateArtwork(cached) }
+            return
+        }
+        guard !artworkLookupsInFlight.contains(key) else { return }
+        artworkLookupsInFlight.insert(key)
+        Task { [weak self] in
+            let data = await ArtworkLookup.fetch(title: track.title, artist: track.artist)
+            guard let self else { return }
+            self.artworkLookupsInFlight.remove(key)
+            if self.artworkLookups.count >= Self.artworkLookupLimit { self.artworkLookups = [:] }
+            self.artworkLookups[key] = .some(data)
+            if let data, self.artworkData == nil, self.nowPlaying?.isSameTrack(as: track) == true {
+                self.updateArtwork(data)
+            }
+        }
     }
 
     private func updateArtwork(_ data: Data?) {

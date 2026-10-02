@@ -75,6 +75,8 @@ dźwięk przechodzi wyłącznie na wybrany głośnik.
 
 Muzyka grająca przez AirPlay (np. na Apple TV) nie jest widoczna dla MediaRemote — wtedy wyspa bierze dane wprost
 z aplikacji Muzyka (AppleScript, bez odpytywania). Przy pierwszym razie macOS zapyta o zgodę na sterowanie Muzyką.
+Utwory z subskrypcji Apple Music nie mają wtedy okładki na dysku — Wyspa szuka jej w katalogu iTunes
+(itunes.apple.com, wysyłane są tylko wykonawca i tytuł; najwyżej jedno zapytanie na utwór).
 
 ### Półka
 
