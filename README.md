@@ -105,6 +105,9 @@ Zakładka z poziomem baterii i szacowanym czasem ładowania albo pracy.
 
 Krótka aktywność po podłączeniu i odłączeniu urządzenia: ikona (AirPods, słuchawki, klawiatura, mysz…) i poziom baterii.
 Zakładka z listą połączonych urządzeń i baterią lewej i prawej słuchawki oraz etui.
+Gdy bateria urządzenia spadnie do 20%, wyspa pokazuje czerwone ostrzeżenie — raz na rozładowanie (ponownie po
+naładowaniu powyżej 30%). Poziom jest odczytywany co 5 minut, tylko gdy podłączone jest urządzenie podające baterię.
+Baterii iPhone'a macOS nie udostępnia publicznie, więc Wyspa jej nie pokazuje.
 
 ### Układ wyspy
 

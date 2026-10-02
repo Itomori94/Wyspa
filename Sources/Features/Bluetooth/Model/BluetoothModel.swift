@@ -95,4 +95,5 @@ public struct ConnectedDevice: Equatable, Identifiable, Sendable {
 public enum BluetoothEvent: Equatable, Sendable {
     case connected(ConnectedDevice)
     case disconnected(ConnectedDevice)
+    case lowBattery(ConnectedDevice)
 }
