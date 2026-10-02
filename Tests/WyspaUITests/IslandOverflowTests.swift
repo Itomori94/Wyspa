@@ -17,6 +17,15 @@ private final class AllGranted: PermissionProviding {
 @MainActor
 private enum Scenario {
     static var activityWing: CGFloat?
+    /// Wysokość karty pod notchem (powiadomienie, HUD); nil = bez karty.
+    static var detailHeight: CGFloat?
+}
+
+/// Za duża, jasna karta: sprawdza, że wyspa przycina kartę do swojego kształtu.
+private struct OversizedCard: View {
+    var body: some View {
+        Rectangle().fill(.white).frame(width: 2000, height: 400)
+    }
 }
 
 /// Szeroka, jasna treść zakładki: wypełnia całą dostępną szerokość jak widok mediów.
@@ -45,7 +54,16 @@ private class TabModuleBase {
     static let descriptor = ModuleDescriptor(id: "t0", name: "T0", summary: "", symbol: "music.note", widgetMinWidth: 60)
     var liveActivity: LiveActivity? {
         Scenario.activityWing.map { wing in
-            LiveActivity(id: "a", priority: .hud, wingWidth: wing) {
+            if let detail = Scenario.detailHeight {
+                return LiveActivity(id: "a", priority: .hud, wingWidth: wing, detailHeight: detail) {
+                    Rectangle().fill(.white).frame(maxWidth: .infinity).frame(height: 10)
+                } trailing: {
+                    Rectangle().fill(.white).frame(maxWidth: .infinity).frame(height: 10)
+                } detail: {
+                    OversizedCard()
+                }
+            }
+            return LiveActivity(id: "a", priority: .hud, wingWidth: wing) {
                 Rectangle().fill(.white).frame(maxWidth: .infinity).frame(height: 10)
             } trailing: {
                 Rectangle().fill(.white).frame(maxWidth: .infinity).frame(height: 10)
@@ -136,7 +154,11 @@ struct IslandOverflowTests {
         let size: IslandSize
         let layout: Layout
         let wing: CGFloat?
-        var testDescription: String { "\(phase) \(size) \(layout.label) skrzydło:\(wing.map { "\(Int($0))" } ?? "brak")" }
+        var detail: CGFloat? = nil
+        var testDescription: String {
+            "\(phase) \(size) \(layout.label) skrzydło:\(wing.map { "\(Int($0))" } ?? "brak")"
+                + (detail.map { " karta:\(Int($0))" } ?? "")
+        }
     }
 
     nonisolated static let cases: [Case] = {
@@ -152,12 +174,23 @@ struct IslandOverflowTests {
                 }
             }
         }
+        // Karta pod notchem (zwinięta wyspa i najechanie), także o wysokości ponad limit.
+        for phase in [IslandPhase.collapsed, .peek] {
+            for size in IslandSize.allCases {
+                for wing in [IslandLayout.wingWidth, IslandLayout.maxWingWidth] {
+                    for detail in [20, 72, IslandLayout.maxDetailHeight, 300] as [CGFloat] {
+                        result.append(Case(phase: phase, size: size, layout: .fullPages(1), wing: wing, detail: detail))
+                    }
+                }
+            }
+        }
         return result
     }()
 
     @Test("Żaden jasny piksel poza kształtem wyspy", arguments: cases)
     func noContentOutsideIsland(_ scenario: Case) async throws {
         Scenario.activityWing = scenario.wing
+        Scenario.detailHeight = scenario.detail
         let defaults = UserDefaults(suiteName: "overflow.\(UUID())")!
         let catalog = Array(allTabModules.prefix(max(scenario.layout.moduleCount, 1)))
         let registry = ModuleRegistry(catalog: catalog, settings: SettingsStore(defaults: defaults),
