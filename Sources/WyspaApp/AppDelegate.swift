@@ -20,7 +20,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             catalog: ModuleCatalog.all,
             settings: settings,
             permissions: permissions,
-            requestExpand: { [weak self] in self?.screens?.expandUnderPointer() }
+            requestExpand: { [weak self] moduleID in self?.screens?.expandUnderPointer(opening: moduleID) }
         )
         self.registry = registry
 

@@ -36,8 +36,8 @@ final class ScreenCoordinator {
         islandUnderPointer()?.send(.toggleRequested)
     }
 
-    func expandUnderPointer() {
-        islandUnderPointer()?.send(.clicked)
+    func expandUnderPointer(opening moduleID: String? = nil) {
+        islandUnderPointer()?.open(moduleID)
     }
 
     private func islandUnderPointer() -> IslandWindowController? {

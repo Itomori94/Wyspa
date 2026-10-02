@@ -42,7 +42,8 @@ public final class ModuleRegistry {
     private let catalog: [any IslandModule.Type]
     @ObservationIgnored private let settings: SettingsStore
     @ObservationIgnored private let permissions: PermissionProviding
-    @ObservationIgnored private let requestExpand: @MainActor () -> Void
+    /// Prośba o rozwinięcie wyspy na stronie danego modułu (nil = bez wskazania modułu).
+    @ObservationIgnored private let requestExpand: @MainActor (_ moduleID: String?) -> Void
     @ObservationIgnored private let log = Log.logger("modules")
 
     private var instances: [String: any IslandModule] = [:]
@@ -53,7 +54,7 @@ public final class ModuleRegistry {
         catalog: [any IslandModule.Type],
         settings: SettingsStore,
         permissions: PermissionProviding,
-        requestExpand: @escaping @MainActor () -> Void
+        requestExpand: @escaping @MainActor (_ moduleID: String?) -> Void
     ) {
         self.catalog = catalog
         self.settings = settings
@@ -187,6 +188,15 @@ public final class ModuleRegistry {
         currentActivityWithSource.flatMap { pageIndex(for: $0.moduleID) }
     }
 
+    /// Moduł, który zgłosił widoczną aktywność (do otwierania jego widoku po kliknięciu).
+    public var activityModuleID: String? { currentActivityWithSource?.moduleID }
+
+    /// Pełny widok modułu (albo jego widżet) do pokazania doraźnie, gdy moduł nie ma strony w układzie.
+    public func standaloneView(for moduleID: String) -> AnyView? {
+        guard let module = instances[moduleID] else { return nil }
+        return module.makeExpandedView() ?? module.makeWidgetView()
+    }
+
     /// Strona modułu: najpierw jego pełny widok, potem strona z jego widżetem.
     public func pageIndex(for moduleID: String) -> Int? {
         let pages = pages
@@ -288,7 +298,9 @@ public final class ModuleRegistry {
             return
         }
 
-        let context = ModuleContext(settings: settings.moduleSettings(for: descriptor.id), requestExpand: requestExpand,
+        let moduleID = descriptor.id
+        let context = ModuleContext(settings: settings.moduleSettings(for: descriptor.id),
+                                    requestExpand: { [weak self] in self?.requestExpand(moduleID) },
                                     deliver: { [weak self] providers, zoneID in self?.deliver(providers, toZone: zoneID) ?? false })
         let module = type.init(context: context)
         do {

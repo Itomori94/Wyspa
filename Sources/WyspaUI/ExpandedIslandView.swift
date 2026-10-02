@@ -12,7 +12,11 @@ struct ExpandedIslandView: View {
             header(tabs: tabs)
                 .frame(height: max(model.notch.size.height - 8, 24))
             Group {
-                if tabs.isEmpty {
+                if let standalone = model.standaloneModuleID, let view = model.registry.standaloneView(for: standalone) {
+                    view
+                        .id("standalone." + standalone)
+                        .transition(.opacity.combined(with: .offset(y: 6)))
+                } else if tabs.isEmpty {
                     EmptyModulesView(openSettings: model.onOpenSettings)
                 } else {
                     let index = min(model.selectedTab, tabs.count - 1)
@@ -67,7 +71,8 @@ struct ExpandedIslandView: View {
     private var headerActivity: LiveActivity? {
         guard let current = model.registry.currentActivityWithSource else { return nil }
         let pages = model.registry.pages
-        let pageModuleIDs = pages.isEmpty ? [] : pages[min(model.selectedTab, pages.count - 1)].moduleIDs
+        let pageModuleIDs = model.standaloneModuleID.map { [$0] }
+            ?? (pages.isEmpty ? [] : pages[min(model.selectedTab, pages.count - 1)].moduleIDs)
         return ModuleRegistry.showsInHeader(current.activity, from: current.moduleID, pageModuleIDs: pageModuleIDs)
             ? current.activity : nil
     }
@@ -78,6 +83,9 @@ struct ExpandedIslandView: View {
             activity.leading
                 .matchedGeometryEffect(id: ActivityGeometryID.leading(activity), in: namespace)
                 .frame(width: activity.wingWidth)
+                .contentShape(Rectangle())
+                .onTapGesture(perform: model.onOpenActivity)
+                .help("Otwórz moduł")
         }
     }
 
@@ -87,6 +95,9 @@ struct ExpandedIslandView: View {
             activity.trailing
                 .matchedGeometryEffect(id: ActivityGeometryID.trailing(activity), in: namespace)
                 .frame(width: activity.wingWidth)
+                .contentShape(Rectangle())
+                .onTapGesture(perform: model.onOpenActivity)
+                .help("Otwórz moduł")
         }
     }
 

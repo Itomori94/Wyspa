@@ -194,7 +194,7 @@ struct IslandOverflowTests {
         let defaults = UserDefaults(suiteName: "overflow.\(UUID())")!
         let catalog = Array(allTabModules.prefix(max(scenario.layout.moduleCount, 1)))
         let registry = ModuleRegistry(catalog: catalog, settings: SettingsStore(defaults: defaults),
-                                      permissions: AllGranted(), requestExpand: {})
+                                      permissions: AllGranted(), requestExpand: { _ in })
         for type in catalog { await registry.setEnabled(type.descriptor.id, true) }
         let ids = catalog.map { $0.descriptor.id }
         switch scenario.layout {

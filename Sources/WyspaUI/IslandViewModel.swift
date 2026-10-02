@@ -11,6 +11,8 @@ public final class IslandViewModel {
     public var selectedTab: Int
     /// Strefa upuszczania pod kursorem podczas przeciągania.
     public var dropTarget: String?
+    /// Moduł pokazywany doraźnie w rozwiniętej wyspie, bo nie ma strony w układzie (np. Claude prosi o zgodę).
+    public var standaloneModuleID: String?
     /// Ramki stref upuszczania we współrzędnych wyspy.
     public var dropZoneFrames: [String: CGRect] = [:]
 
@@ -18,6 +20,8 @@ public final class IslandViewModel {
     @ObservationIgnored public var onSelectTab: (Int) -> Void = { _ in }
     @ObservationIgnored public var onOpenSettings: () -> Void = {}
     @ObservationIgnored public var onClick: () -> Void = {}
+    /// Kliknięcie aktywności w nagłówku rozwiniętej wyspy: otwiera widok jej modułu.
+    @ObservationIgnored public var onOpenActivity: () -> Void = {}
     @ObservationIgnored public var onDragEntered: () -> Void = {}
     @ObservationIgnored public var onDragExited: () -> Void = {}
     @ObservationIgnored public var onDropFinished: () -> Void = {}

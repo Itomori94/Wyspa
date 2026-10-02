@@ -139,7 +139,7 @@ struct ModuleRegistryTests {
             catalog: [PlainModule.self, CameraModule.self],
             settings: settings,
             permissions: permissions,
-            requestExpand: {}
+            requestExpand: { _ in }
         )
     }
 
@@ -240,7 +240,7 @@ struct ModuleRegistryTests {
         let settings = makeSettings()
         let registry = ModuleRegistry(
             catalog: [PlainModule.self, DropModule.self], settings: settings,
-            permissions: FakePermissions(), requestExpand: {}
+            permissions: FakePermissions(), requestExpand: { _ in }
         )
         #expect(registry.dropTypes.isEmpty)
         #expect(!registry.performDrop([], zoneID: nil))
@@ -283,7 +283,7 @@ struct ModuleRegistryTests {
         HUDLikeModule.showing = false
         let registry = ModuleRegistry(
             catalog: [MediaLikeModule.self, HUDLikeModule.self], settings: makeSettings(),
-            permissions: FakePermissions(), requestExpand: {}
+            permissions: FakePermissions(), requestExpand: { _ in }
         )
         await registry.setEnabled("media-like", true)
         await registry.setEnabled("hud-like", true)
@@ -310,7 +310,7 @@ struct ModuleRegistryTests {
         let settings = makeSettings()
         let registry = ModuleRegistry(
             catalog: [PlainModule.self, DropModule.self], settings: settings,
-            permissions: FakePermissions(), requestExpand: {}
+            permissions: FakePermissions(), requestExpand: { _ in }
         )
         await registry.setEnabled("plain", true)
         await registry.setEnabled("drop", true)
@@ -331,7 +331,7 @@ struct ModuleRegistryTests {
         let settings = makeSettings()
         let registry = ModuleRegistry(
             catalog: [PlainModule.self, DropModule.self], settings: settings,
-            permissions: FakePermissions(), requestExpand: {}
+            permissions: FakePermissions(), requestExpand: { _ in }
         )
         await registry.setEnabled("plain", true)
         registry.setBoard(IslandBoard().addingModulePage("plain"))
@@ -344,7 +344,7 @@ struct ModuleRegistryTests {
     func disableWhilePending() async {
         let settings = makeSettings()
         let permissions = SlowPermissions()
-        let registry = ModuleRegistry(catalog: [CameraModule.self], settings: settings, permissions: permissions, requestExpand: {})
+        let registry = ModuleRegistry(catalog: [CameraModule.self], settings: settings, permissions: permissions, requestExpand: { _ in })
         Probe.reset()
         let enabling = Task { await registry.setEnabled("camera", true) }
         await permissions.waitUntilAsked()
@@ -436,7 +436,7 @@ struct ActivityTabTests {
     func activityTab() async {
         let settings = SettingsStore(defaults: UserDefaults(suiteName: "wyspa.tests.\(UUID().uuidString)")!)
         let registry = ModuleRegistry(catalog: [PlainModule.self, ActivityPageModule.self], settings: settings,
-                                      permissions: FakePermissions(), requestExpand: {})
+                                      permissions: FakePermissions(), requestExpand: { _ in })
         await registry.setEnabled("plain", true)
         await registry.setEnabled("activity-page", true)
         ActivityPageModule.active = false
@@ -445,6 +445,8 @@ struct ActivityTabTests {
         defer { ActivityPageModule.active = false }
         #expect(registry.activityTabIndex == registry.pageIndex(for: "activity-page"))
         #expect(registry.activityTabIndex != nil && registry.activityTabIndex != registry.pageIndex(for: "plain"))
+        #expect(registry.activityModuleID == "activity-page")
+        #expect(registry.standaloneView(for: "activity-page") != nil && registry.standaloneView(for: "brak") == nil)
     }
 
     @Test("Przekazanie do strefy innego modułu tylko, gdy ten moduł działa (bez zastępczego odbiorcy)")
@@ -452,7 +454,7 @@ struct ActivityTabTests {
         DropModule.drops = []
         let settings = SettingsStore(defaults: UserDefaults(suiteName: "wyspa.tests.\(UUID().uuidString)")!)
         let registry = ModuleRegistry(catalog: [PlainModule.self, DropModule.self], settings: settings,
-                                      permissions: FakePermissions(), requestExpand: {})
+                                      permissions: FakePermissions(), requestExpand: { _ in })
         await registry.setEnabled("plain", true)
         #expect(!registry.deliver([], toZone: "drop.store"))
         await registry.setEnabled("drop", true)

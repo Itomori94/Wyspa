@@ -180,4 +180,12 @@ struct IslandStateMachineTests {
         let without = reduce(withCard.state, .cardChanged(false))
         #expect(!without.state.hasCard && without.effects == [.schedule(.expand, after: config.hoverDelay)])
     }
+
+    @Test("Prośba modułu o rozwinięcie działa także, gdy wisi karta; rozwinięta nie zwija się")
+    func expandRequestedWithCard() {
+        let card = IslandState(phase: .collapsed, hasActivity: true, hasCard: true)
+        #expect(reduce(card, .expandRequested).state.phase == .expanded)
+        let expanded = reduce(IslandState(phase: .expanded), .expandRequested)
+        #expect(expanded.state.phase == .expanded && expanded.effects == [.cancel(.collapse)])
+    }
 }

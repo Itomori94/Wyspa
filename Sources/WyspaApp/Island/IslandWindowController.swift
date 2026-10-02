@@ -40,6 +40,7 @@ final class IslandWindowController {
         model.onOpenSettings = openSettings
         model.onSelectTab = { [weak self] index in self?.selectTab(index) }
         model.onClick = { [weak self] in self?.clicked() }
+        model.onOpenActivity = { [weak self] in self?.open(self?.registry.activityModuleID) }
         model.onDragEntered = { [weak self] in
             self?.send(.dragEntered(preferredTab: self?.registry.dropTabIndex))
         }
@@ -98,6 +99,7 @@ final class IslandWindowController {
                 model.phase = next.phase
             }
             panel.acceptsKeyboard = next.phase == .expanded
+            if next.phase != .expanded { model.standaloneModuleID = nil }
             if previous.phase == .expanded, panel.isKeyWindow { returnKeyboard() }
         }
         if next.selectedTab != model.selectedTab {
@@ -126,15 +128,30 @@ final class IslandWindowController {
     }
 
     private func selectTab(_ index: Int) {
+        model.standaloneModuleID = nil
         send(.tabSelected(index))
     }
 
     /// Kliknięcie zwiniętej wyspy z aktywnością (okładka, timer, Claude) otwiera stronę tego modułu.
     private func clicked() {
-        if state.phase != .expanded, !state.hasCard, let index = registry.activityTabIndex {
-            send(.tabSelected(index))
+        if state.phase != .expanded, !state.hasCard, let moduleID = registry.activityModuleID {
+            open(moduleID)
+        } else {
+            send(.clicked)
         }
-        send(.clicked)
+    }
+
+    /// Rozwija wyspę na stronie modułu; bez strony w układzie pokazuje jego widok doraźnie (np. zgoda dla Claude).
+    func open(_ moduleID: String?) {
+        if let moduleID {
+            if let index = registry.pageIndex(for: moduleID) {
+                model.standaloneModuleID = nil
+                send(.tabSelected(index))
+            } else if registry.standaloneView(for: moduleID) != nil {
+                model.standaloneModuleID = moduleID
+            }
+        }
+        send(.expandRequested)
     }
 
     private static func config(for screen: ScreenInfo, settings: SettingsStore) -> IslandConfig {
