@@ -141,8 +141,10 @@ APP=$PWD/build/Wyspa.app/Contents
   równy podział jest dokładny); starszy zapis w dwunastkach przeliczany przy odczycie (`unitScale`). Minimalna
   szerokość z `ModuleDescriptor.widgetMinWidth` (punkty → jednostki). Wstawianie bierze wolne miejsce, a gdy go brak —
   równy podział; dzielnik przesuwa szerokości płynnie, suma pary bez zmian; usunięcie oddaje miejsce pozostałym.
-  Zapis w `SettingsStore.board`; bez zapisu `ModuleRegistry.board` buduje układ startowy. Nowo włączony moduł
-  spoza układu dostaje stronę na końcu. `ModuleRegistry.pages` pomija wyłączone moduły i puste strony.
+  Zapis w `SettingsStore.board`; bez zapisu `ModuleRegistry.board` = `arrangedBoard` (układ automatyczny:
+  odtwarzacz, półka i schowek na pełnych stronach, pozostałe widżety po 3 na stronę). Nowo włączony moduł dołącza
+  do ostatniej strony z widżetami (`appendingWidget`); „Uporządkuj automatycznie” w edytorze zastępuje układ automatycznym.
+  Pasek stron w edytorze zawija się (`FlowLayout`) — nic w edytorze nie może być szersze niż okno. `ModuleRegistry.pages` pomija wyłączone moduły i puste strony.
 - **Edytor układu** (`WyspaApp/Settings/BoardEditorView.swift`, karta „Układ”): podgląd wyspy w skali z prawdziwymi
   widżetami (bez interakcji), przeciąganie z palety, między stronami i z powrotem na paletę (usuwa), uchwyty dzielników
   (gest liczony we współrzędnych wiersza, nie dzielnika — inaczej punkt odniesienia skacze i podgląd miga; w trakcie

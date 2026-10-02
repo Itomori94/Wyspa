@@ -96,8 +96,11 @@ private struct PageBar: View {
     let select: (UUID) -> Void
     let apply: (() throws -> IslandBoard) -> Void
 
+    @State private var confirmingArrange = false
+
     var body: some View {
-        HStack(spacing: 6) {
+        // Zawijanie do kolejnych wierszy: pasek nigdy nie poszerza edytora ponad okno.
+        FlowLayout(spacing: 6) {
             ForEach(Array(board.pages.enumerated()), id: \.element.id) { index, page in
                 PageChip(title: title(of: page), symbol: symbol(of: page), isSelected: page.id == selected,
                          select: { select(page.id) }, remove: { apply { board.removingPage(page.id) } })
@@ -113,7 +116,29 @@ private struct PageBar: View {
                     }
             }
             addMenu
-            Spacer()
+            arrangeButton
+        }
+    }
+
+    /// Układa wszystko od nowa według reguł automatycznych; wymaga potwierdzenia, bo zastępuje bieżący układ.
+    @ViewBuilder
+    private var arrangeButton: some View {
+        if confirmingArrange {
+            HStack(spacing: 4) {
+                Button("Zastąp bieżący układ") {
+                    registry.autoArrange()
+                    confirmingArrange = false
+                }
+                .buttonStyle(.borderedProminent)
+                Button("Anuluj") { confirmingArrange = false }
+            }
+            .fixedSize()
+        } else {
+            Button { confirmingArrange = true } label: {
+                Label("Uporządkuj automatycznie", systemImage: "wand.and.stars")
+            }
+            .fixedSize()
+            .help("Odtwarzacz, półka i schowek na osobnych stronach, pozostałe moduły po trzy widżety na stronę")
         }
     }
 

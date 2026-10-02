@@ -114,12 +114,30 @@ struct IslandBoardTests {
         #expect(IslandBoard.minimumWidth(points: 500, innerWidth: 452) == .full)
     }
 
-    @Test("Układ startowy z zachowaniem minimów, nadmiarowe widżety na osobnych stronach")
-    func initial() {
-        let board = IslandBoard.initial(widgetModules: ["media", "calendar", "timer", "power"],
-                                        pageModules: ["shelf", "timer"], minimum: minimum)
-        #expect(board.pages[0].widgets.map(\.moduleID) == ["media", "calendar", "timer"])
-        #expect(board.pages.dropFirst().map(\.content) == [.module("power"), .module("shelf")])
+    @Test("Układ automatyczny: widżety po trzy na stronę, pełne strony w kolejności")
+    func arranged() {
+        let board = IslandBoard.arranged([
+            .page("media"), .widget("timer"), .widget("notes"), .widget("power"),
+            .widget("bluetooth"), .page("shelf"), .widget("mirror"),
+        ], minimum: minimum)
+        #expect(board.pages.count == 4)
+        #expect(board.pages[0].content == .module("media"))
+        #expect(board.pages[1].widgets.map(\.moduleID) == ["timer", "notes", "power"])
+        #expect(board.pages[1].usedUnits == WidgetWidth.totalUnits)
+        #expect(board.pages[2].widgets.map(\.moduleID) == ["bluetooth", "mirror"])
+        #expect(board.pages[3].content == .module("shelf"))
+    }
+
+    @Test("Dołączanie widżetu: do ostatniej strony z miejscem, inaczej nowa strona, bez duplikatów")
+    func appending() {
+        var board = IslandBoard().addingModulePage("media")
+        for id in ["a", "b", "c", "d"] { board = board.appendingWidget(id, minimum: minimum) }
+        #expect(board.pages.map(\.widgets.count) == [0, 3, 1])
+        #expect(board.appendingWidget("a", minimum: minimum) == board)
+        // „media” potrzebuje ⅓: przy trzech widżetach na stronie trafia na nową, nawet poniżej limitu.
+        let (base, pageID) = IslandBoard().addingWidgetPage()
+        let crowded = (try? base.inserting(moduleID: "x", intoPage: pageID, at: 0, minimum: { _ in WidgetWidth(units: 100) })) ?? base
+        #expect(crowded.appendingWidget("media", minimum: { $0 == "x" ? WidgetWidth(units: 100) : WidgetWidth(units: 40) }).pages.count == 2)
     }
 
     @Test("Zapis i odczyt układu")

@@ -286,22 +286,36 @@ public struct IslandBoard: Codable, Equatable, Sendable {
 }
 
 extension IslandBoard {
-    /// Układ startowy: pierwsza strona z widżetami (tyle, ile zmieści się z zachowaniem minimów),
-    /// potem pełne strony — dla modułów stron oraz widżetów, które się nie zmieściły.
-    public static func initial(widgetModules: [String], pageModules: [String], minimum: Minimum) -> IslandBoard {
-        var (board, pageID) = IslandBoard().addingWidgetPage()
-        var overflow: [String] = []
-        for id in widgetModules {
-            if let next = try? board.inserting(moduleID: id, intoPage: pageID, at: .max, minimum: minimum) {
-                board = next
-            } else {
-                overflow.append(id)
+    /// Najwięcej widżetów na jednej stronie w układzie automatycznym (ręcznie można dodać więcej).
+    public static let autoWidgetsPerPage = 3
+
+    public enum Placement: Equatable, Sendable {
+        /// Moduł jako widżet (grupowany z innymi na stronie).
+        case widget(String)
+        /// Moduł jako pełna strona.
+        case page(String)
+    }
+
+    /// Układ automatyczny w podanej kolejności: pełne strony tam, gdzie wskazano, a widżety grupowane
+    /// po `autoWidgetsPerPage` na stronę z zachowaniem minimalnych szerokości.
+    public static func arranged(_ placements: [Placement], minimum: Minimum) -> IslandBoard {
+        placements.reduce(IslandBoard()) { board, placement in
+            switch placement {
+            case .page(let id): board.addingModulePage(id)
+            case .widget(let id): board.appendingWidget(id, minimum: minimum)
             }
         }
-        if board.pages.first?.widgets.isEmpty ?? true { board = board.removingPage(pageID) }
-        for id in overflow + pageModules where !board.contains(moduleID: id) {
-            board = board.addingModulePage(id)
+    }
+
+    /// Dodaje widżet do ostatniej strony z widżetami, jeśli jest na niej miejsce; inaczej na nowej stronie.
+    public func appendingWidget(_ moduleID: String, minimum: Minimum) -> IslandBoard {
+        guard !contains(moduleID: moduleID) else { return self }
+        if let last = pages.last(where: { if case .widgets = $0.content { true } else { false } }),
+           last.widgets.count < Self.autoWidgetsPerPage,
+           let placed = try? inserting(moduleID: moduleID, intoPage: last.id, at: .max, minimum: minimum) {
+            return placed
         }
-        return board
+        let (withPage, pageID) = addingWidgetPage()
+        return (try? withPage.inserting(moduleID: moduleID, intoPage: pageID, at: 0, minimum: minimum)) ?? self
     }
 }

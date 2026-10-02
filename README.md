@@ -110,7 +110,8 @@ Ustawienia → Układ to graficzny edytor rozwiniętej wyspy, podobny do NotchNo
 - **Szerokość**: przeciągnij uchwyt między widżetami — szerokość zmienia się płynnie, a w trakcie widać procent.
   Każdy widżet ma minimalną szerokość; edytor nie pozwoli zwęzić go bardziej.
 - Odtwarzacz na dużej szerokości (np. sam na stronie) wygląda jak pełny odtwarzacz z paskiem przewijania.
-- Nowo włączony moduł pojawia się na końcu jako osobna strona — przenieś go, gdzie chcesz.
+- Nowo włączony moduł dołącza do ostatniej strony z widżetami (najwyżej trzy na stronę), a odtwarzacz, półka
+  i schowek dostają własne strony. **Uporządkuj automatycznie** układa wszystko od nowa według tych reguł.
 
 ### Kalendarz i Przypomnienia
 

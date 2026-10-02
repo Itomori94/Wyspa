@@ -82,20 +82,30 @@ public final class ModuleRegistry {
             .max { $0.priority < $1.priority }
     }
 
-    /// Układ wyspy: zapisany albo startowy z bieżących modułów.
+    /// Układ wyspy: zapisany albo automatyczny z bieżących modułów.
     public var board: IslandBoard {
-        settings.board?.normalized() ?? IslandBoard.initial(
-            widgetModules: activeModules.filter { $0.makeWidgetView() != nil }.map { type(of: $0).descriptor.id }
-                .filter { !Self.preferredFullPages.contains($0) },
-            pageModules: activeModules.filter { type(of: $0).descriptor.providesPage }.map { type(of: $0).descriptor.id }
-                .filter { id in !activeModules.contains { type(of: $0).descriptor.id == id && $0.makeWidgetView() != nil }
-                    || Self.preferredFullPages.contains(id) },
-            minimum: minimumWidth(for:)
-        )
+        settings.board?.normalized() ?? arrangedBoard
     }
 
-    /// Moduły, które w układzie startowym lepiej wyglądają na pełnej stronie niż w widżecie.
+    /// Moduły, które w układzie automatycznym dostają pełną stronę zamiast widżetu.
     static let preferredFullPages: Set<String> = ["media", "shelf", "clipboard"]
+
+    /// Układ automatyczny z działających modułów w kolejności katalogu.
+    public var arrangedBoard: IslandBoard {
+        IslandBoard.arranged(activeModules.compactMap(placement(for:)), minimum: minimumWidth(for:))
+    }
+
+    /// Zastępuje zapisany układ automatycznym (przycisk „Uporządkuj automatycznie”).
+    public func autoArrange() {
+        settings.setBoard(arrangedBoard)
+    }
+
+    private func placement(for module: any IslandModule) -> IslandBoard.Placement? {
+        let descriptor = type(of: module).descriptor
+        let hasWidget = descriptor.widgetMinWidth != nil && module.makeWidgetView() != nil
+        if hasWidget && !Self.preferredFullPages.contains(descriptor.id) { return .widget(descriptor.id) }
+        return descriptor.providesPage ? .page(descriptor.id) : nil
+    }
 
     /// Strony do wyświetlenia: tylko działające moduły; puste strony są pomijane.
     public var pages: [IslandPage] {
@@ -214,17 +224,15 @@ public final class ModuleRegistry {
         }
     }
 
-    /// Nowo włączony moduł trafia do zapisanego układu jako pełna strona albo widżet na nowej stronie.
+    /// Nowo włączony moduł dołącza do zapisanego układu: widżet do ostatniej strony z widżetami (jeśli jest miejsce),
+    /// pełna strona tylko dla modułów, które jej wymagają.
     private func placeNewlyEnabled(_ type: any IslandModule.Type) {
         let id = type.descriptor.id
-        guard instances[id] != nil, let saved = settings.board, !saved.contains(moduleID: id) else { return }
-        if type.descriptor.providesPage {
-            settings.setBoard(saved.addingModulePage(id))
-        } else if type.descriptor.widgetMinWidth != nil {
-            let (withPage, pageID) = saved.addingWidgetPage()
-            if let placed = try? withPage.inserting(moduleID: id, intoPage: pageID, at: 0, minimum: minimumWidth(for:)) {
-                settings.setBoard(placed)
-            }
+        guard let module = instances[id], let saved = settings.board, !saved.contains(moduleID: id) else { return }
+        switch placement(for: module) {
+        case .widget(let id): settings.setBoard(saved.appendingWidget(id, minimum: minimumWidth(for:)))
+        case .page(let id): settings.setBoard(saved.addingModulePage(id))
+        case nil: break
         }
     }
 
