@@ -171,13 +171,42 @@ public final class QuickActionsModule: IslandModule {
         }
     }
 
-    /// Systemowy pasek zrzutów i nagrywania (jak ⇧⌘5): wybór obszaru, nagrywanie, zapis jak w ustawieniach systemu.
+    /// Nagrywanie wideo: systemowy pasek od razu w trybie nagrywania (`-J video`), z widocznymi kliknięciami.
+    /// Nagranie zostaje tam, gdzie system zapisuje zrzuty (inaczej na biurku), i trafia na Półkę.
     func startRecording() {
+        guard captureProcess == nil else { return }
         context.requestCollapse()
-        let screenshotApp = URL(fileURLWithPath: "/System/Applications/Utilities/Screenshot.app")
-        NSWorkspace.shared.openApplication(at: screenshotApp, configuration: NSWorkspace.OpenConfiguration()) { [weak self] _, error in
-            guard error != nil else { return }
-            Task { @MainActor in self?.show("Nie udało się otworzyć paska nagrywania") }
+        let defaults = UserDefaults(suiteName: "com.apple.screencapture")
+        let directory = QuickActionsLogic.recordingDirectory(systemLocation: defaults?.string(forKey: "location"),
+                                                             home: FileManager.default.homeDirectoryForCurrentUser)
+        let url = QuickActionsLogic.recordingURL(in: directory, at: Date())
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/sbin/screencapture")
+        process.arguments = ["-i", "-U", "-J", "video", "-k", url.path]
+        process.terminationHandler = { [weak self] finished in
+            Task { @MainActor in
+                guard let self, self.captureProcess === finished else { return }
+                self.captureProcess = nil
+                self.recordingFinished(url)
+            }
+        }
+        do {
+            try process.run()
+            captureProcess = process
+        } catch {
+            log.error("screencapture -v: \(error.localizedDescription, privacy: .public)")
+            show("Nie udało się uruchomić nagrywania")
+        }
+    }
+
+    /// Nagranie jest plikiem docelowym (nie tymczasowym): Półka dostaje odnośnik, plik zostaje na dysku.
+    private func recordingFinished(_ url: URL) {
+        // Anulowanie (Esc) nie zostawia pliku.
+        guard FileManager.default.fileExists(atPath: url.path) else { return }
+        if let provider = NSItemProvider(contentsOf: url), context.deliver([provider], Self.shelfZone) {
+            show("Nagranie na Półce")
+        } else {
+            show("Nagranie zapisane: \(url.deletingLastPathComponent().lastPathComponent)")
         }
     }
 

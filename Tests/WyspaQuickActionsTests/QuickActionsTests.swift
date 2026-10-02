@@ -120,4 +120,13 @@ struct QuickActionsSelectionTests {
         #expect(!QuickActionsLogic.desktopIconsVisible(false))
         #expect(!QuickActionsLogic.desktopIconsVisible(NSNumber(value: false)))
     }
+
+    @Test("Nagranie: miejsce zrzutów z ustawień systemu, inaczej biurko")
+    func recordingLocation() {
+        let home = URL(fileURLWithPath: "/Users/demo")
+        #expect(QuickActionsLogic.recordingDirectory(systemLocation: "/Users/demo/Movies", home: home).path == "/Users/demo/Movies")
+        #expect(QuickActionsLogic.recordingDirectory(systemLocation: nil, home: home).path == "/Users/demo/Desktop")
+        #expect(QuickActionsLogic.recordingDirectory(systemLocation: "", home: home).path == "/Users/demo/Desktop")
+        #expect(QuickActionsLogic.recordingURL(in: home, at: Date()).pathExtension == "mov")
+    }
 }

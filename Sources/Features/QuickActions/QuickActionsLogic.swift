@@ -77,6 +77,22 @@ public enum QuickActionsLogic {
         (value as? Bool) ?? (value as? NSNumber)?.boolValue ?? true
     }
 
+    /// Miejsce zapisu nagrań: to samo co zrzutów w ustawieniach systemu (`com.apple.screencapture location`), inaczej biurko.
+    public static func recordingDirectory(systemLocation: String?, home: URL) -> URL {
+        if let systemLocation, !systemLocation.isEmpty {
+            let expanded = (systemLocation as NSString).expandingTildeInPath
+            if expanded.hasPrefix("/") { return URL(fileURLWithPath: expanded, isDirectory: true) }
+        }
+        return home.appendingPathComponent("Desktop", isDirectory: true)
+    }
+
+    public static func recordingURL(in directory: URL, at date: Date) -> URL {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = "yyyy-MM-dd 'o' HH.mm.ss"
+        return directory.appendingPathComponent("Nagranie ekranu \(formatter.string(from: date)).mov")
+    }
+
     /// Plik zrzutu w katalogu tymczasowym, z datą w nazwie (tak trafia na Półkę).
     public static func screenshotURL(in directory: URL, at date: Date) -> URL {
         let formatter = DateFormatter()

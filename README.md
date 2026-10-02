@@ -273,7 +273,8 @@ wybierasz przełącznikami w ustawieniach modułu. Do wyboru:
 - **Zrzut na Półkę**: zaznaczasz obszar ekranu, zrzut ląduje na Półce (gdy Półka jest wyłączona — w schowku).
   Przy pierwszym użyciu macOS zapyta o zgodę na nagrywanie ekranu dla Wyspy.
 - **Cały ekran**: zrzut ekranu głównego na Półkę (wyspa najpierw się zwija, żeby nie było jej na zrzucie).
-- **Nagrywanie**: systemowy pasek zrzutów i nagrywania (jak ⇧⌘5).
+- **Nagrywanie**: systemowy pasek od razu w trybie nagrywania wideo (z widocznymi kliknięciami); zatrzymujesz przyciskiem
+  w pasku menu. Nagranie zapisuje się tam, gdzie system zapisuje zrzuty (inaczej na biurku), i trafia na Półkę.
 - **Hasło**: losowe hasło (20 znaków, bez mylących 0/O, 1/l/I) do schowka. Oznaczone jako poufne, więc historia
   schowka go nie zapisuje; znika ze schowka po 90 s, jeśli nic innego nie skopiujesz.
 - **Tryb ciemny**: przełącza wygląd całego systemu (przy pierwszym razie macOS zapyta o zgodę na sterowanie „System Events”).
