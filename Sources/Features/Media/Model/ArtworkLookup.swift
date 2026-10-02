@@ -25,11 +25,11 @@ public enum ArtworkLookup {
               let results = object["results"] as? [[String: Any]], !results.isEmpty
         else { return nil }
         let wantedTitle = normalized(title)
-        let wantedArtist = artist.map(normalized)
+        let wantedArtist = artist.map(primaryArtist)
         let matches = { (result: [String: Any]) -> Bool in
             let trackTitle = normalized(result["trackName"] as? String ?? "")
-            let trackArtist = normalized(result["artistName"] as? String ?? "")
-            return trackTitle == wantedTitle && (wantedArtist.map { trackArtist.contains($0) || $0.contains(trackArtist) } ?? true)
+            let trackArtist = primaryArtist(result["artistName"] as? String ?? "")
+            return trackTitle == wantedTitle && (wantedArtist.map { $0 == trackArtist } ?? true)
         }
         guard let best = results.first(where: matches),
               let small = best["artworkUrl100"] as? String,
@@ -37,6 +37,14 @@ public enum ArtworkLookup {
               url.scheme == "https", url.host?.hasSuffix(".mzstatic.com") == true
         else { return nil }
         return url
+    }
+
+    /// Pierwszy wykonawca: Muzyka i iTunes różnie zapisują kilku („A, B, C” kontra „A, B & C”, „feat.”).
+    static func primaryArtist(_ text: String) -> String {
+        let separators = [",", "&", " feat.", " ft.", " x ", " and ", " i "]
+        let lowered = normalized(text)
+        let cut = separators.compactMap { lowered.range(of: $0)?.lowerBound }.min() ?? lowered.endIndex
+        return String(lowered[..<cut]).trimmingCharacters(in: .whitespaces)
     }
 
     static func normalized(_ text: String) -> String {

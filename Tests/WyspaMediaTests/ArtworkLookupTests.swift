@@ -35,4 +35,12 @@ struct ArtworkLookupTests {
         #expect(items.contains(URLQueryItem(name: "term", value: "Zalia diament")))
         #expect(items.contains(URLQueryItem(name: "country", value: "pl")) && items.contains(URLQueryItem(name: "entity", value: "song")))
     }
+
+    @Test("Kilku wykonawców zapisanych różnie w Muzyce i iTunes")
+    func multipleArtists() {
+        let data = Data(#"{"results":[{"trackName":"Alibi","artistName":"Sevdaliza, Pabllo Vittar & Yseult","artworkUrl100":"https://is1-ssl.mzstatic.com/c/100x100bb.jpg"}]}"#.utf8)
+        #expect(ArtworkLookup.artworkURL(from: data, title: "Alibi", artist: "Sevdaliza, Pabllo Vittar, Yseult") != nil)
+        #expect(ArtworkLookup.artworkURL(from: data, title: "Alibi", artist: "Ktoś Inny") == nil)
+        #expect(ArtworkLookup.primaryArtist("Drake feat. Rihanna") == "drake")
+    }
 }
