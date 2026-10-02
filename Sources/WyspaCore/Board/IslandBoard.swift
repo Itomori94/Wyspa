@@ -150,12 +150,49 @@ public struct IslandBoard: Codable, Equatable, Sendable {
         return try withoutSource.inserting(moduleID: widget.moduleID, intoPage: pageID, at: index, minimum: minimum)
     }
 
+    /// Usuwa widżet i oddaje zwolnione miejsce pozostałym: równe szerokości zostają równe,
+    /// a przy własnych proporcjach miejsce dostaje sąsiad usuniętego widżetu.
     public func removing(widget widgetID: UUID) -> IslandBoard {
+        guard let page = pages.first(where: { $0.widgets.contains { $0.id == widgetID } }),
+              let index = page.widgets.firstIndex(where: { $0.id == widgetID })
+        else { return self }
+        let wasEqual = Set(page.widgets.map(\.width)).count == 1
+        let remaining = page.widgets.filter { $0.id != widgetID }
+        return replacing(page.with(widgets: Self.filling(remaining, freedAt: index, keepEqual: wasEqual)))
+    }
+
+    /// Strony z wolnym miejscem (np. układ zapisany przed wypełnianiem po usunięciu) wypełnione do pełnej szerokości.
+    public func normalized() -> IslandBoard {
         IslandBoard(pages: pages.map { page in
-            page.widgets.contains { $0.id == widgetID }
-                ? page.with(widgets: page.widgets.filter { $0.id != widgetID })
-                : page
+            let widgets = page.widgets
+            guard !widgets.isEmpty, page.usedUnits < WidgetWidth.totalUnits else { return page }
+            let allEqual = Set(widgets.map(\.width)).count == 1
+            return page.with(widgets: Self.filling(widgets, freedAt: widgets.count, keepEqual: allEqual))
         })
+    }
+
+    /// Rozdziela wolne miejsce strony tak, żeby widżety znów zajmowały całą szerokość.
+    static func filling(_ widgets: [BoardWidget], freedAt index: Int, keepEqual: Bool) -> [BoardWidget] {
+        guard !widgets.isEmpty else { return widgets }
+        let free = WidgetWidth.totalUnits - widgets.map(\.width.units).reduce(0, +)
+        guard free > 0 else { return widgets }
+        if keepEqual, let equal = equalWidth(count: widgets.count) {
+            return widgets.map { $0.with(width: equal) }
+        }
+        // Najpierw sąsiad z lewej, potem z prawej, potem dowolny widżet, który przyjmie całe wolne miejsce.
+        let neighbours = [index - 1, index] + Array(widgets.indices)
+        for candidate in neighbours where widgets.indices.contains(candidate) {
+            if let wider = WidgetWidth(rawValue: widgets[candidate].width.units + free) {
+                var result = widgets
+                result[candidate] = widgets[candidate].with(width: wider)
+                return result
+            }
+        }
+        // Wolnego miejsca nie da się oddać jednemu widżetowi w stopniach — równy podział, jeśli możliwy.
+        if let equal = equalWidth(count: widgets.count), widgets.allSatisfy({ $0.width <= equal }) {
+            return widgets.map { $0.with(width: equal) }
+        }
+        return widgets
     }
 
     /// Przesuwa dzielnik między widżetami `dividerIndex` i `dividerIndex + 1` o `delta` dwunastek.

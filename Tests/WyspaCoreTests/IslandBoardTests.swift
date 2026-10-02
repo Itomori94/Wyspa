@@ -106,6 +106,42 @@ struct IslandBoardTests {
         #expect(board.pages[0].widgets.count == 1)
     }
 
+    private func page(_ widths: [WidgetWidth]) -> (IslandBoard, [UUID]) {
+        let widgets = widths.enumerated().map { BoardWidget(moduleID: "m\($0.offset)", width: $0.element) }
+        return (IslandBoard(pages: [BoardPage(content: .widgets(widgets))]), widgets.map(\.id))
+    }
+
+    @Test("Usunięcie jednego z trzech równych: dwa pozostałe po połowie, potem jeden na całość")
+    func removalKeepsEqualSplit() {
+        let (board, ids) = page([.third, .third, .third])
+        let two = board.removing(widget: ids[1])
+        #expect(two.pages[0].widgets.map(\.width) == [.half, .half])
+        #expect(two.pages[0].usedUnits == 12)
+        let one = two.removing(widget: ids[0])
+        #expect(one.pages[0].widgets.map(\.width) == [.full])
+    }
+
+    @Test("Usunięcie przy własnych proporcjach: miejsce dostaje sąsiad, reszta bez zmian")
+    func removalGivesSpaceToNeighbour() {
+        let (board, ids) = page([.half, .quarter, .quarter])
+        #expect(board.removing(widget: ids[2]).pages[0].widgets.map(\.width) == [.half, .half])
+        #expect(board.removing(widget: ids[1]).pages[0].widgets.map(\.width) == [.threeQuarters, .quarter])
+        let (four, fourIDs) = page([.quarter, .quarter, .quarter, .quarter])
+        #expect(four.removing(widget: fourIDs[0]).pages[0].widgets.map(\.width) == [.third, .third, .third])
+    }
+
+    @Test("Każde usunięcie zostawia stronę wypełnioną", arguments: [
+        [WidgetWidth.third, .third, .third], [.half, .quarter, .quarter], [.quarter, .half, .quarter],
+        [.twoThirds, .third], [.quarter, .threeQuarters], [.quarter, .quarter, .quarter, .quarter], [.half, .half],
+    ])
+    func removalAlwaysFills(widths: [WidgetWidth]) {
+        let (board, ids) = page(widths)
+        for id in ids {
+            let next = board.removing(widget: id)
+            if !next.pages[0].widgets.isEmpty { #expect(next.pages[0].usedUnits == 12, "\(widths) bez \(id)") }
+        }
+    }
+
     @Test("Minimalna szerokość w stopniach zależy od wnętrza wyspy")
     func minimumWidth() {
         // mała wyspa: wnętrze 452 → ¼ = 113, ⅓ ≈ 150,7
@@ -131,5 +167,15 @@ struct IslandBoardTests {
         let (empty, page) = boardWithEmptyPage()
         let board = try empty.inserting(moduleID: "a", intoPage: page, at: 0, minimum: minimum).addingModulePage("shelf")
         #expect(try JSONDecoder().decode(IslandBoard.self, from: JSONEncoder().encode(board)) == board)
+    }
+
+    @Test("Zapisany układ z dziurą jest wypełniany przy odczycie")
+    func normalization() {
+        let (gap, _) = page([.third, .third])
+        #expect(gap.normalized().pages[0].widgets.map(\.width) == [.half, .half])
+        let (custom, _) = page([.half, .quarter])
+        #expect(custom.normalized().pages[0].usedUnits == 12)
+        let (full, _) = page([.half, .half])
+        #expect(full.normalized() == full)
     }
 }

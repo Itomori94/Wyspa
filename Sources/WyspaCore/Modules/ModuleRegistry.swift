@@ -84,7 +84,7 @@ public final class ModuleRegistry {
 
     /// Układ wyspy: zapisany albo startowy z bieżących modułów.
     public var board: IslandBoard {
-        settings.board ?? IslandBoard.initial(
+        settings.board?.normalized() ?? IslandBoard.initial(
             widgetModules: activeModules.filter { $0.makeWidgetView() != nil }.map { type(of: $0).descriptor.id }
                 .filter { !Self.preferredFullPages.contains($0) },
             pageModules: activeModules.filter { type(of: $0).descriptor.providesPage }.map { type(of: $0).descriptor.id }

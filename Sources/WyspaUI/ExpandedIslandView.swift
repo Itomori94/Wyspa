@@ -152,7 +152,8 @@ public struct PageContentView: View {
     }
 }
 
-/// Widżety według ich szerokości w dwunastkach; wolne miejsce zostaje po prawej.
+/// Widżety według ich szerokości, zawsze na całą szerokość strony (proporcjonalnie),
+/// także gdy któryś moduł jest chwilowo wyłączony.
 public struct WidgetRow: View {
     public static let dividerSpacing: CGFloat = 14
 
@@ -161,7 +162,8 @@ public struct WidgetRow: View {
     public var body: some View {
         GeometryReader { proxy in
             let gaps = CGFloat(max(widgets.count - 1, 0)) * Self.dividerSpacing
-            let unit = max(0, proxy.size.width - gaps) / CGFloat(WidgetWidth.totalUnits)
+            let totalUnits = max(widgets.map(\.width.units).reduce(0, +), 1)
+            let unit = max(0, proxy.size.width - gaps) / CGFloat(totalUnits)
             HStack(spacing: 0) {
                 ForEach(Array(widgets.enumerated()), id: \.element.id) { index, widget in
                     if index > 0 {
