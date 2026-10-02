@@ -97,28 +97,6 @@ private struct IslandSettingsView: View {
                     ForEach(IslandSize.allCases, id: \.self) { Text($0.displayName).tag($0) }
                 }
                 .pickerStyle(.segmented)
-                Picker("Tło wyspy", selection: $settings.islandMaterial) {
-                    ForEach(IslandMaterial.allCases, id: \.self) { Text($0.displayName).tag($0) }
-                }
-                .pickerStyle(.segmented)
-                if settings.islandMaterial == .transparent {
-                    LabeledContent("Przezroczystość") {
-                        HStack {
-                            Slider(value: $settings.islandTransparency, in: IslandMaterial.transparencyRange)
-                            Text("\(Int((settings.islandTransparency * 100).rounded()))%")
-                                .monospacedDigit().frame(width: 40, alignment: .trailing)
-                        }
-                    }
-                    Text("Bez rozmycia: 0% to czarne tło, 100% — zupełnie przejrzyste (zostaje tylko krawędź). "
-                         + "Zwinięta wyspa zostaje czarna, żeby zlewać się z notchem.")
-                        .font(.caption).foregroundStyle(.secondary)
-                } else if settings.islandMaterial == .liquidGlass {
-                    Text(IslandMaterial.isGlassAvailable
-                         ? "Szkło pojawia się po rozwinięciu i w kartach (powiadomienia); zwinięta wyspa zostaje czarna, żeby zlewać się z notchem. "
-                           + "Systemowe szkło zawsze trochę rozmywa tło; „Przezroczyste”/„Zabarwione” wybierasz w Ustawieniach systemowych → Wygląd → Liquid Glass."
-                         : "Liquid Glass wymaga macOS 26 lub nowszego — wyspa zostaje czarna.")
-                        .font(.caption).foregroundStyle(.secondary)
-                }
                 Toggle("Haptyka gładzika przy rozwinięciu", isOn: $settings.hapticsEnabled)
             }
         }

@@ -30,11 +30,6 @@ Przy pierwszym podpisie macOS może zapytać, czy `codesign` może użyć klucza
 - **Przesunięcie w poziomie** w rozwiniętej wyspie: zmienia zakładkę modułu.
 - **⌃⌥W** (domyślnie, do zmiany w ustawieniach): rozwija lub zwija wyspę na ekranie z kursorem.
 - Ikona w pasku menu: ustawienia i zamknięcie aplikacji.
-- **Wygląd** (Ustawienia → Ogólne): rozmiar rozwiniętej wyspy i tło — czarne, Liquid Glass (macOS 26+) albo
-  przezroczyste bez rozmycia z suwakiem 0–100%.
-  Szkło pojawia się po rozwinięciu i w kartach; zwinięta wyspa zostaje czarna, żeby zlewać się z notchem.
-  Przezroczystość szkła wynika z ustawień systemu (Ustawienia systemowe → Wygląd → Liquid Glass, a także
-  Dostępność → Zmniejsz przezroczystość), tak jak w innych aplikacjach.
 
 ## Uprawnienia
 

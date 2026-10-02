@@ -36,8 +36,6 @@ final class IslandWindowController {
             expandedSize: settings.islandSize.expandedSize,
             registry: registry
         )
-        model.material = settings.islandMaterial
-        model.transparency = settings.islandTransparency
         container = IslandContainerView(content: IslandView(model: model))
         model.onOpenSettings = openSettings
         model.onSelectTab = { [weak self] index in self?.selectTab(index) }
@@ -65,8 +63,6 @@ final class IslandWindowController {
         self.screen = screen
         model.notch = screen.notch
         model.expandedSize = settings.islandSize.expandedSize
-        model.material = settings.islandMaterial
-        model.transparency = settings.islandTransparency
         layout()
         // Tryb wirtualnego notcha mógł się zmienić: przelicz fazę spoczynku.
         send(.activityChanged(hasActivity: registry.currentActivity != nil))

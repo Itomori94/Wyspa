@@ -18,10 +18,9 @@ public struct IslandView: View {
     public var body: some View {
         let size = model.islandSize
         ZStack(alignment: .top) {
-            IslandBackground(shape: IslandShape(topRadius: topRadius, bottomRadius: bottomRadius),
-                             style: backgroundStyle, hiddenAlpha: model.phase == .hidden ? Self.hiddenAlpha : 1)
-                // Cień tylko pod czarną wyspą: pod szkłem przyciemniałby tło i szkło wyglądałoby na szare, zaszronione.
-                .shadow(color: .black.opacity(model.phase == .expanded && backgroundStyle == .black ? 0.5 : 0), radius: 20, y: 10)
+            IslandShape(topRadius: topRadius, bottomRadius: bottomRadius)
+                .fill(Color.black.opacity(model.phase == .hidden ? Self.hiddenAlpha : 1))
+                .shadow(color: .black.opacity(model.phase == .expanded ? 0.5 : 0), radius: 20, y: 10)
                 .contentShape(IslandShape(topRadius: topRadius, bottomRadius: bottomRadius))
                 .onTapGesture {
                     // W rozwiniętej wyspie kliknięcia obsługują kontrolki modułów.
@@ -49,11 +48,6 @@ public struct IslandView: View {
         .onExitCommand(perform: model.onEscape)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .environment(\.colorScheme, .dark)
-    }
-
-    private var backgroundStyle: IslandBackgroundStyle {
-        model.material.background(phase: model.phase, showsCard: model.activity?.detail != nil,
-                                  systemSupportsGlass: IslandMaterial.isGlassAvailable, transparency: model.transparency)
     }
 
     /// Ukryta wyspa musi mieć niezerową przezroczystość, inaczej okno nie dostanie zdarzeń myszy.
@@ -132,69 +126,4 @@ struct CollapsedActivityView: View {
 enum ActivityGeometryID {
     static func leading(_ activity: LiveActivity) -> String { "activity.\(activity.id).leading" }
     static func trailing(_ activity: LiveActivity) -> String { "activity.\(activity.id).trailing" }
-}
-
-/// Tło wyspy: czarne, Liquid Glass albo przezroczyste bez rozmycia. Warstwy przenikają się, więc zmiana nie przeskakuje.
-struct IslandBackground: View {
-    let shape: IslandShape
-    let style: IslandBackgroundStyle
-    let hiddenAlpha: Double
-    @State private var preference = SystemGlassPreference.shared
-
-    var body: some View {
-        ZStack {
-            if #available(macOS 26, *), style == .glass {
-                // Przezroczystość wynika z ustawień macOS (Wygląd → Liquid Glass: Przezroczyste/Zabarwione);
-                // „Zmniejsz przezroczystość” system stosuje do szkła sam.
-                Color.clear.glassEffect(preference.variant == .clear ? .clear : .regular, in: shape)
-                    .transition(.opacity)
-                // Błyszcząca krawędź jak w Centrum sterowania: jaśniejsza u dołu i po bokach, gaśnie ku notchowi.
-                shape.stroke(LinearGradient(colors: [.white.opacity(0.05), .white.opacity(0.35)],
-                                            startPoint: .top, endPoint: .bottom), lineWidth: 1)
-                    .transition(.opacity)
-            }
-            shape.fill(Color.black.opacity(blackOpacity))
-            if case .tinted = style {
-                // Jasna krawędź, żeby zupełnie przejrzysta wyspa nadal miała widoczny kształt.
-                shape.stroke(.white.opacity(0.18), lineWidth: 1)
-                    .transition(.opacity)
-            }
-        }
-        .animation(.easeInOut(duration: 0.25), value: style)
-    }
-
-    private var blackOpacity: Double {
-        switch style {
-        case .black: hiddenAlpha
-        case .glass: 0
-        // Ukryta wyspa musi mieć niezerowe krycie, inaczej okno nie dostaje zdarzeń myszy.
-        case .tinted(let opacity): max(opacity, 0.01)
-        }
-    }
-}
-
-/// Obserwuje wybór Liquid Glass w Ustawieniach systemowych (KVO na globalnej preferencji, bez odpytywania).
-@MainActor
-@Observable
-final class SystemGlassPreference {
-    static let shared = SystemGlassPreference()
-
-    private(set) var variant: GlassVariant
-    @ObservationIgnored private var observation: NSKeyValueObservation?
-
-    private init() {
-        variant = Self.read()
-        observation = UserDefaults.standard.observe(\.NSGlassTintAmount, options: [.new]) { _, _ in
-            Task { @MainActor in SystemGlassPreference.shared.variant = Self.read() }
-        }
-    }
-
-    private nonisolated static func read() -> GlassVariant {
-        GlassVariant.forSystemTint(UserDefaults.standard.object(forKey: GlassVariant.systemTintKey) as? Double)
-    }
-}
-
-private extension UserDefaults {
-    /// Nazwa musi odpowiadać kluczowi preferencji, żeby działało KVO.
-    @objc dynamic var NSGlassTintAmount: Double { double(forKey: GlassVariant.systemTintKey) }
 }

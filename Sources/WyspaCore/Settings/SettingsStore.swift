@@ -15,8 +15,6 @@ public final class SettingsStore {
         static let hoverDelay = "island.hoverDelay"
         static let collapseDelay = "island.collapseDelay"
         static let islandSize = "island.size"
-        static let islandMaterial = "island.material"
-        static let islandTransparency = "island.transparency"
         static let hapticsEnabled = "island.haptics"
         static let screenSelection = "screens.selection"
         static let virtualNotchMode = "screens.virtualNotch"
@@ -32,13 +30,6 @@ public final class SettingsStore {
     public var collapseDelay: Double { didSet { defaults.set(collapseDelay, forKey: Key.collapseDelay) } }
     public var hapticsEnabled: Bool { didSet { defaults.set(hapticsEnabled, forKey: Key.hapticsEnabled) } }
     public var islandSize: IslandSize { didSet { defaults.set(islandSize.rawValue, forKey: Key.islandSize) } }
-    public var islandMaterial: IslandMaterial {
-        didSet { defaults.set(islandMaterial.rawValue, forKey: Key.islandMaterial) }
-    }
-    /// Przezroczystość tła w trybie „Przezroczysty”: 0 = czarne, 1 = przejrzyste.
-    public var islandTransparency: Double {
-        didSet { defaults.set(islandTransparency, forKey: Key.islandTransparency) }
-    }
     public var screenSelection: ScreenSelection {
         didSet { defaults.set(screenSelection.rawValue, forKey: Key.screenSelection) }
     }
@@ -66,9 +57,6 @@ public final class SettingsStore {
         )
         hapticsEnabled = defaults.object(forKey: Key.hapticsEnabled) as? Bool ?? true
         islandSize = defaults.string(forKey: Key.islandSize).flatMap(IslandSize.init) ?? .medium
-        islandMaterial = defaults.string(forKey: Key.islandMaterial).flatMap(IslandMaterial.init) ?? .black
-        islandTransparency = Self.clamped(defaults.object(forKey: Key.islandTransparency) as? Double ?? IslandMaterial.defaultTransparency,
-                                          to: IslandMaterial.transparencyRange)
         screenSelection = defaults.string(forKey: Key.screenSelection).flatMap(ScreenSelection.init) ?? .all
         virtualNotchMode = defaults.string(forKey: Key.virtualNotchMode).flatMap(VirtualNotchMode.init) ?? .whenActive
         toggleShortcut = defaults.object(forKey: Key.toggleShortcut) == nil
