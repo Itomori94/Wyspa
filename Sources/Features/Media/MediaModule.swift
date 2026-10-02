@@ -353,3 +353,13 @@ private final class SilenceWatch {
         }
     }
 }
+
+#if DEBUG
+extension MediaModule {
+    /// Dane demonstracyjne do zrzutów ekranu w README (tylko build debug).
+    func showDemo(_ demo: NowPlaying, artworkData: Data?) {
+        nowPlaying = demo
+        updateArtwork(artworkData)
+    }
+}
+#endif

@@ -3,6 +3,24 @@
 Natywna aplikacja macOS, która zamienia notch MacBooka w interaktywną wyspę w stylu Dynamic Island.
 Projekt open source (licencja MIT), dystrybucja poza App Store — budujesz i instalujesz sam.
 
+## Zrzuty ekranu
+
+| Zwinięta wyspa | |
+|---|---|
+| ![Muzyka](docs/screenshots/zwinieta-muzyka.png) Teraz odtwarzane | ![Głośność](docs/screenshots/zwinieta-glosnosc.png) Głośność |
+| ![Powiadomienie](docs/screenshots/zwinieta-powiadomienie.png) Powiadomienie | ![Claude](docs/screenshots/zwinieta-claude.png) Claude skończył |
+| ![Pobieranie](docs/screenshots/zwinieta-pobieranie.png) Pobieranie | ![Timer](docs/screenshots/zwinieta-timer.png) Pomodoro |
+| ![Bluetooth](docs/screenshots/zwinieta-bluetooth.png) AirPods | |
+
+| Rozwinięta wyspa | |
+|---|---|
+| ![Odtwarzacz](docs/screenshots/odtwarzacz.png) Odtwarzacz z AirPlay | ![Widżety](docs/screenshots/widzety.png) Kilka widżetów na stronie |
+| ![Claude Code](docs/screenshots/claude-code.png) Claude Code z limitami planu | ![Pomodoro](docs/screenshots/pomodoro.png) Pomodoro i cel dnia |
+| ![Pogoda](docs/screenshots/pogoda.png) Pogoda | ![Schowek](docs/screenshots/schowek.png) Historia schowka |
+| ![Szybkie akcje](docs/screenshots/szybkie-akcje.png) Szybkie akcje | ![Bluetooth](docs/screenshots/bluetooth.png) Bluetooth |
+
+Zrzuty powstają z danych demonstracyjnych (`scripts/screenshots.sh`), więc nie zawierają prywatnych treści.
+
 ## Wymagania
 
 - macOS 14 Sonoma lub nowszy, Apple Silicon albo Intel.

@@ -165,3 +165,13 @@ final class OneShotLocator: NSObject, CLLocationManagerDelegate {
         completion(location)
     }
 }
+
+#if DEBUG
+extension WeatherModule {
+    /// Dane demonstracyjne do zrzutów ekranu w README (tylko build debug).
+    func showDemo(_ demo: Forecast) {
+        forecast = demo
+        status = .ready
+    }
+}
+#endif

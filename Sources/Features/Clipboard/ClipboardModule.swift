@@ -122,3 +122,12 @@ public final class ClipboardModule: IslandModule {
         return nil
     }
 }
+
+#if DEBUG
+extension ClipboardModule {
+    /// Dane demonstracyjne do zrzutów ekranu w README (tylko build debug).
+    func showDemo(_ demo: ClipboardHistory) {
+        history = demo
+    }
+}
+#endif

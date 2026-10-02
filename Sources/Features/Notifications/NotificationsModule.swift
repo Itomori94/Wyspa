@@ -144,3 +144,12 @@ enum NotificationsError: LocalizedError {
     case notTrusted
     var errorDescription: String? { "Wyspa nie ma uprawnienia Dostępność." }
 }
+
+#if DEBUG
+extension NotificationsModule {
+    /// Dane demonstracyjne do zrzutów ekranu w README (tylko build debug).
+    func showDemo(_ demo: NotificationQueue) {
+        queue = demo
+    }
+}
+#endif

@@ -225,6 +225,12 @@ APP=$PWD/build/Wyspa.app/Contents
   zapis (`transcript_path`, `DispatchSource` na pliku) i czytamy ostatnie 32 KB: jeśli ostatnia wiadomość rozmowy to
   „[Request interrupted by user…”, sesja wraca do bezczynności (`TranscriptTail`, testy).
 
+## Zrzuty ekranu
+
+`scripts/screenshots.sh` → `docs/screenshots/*.png`: test `WyspaScreenshotTests` (pomijany bez `WYSPA_SCREENSHOTS_DIR`)
+renderuje prawdziwe widoki modułów z danymi demonstracyjnymi (`showDemo` w modułach, tylko `#if DEBUG`). Nigdy nie
+wrzucaj prawdziwych zrzutów ekranu do publicznego repo. Po zmianie wyglądu odśwież zrzuty.
+
 ## Tryb prywatny
 
 - `ModuleDescriptor.content` (`.personal`/`.neutral`) bez wartości domyślnej — nowy moduł musi się zadeklarować.

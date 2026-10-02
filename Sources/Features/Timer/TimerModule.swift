@@ -218,3 +218,14 @@ public final class TimerModule: IslandModule {
         }
     }
 }
+
+#if DEBUG
+extension TimerModule {
+    /// Dane demonstracyjne do zrzutów ekranu w README (tylko build debug).
+    func showDemo(session demo: TimerSession, stats demoStats: FocusStats, goal: Int) {
+        session = demo
+        stats = demoStats
+        dailyGoal = goal
+    }
+}
+#endif

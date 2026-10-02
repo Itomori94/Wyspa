@@ -59,6 +59,12 @@ let package = Package(
         .testTarget(name: "WyspaRemindersTests", dependencies: ["WyspaReminders"], path: "Tests/WyspaRemindersTests"),
         .testTarget(name: "WyspaClaudeMonitorTests", dependencies: ["WyspaClaudeMonitor", "WyspaHookKit"], path: "Tests/WyspaClaudeMonitorTests"),
         .testTarget(name: "WyspaNotificationsTests", dependencies: ["WyspaNotifications"], path: "Tests/WyspaNotificationsTests"),
+        .testTarget(
+            name: "WyspaScreenshotTests",
+            dependencies: ["WyspaCore", "WyspaUI", "WyspaHookKit", "WyspaMedia", "WyspaTimer", "WyspaWeather", "WyspaClaudeMonitor",
+                           "WyspaClipboard", "WyspaQuickActions", "WyspaBluetooth", "WyspaHUD", "WyspaNotifications", "WyspaDownloads"],
+            path: "Tests/WyspaScreenshotTests"
+        ),
         .testTarget(name: "WyspaFeaturesTests", dependencies: ["WyspaFeatures", "WyspaCore"], path: "Tests/WyspaFeaturesTests"),
         .testTarget(name: "WyspaDownloadsTests", dependencies: ["WyspaDownloads"], path: "Tests/WyspaDownloadsTests"),
         .testTarget(name: "WyspaWeatherTests", dependencies: ["WyspaWeather"], path: "Tests/WyspaWeatherTests"),

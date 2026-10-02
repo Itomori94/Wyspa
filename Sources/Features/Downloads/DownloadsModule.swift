@@ -119,3 +119,12 @@ public final class DownloadsModule: IslandModule {
 private struct ProgressBox: @unchecked Sendable {
     let progress: Progress
 }
+
+#if DEBUG
+extension DownloadsModule {
+    /// Dane demonstracyjne do zrzutów ekranu w README (tylko build debug).
+    func showDemo(_ demo: [DownloadItem]) {
+        items = demo
+    }
+}
+#endif

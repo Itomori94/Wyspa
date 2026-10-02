@@ -147,3 +147,13 @@ public final class BluetoothModule: IslandModule {
         } : nil
     }
 }
+
+#if DEBUG
+extension BluetoothModule {
+    /// Dane demonstracyjne do zrzutów ekranu w README (tylko build debug).
+    func showDemo(_ demo: [ConnectedDevice], event demoEvent: BluetoothEvent?) {
+        devices = demo
+        event = demoEvent
+    }
+}
+#endif

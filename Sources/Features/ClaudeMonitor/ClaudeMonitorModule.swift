@@ -405,3 +405,14 @@ extension HookEvent {
         ])) ?? HookEvent.fallback(sessionID)
     }
 }
+
+#if DEBUG
+extension ClaudeMonitorModule {
+    /// Dane demonstracyjne do zrzutów ekranu w README (tylko build debug).
+    func showDemo(store demoStore: SessionStore, limits demoLimits: ClaudeLimits?, finished: ClaudeSession?) {
+        store = demoStore
+        limits = demoLimits
+        justFinished = finished
+    }
+}
+#endif

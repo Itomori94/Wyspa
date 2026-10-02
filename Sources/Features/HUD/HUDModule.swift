@@ -141,3 +141,12 @@ public final class HUDModule: IslandModule {
         return true
     }
 }
+
+#if DEBUG
+extension HUDModule {
+    /// Dane demonstracyjne do zrzutów ekranu w README (tylko build debug).
+    func showDemo(_ demo: HUDReading) {
+        reading = demo
+    }
+}
+#endif
