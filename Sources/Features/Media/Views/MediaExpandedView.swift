@@ -4,16 +4,17 @@ import WyspaUI
 
 struct MediaExpandedView: View {
     let module: MediaModule
+    var metrics: PlayerMetrics = .full
 
     var body: some View {
         if let nowPlaying = module.nowPlaying {
-            HStack(alignment: .center, spacing: 16) {
-                ArtworkView(image: module.artwork, size: 92, cornerRadius: 16)
+            HStack(alignment: .center, spacing: metrics.spacing) {
+                ArtworkView(image: module.artwork, size: metrics.artworkSize, cornerRadius: 16 * metrics.artworkSize / 92)
                     .shadow(color: (module.accent ?? .black).opacity(0.45), radius: 14, y: 4)
                 VStack(alignment: .leading, spacing: 8) {
                     TrackInfo(nowPlaying: nowPlaying)
                     Scrubber(nowPlaying: nowPlaying, accent: module.accent ?? .white, seek: module.seek)
-                    Controls(isPlaying: nowPlaying.isPlaying, send: module.send)
+                    Controls(isPlaying: nowPlaying.isPlaying, spacing: metrics.controlSpacing, send: module.send)
                 }
             }
             .frame(maxHeight: .infinity)
@@ -132,10 +133,11 @@ private struct Scrubber: View {
 
 private struct Controls: View {
     let isPlaying: Bool
+    let spacing: CGFloat
     let send: (MediaCommand) -> Void
 
     var body: some View {
-        HStack(spacing: 22) {
+        HStack(spacing: spacing) {
             ControlButton(symbol: "backward.fill", size: 15, label: "Poprzedni") { send(.previous) }
             ControlButton(symbol: isPlaying ? "pause.fill" : "play.fill", size: 22,
                           label: isPlaying ? "Pauza" : "Odtwarzaj") { send(.togglePlayPause) }
