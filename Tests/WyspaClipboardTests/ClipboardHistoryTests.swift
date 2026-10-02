@@ -66,6 +66,17 @@ struct ClipboardHistoryTests {
         #expect(history.entries.filter(\.isPinned).map(\.searchableText) == ["a"])
     }
 
+    @Test("Przy pełnym limicie przypiętych przypięcie nic nie zmienia (żaden przypięty nie wypada)")
+    func pinLimit() {
+        var history = ClipboardHistory(limit: ClipboardHistory.limitRange.upperBound)
+        for index in 0..<(ClipboardHistory.maxPinned + 1) { history = history.adding(text("p\(index)")) }
+        for entry in history.entries.dropFirst() { history = history.togglingPin(entry.id) }
+        #expect(history.pinnedEntries.count == ClipboardHistory.maxPinned && !history.canPinMore)
+        let extra = history.entries.first { !$0.isPinned }!
+        #expect(history.togglingPin(extra.id) == history)
+        #expect(history.entries.count == ClipboardHistory.maxPinned + 1)
+    }
+
     @Test("Odpięcie wraca między zwykłe wpisy według daty")
     func unpin() {
         let early = ClipboardEntry(content: .text("stary"), copiedAt: Date(timeIntervalSince1970: 10))
@@ -98,12 +109,5 @@ struct ClipboardHistoryTests {
         let image = ClipboardEntry(content: .image(png: Data([1]), width: 640, height: 480), copiedAt: now)
         #expect(files.searchableText == "raport.pdf")
         #expect(image.searchableText == "Obraz 640×480")
-    }
-
-    @Test("Hasła i treści tymczasowe są pomijane")
-    func privacy() {
-        #expect(PasteboardPrivacy.shouldIgnore(types: ["public.utf8-plain-text", "org.nspasteboard.ConcealedType"]))
-        #expect(PasteboardPrivacy.shouldIgnore(types: ["org.nspasteboard.TransientType"]))
-        #expect(!PasteboardPrivacy.shouldIgnore(types: ["public.utf8-plain-text"]))
     }
 }

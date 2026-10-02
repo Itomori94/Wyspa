@@ -96,12 +96,6 @@ public struct ScriptsState: Equatable, Sendable {
 
     /// Łączny postęp do skrzydła: średnia określonych wartości; nil, gdy żaden nie jest określony.
     public var overallFraction: Double? {
-        let known = progress.compactMap(\.fraction)
-        return known.isEmpty ? nil : known.reduce(0, +) / Double(known.count)
-    }
-
-    public static func percentText(_ fraction: Double?) -> String {
-        guard let fraction else { return "…" }
-        return "\(Int((fraction * 100).rounded(.down)))%"
+        ProgressSummary.average(progress.map(\.fraction))
     }
 }

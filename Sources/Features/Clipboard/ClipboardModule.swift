@@ -34,14 +34,14 @@ public final class ClipboardModule: IslandModule, IslandKeyboardHandling {
     public private(set) var selectedIndex: Int?
     /// Kliknięcie wpisu wkleja go do aplikacji na pierwszym planie (inaczej tylko kopiuje).
     public var pastesOnClick: Bool { didSet { context.settings.set(pastesOnClick, for: Self.pasteKey) } }
-    /// Krótki komunikat po kliknięciu („Wklejono”, „Skopiowano”).
-    public private(set) var feedback: String?
+    /// Krótki komunikat po kliknięciu, gdy wpis tylko skopiowano (przy wklejaniu wyspa się zwija).
+    public var feedback: String? { message.text }
 
     @ObservationIgnored private let context: ModuleContext
     @ObservationIgnored private var timer: Timer?
     @ObservationIgnored private var lastChangeCount = NSPasteboard.general.changeCount
     @ObservationIgnored private var pasteTask: Task<Void, Never>?
-    @ObservationIgnored private var feedbackTask: Task<Void, Never>?
+    @ObservationIgnored private let message = TransientMessage()
 
     public required init(context: ModuleContext) {
         self.context = context
@@ -64,7 +64,7 @@ public final class ClipboardModule: IslandModule, IslandKeyboardHandling {
         timer?.invalidate()
         timer = nil
         pasteTask?.cancel()
-        feedbackTask?.cancel()
+        message.clear()
         history = history.clearedAll()
     }
 
@@ -90,7 +90,7 @@ public final class ClipboardModule: IslandModule, IslandKeyboardHandling {
         }
     }
 
-    /// Wkleja wpis z powrotem do schowka (trafia na górę historii).
+    /// Kopiuje wpis z powrotem do schowka (trafia na górę historii, przypięty zostaje przypięty).
     func copy(_ entry: ClipboardEntry) {
         let pasteboard = NSPasteboard.general
         pasteboard.clearContents()
@@ -115,8 +115,7 @@ public final class ClipboardModule: IslandModule, IslandKeyboardHandling {
             show("Skopiowano — wklejanie wymaga Dostępności")
             return
         }
-        query = ""
-        selectedIndex = nil
+        query = ""  // czyści też wybór strzałkami
         context.requestCollapse()
         pasteTask?.cancel()
         pasteTask = Task { [weak self] in
@@ -172,17 +171,15 @@ public final class ClipboardModule: IslandModule, IslandKeyboardHandling {
     }
 
     func togglePin(_ entry: ClipboardEntry) {
+        guard entry.isPinned || history.canPinMore else {
+            show("Najwyżej \(ClipboardHistory.maxPinned) przypiętych — odepnij któryś")
+            return
+        }
         withAnimation(.snappy) { history = history.togglingPin(entry.id) }
     }
 
-    private func show(_ message: String) {
-        withAnimation { feedback = message }
-        feedbackTask?.cancel()
-        feedbackTask = Task { [weak self] in
-            try? await Task.sleep(for: .seconds(1.5))
-            guard !Task.isCancelled else { return }
-            withAnimation { self?.feedback = nil }
-        }
+    private func show(_ text: String) {
+        message.show(text, for: .seconds(1.5))
     }
 
     func remove(_ entry: ClipboardEntry) {

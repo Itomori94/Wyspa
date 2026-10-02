@@ -1,22 +1,6 @@
 import SwiftUI
+import WyspaCore
 import WyspaUI
-
-struct DownloadRing: View {
-    let fraction: Double?
-
-    var body: some View {
-        ZStack {
-            Circle().stroke(.white.opacity(0.2), lineWidth: 2.5)
-            Circle()
-                .trim(from: 0, to: fraction ?? 0.25)
-                .stroke(Color.blue, style: StrokeStyle(lineWidth: 2.5, lineCap: .round))
-                .rotationEffect(.degrees(-90))
-                .animation(.easeOut(duration: 0.3), value: fraction)
-            Image(systemName: "arrow.down").font(.system(size: 8, weight: .bold)).foregroundStyle(.white)
-        }
-        .frame(width: 16, height: 16)
-    }
-}
 
 struct DownloadsView: View {
     let module: DownloadsModule
@@ -36,7 +20,7 @@ struct DownloadsView: View {
                                 HStack {
                                     Text(item.displayName).font(.system(size: 12, weight: .medium)).lineLimit(1)
                                     Spacer()
-                                    Text(DownloadSummary.percentText(item.fraction))
+                                    Text(ProgressSummary.percentText(item.fraction))
                                         .font(.system(size: 11, weight: .semibold)).monospacedDigit()
                                         .foregroundStyle(.white.opacity(0.6))
                                 }

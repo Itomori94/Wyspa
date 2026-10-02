@@ -1,4 +1,5 @@
 import Foundation
+import WyspaCore
 
 /// Powiadomienie odczytane z banera macOS.
 public struct NotificationCard: Equatable, Identifiable, Sendable {
@@ -80,7 +81,8 @@ public struct NotificationQueue: Equatable, Sendable {
     public func cleared() -> NotificationQueue { NotificationQueue() }
 }
 
-private extension String {
+/// Wspólne dla odczytu banera i widoku karty (jedno miejsce w module).
+extension String {
     var trimmed: String { trimmingCharacters(in: .whitespacesAndNewlines) }
     var nilIfEmpty: String? { isEmpty ? nil : self }
 }
@@ -111,17 +113,22 @@ public enum FocusDigest {
 
     /// „1 powiadomienie”, „3 powiadomienia”, „5 powiadomień”, „22 powiadomienia”.
     public static func countText(_ count: Int) -> String {
-        let last = count % 10
-        let lastTwo = count % 100
-        let noun: String
-        if count == 1 {
-            noun = "powiadomienie"
-        } else if (2...4).contains(last) && !(12...14).contains(lastTwo) {
-            noun = "powiadomienia"
-        } else {
-            noun = "powiadomień"
-        }
-        return "\(count) \(noun)"
+        PolishPlural.format(count, one: "powiadomienie", few: "powiadomienia", many: "powiadomień")
+    }
+
+    public enum Disposition: Equatable, Sendable {
+        /// Karta od razu w wyspie.
+        case show
+        /// Karta czeka do końca skupienia.
+        case hold
+        /// Bez karty: system i tak pokazał swój baner, karta po sesji byłaby tym samym powiadomieniem drugi raz.
+        case skip
+    }
+
+    /// Co zrobić z nowym powiadomieniem. Wstrzymanie ma sens tylko, gdy systemowy baner jest chowany.
+    public static func disposition(focusActive: Bool, hidesOriginal: Bool) -> Disposition {
+        guard focusActive else { return .show }
+        return hidesOriginal ? .hold : .skip
     }
 
     /// Aplikacje w kolejności pierwszego powiadomienia, najwyżej cztery („Mail, Slack, Wiadomości, Kalendarz +2”).

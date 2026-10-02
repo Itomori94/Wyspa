@@ -27,12 +27,12 @@ public final class MicrophoneModule: IslandModule {
     public private(set) var shortcut: HotkeyShortcut?
     public private(set) var shortcutProblem: String?
     /// Krótki komunikat po przełączeniu („Mikrofon wyciszony”) — także przy niewyciszonym mikrofonie.
-    public private(set) var feedback: String?
+    public var feedback: String? { message.text }
 
     @ObservationIgnored private let context: ModuleContext
     @ObservationIgnored private var control: MicrophoneControl?
     @ObservationIgnored private var hotkey: GlobalHotkey?
-    @ObservationIgnored private var feedbackTask: Task<Void, Never>?
+    @ObservationIgnored private let message = TransientMessage()
 
     public required init(context: ModuleContext) {
         self.context = context
@@ -51,9 +51,8 @@ public final class MicrophoneModule: IslandModule {
         hotkey = nil
         control?.stop()
         control = nil
-        feedbackTask?.cancel()
+        message.clear()
         reading = nil
-        feedback = nil
     }
 
     public var liveActivity: LiveActivity? {
@@ -111,14 +110,8 @@ public final class MicrophoneModule: IslandModule {
         reading = control?.reading
     }
 
-    private func show(_ message: String) {
-        withAnimation { feedback = message }
-        feedbackTask?.cancel()
-        feedbackTask = Task { [weak self] in
-            try? await Task.sleep(for: Self.toggleFeedback)
-            guard !Task.isCancelled else { return }
-            withAnimation { self?.feedback = nil }
-        }
+    private func show(_ text: String) {
+        message.show(text, for: Self.toggleFeedback)
     }
 
     // MARK: - Skrót

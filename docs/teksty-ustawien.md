@@ -74,7 +74,8 @@ zaktualizuj też ten plik. Karty okna: **Ogólne · Wyspa · Moduły · Układ �
 - **Powiadomienia**
   - „Chowaj systemowy baner (zostaje w Centrum powiadomień)” · Pokazuj przez: 3 / 5 / 8 / 10 / 15 s
   - „Podczas skupienia Pomodoro (Timer → „Wstrzymuj powiadomienia podczas skupienia”) karty czekają i przychodzą
-    po sesji z podsumowaniem.”
+    po sesji z podsumowaniem — gdy systemowy baner jest chowany. Bez chowania baner pokazuje system, a wyspa nie
+    dubluje go kartą.”
   - „Przyciski z powiadomień (np. „Odpowiedz”) działają tylko w systemowym banerze — kliknięcie karty otwiera
     aplikację. Gdy nowa wersja macOS zmieni budowę banerów, moduł przestanie je widzieć, a powiadomienia działają
     zwyczajnie.”
@@ -104,7 +105,7 @@ zaktualizuj też ten plik. Karty okna: **Ogólne · Wyspa · Moduły · Układ �
   jest tylko w pamięci i znika po zamknięciu Wyspy.”
 - **Timer** — „Dzienny cel Pomodoro: brak / … sesji” · „Wstrzymuj powiadomienia podczas skupienia” · „Gdy trwa faza
   skupienia Pomodoro, karty powiadomień w wyspie czekają i przychodzą po jej końcu z podsumowaniem. Działa z włączonym
-  modułem Powiadomienia; systemowy baner jest wtedy chowany.”
+  modułem Powiadomienia i chowaniem systemowego banera.”
 - **Pogoda** — „Temperatura w zwiniętej wyspie” · „Dane z Open-Meteo (bez konta). Wysyłane są tylko współrzędne
   zaokrąglone do ok. 1 km; odświeżanie przy otwarciu wyspy, gdy dane mają ponad 15 minut. Kliknięcie pogody otwiera
   aplikację Pogoda.”

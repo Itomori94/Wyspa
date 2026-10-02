@@ -210,7 +210,7 @@ struct TimerSettingsView: View {
             }
             Toggle("Wstrzymuj powiadomienia podczas skupienia", isOn: $module.holdsNotifications)
             Text("Gdy trwa faza skupienia Pomodoro, karty powiadomień w wyspie czekają i przychodzą po jej końcu "
-                 + "z podsumowaniem. Działa z włączonym modułem Powiadomienia; systemowy baner jest wtedy chowany.")
+                 + "z podsumowaniem. Działa z włączonym modułem Powiadomienia i chowaniem systemowego banera.")
                 .font(.caption).foregroundStyle(.secondary)
         }
     }

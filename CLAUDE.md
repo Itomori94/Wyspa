@@ -71,6 +71,9 @@ binarka ma `minos 14.0` dla obu architektur (sprawdź: `vtool -arch x86_64 -show
   Bez hardened runtime (nie notaryzujemy; runtime wymagałby entitlements dla kamery i Apple Events).
 - **Swift 6 language mode**: callbacki C (Carbon, event tap) wchodzą na MainActor przez `MainActor.assumeIsolated`.
 - **Ustawienia**: `SettingsStore` (UserDefaults, `@Observable`); moduły dostają `ModuleSettings` z prefiksem `module.<id>.`.
+- **Wspólne pomocniki** (zamiast kopii w modułach, które nie mogą się importować): `PolishPlural`, `ProgressSummary`
+  (średnia postępu, „42%”), `TransientMessage` (znikający komunikat po akcji), `PasteboardPrivacy` (typy poufne schowka),
+  `PermissionCenter.openSettings(for:)` (statycznie) w WyspaCore; `ProgressRing` w WyspaUI.
 - **Obserwacja**: `observeChanges` (Observation, re-rejestracja po każdej zmianie) zamiast timerów i Combine.
 
 ## Media (moduł `WyspaMedia`)
@@ -175,7 +178,7 @@ APP=$PWD/build/Wyspa.app/Contents
 | Historia schowka | `WyspaClipboard` | — | `changeCount` co 0,75 s tylko gdy włączony (zaakceptowany wyjątek); pomija Concealed/Transient; limit 10–500 (przypięte poza limitem, najwyżej 50, zostają po „Wyczyść”); tylko w pamięci; wyszukiwanie z „ł”→„l”; kliknięcie = kopiuj + `requestCollapse` + po 180 ms ⌘V przez `CGEvent` (tylko z Dostępnością, inaczej samo kopiowanie) |
 | Skróty | `WyspaShortcuts` | — | `/usr/bin/shortcuts list/run`, nazwy jako argumenty procesu (bez powłoki), ulubione w ustawieniach |
 | Lusterko | `WyspaMirror` | Kamera | sesja AVCapture tylko gdy widok zakładki jest w oknie |
-| Szybkie akcje | `WyspaQuickActions` | Nagrywanie ekranu (przy pierwszym zrzucie) | zrzut `screencapture -i`; „Tekst ze zrzutu” = Vision `VNRecognizeTextRequest` (accurate, pl-PL + en-US, poza głównym wątkiem) → schowek, plik kasowany; skróty i widoczne kafelki zapisane po `rawValue` — nigdy nie zmieniaj istniejących nazw (test); 8 miejsc `ActionSlot` (akcja + przełącznik, najmniej 2 włączone, wybór zajętej akcji = zamiana; `QuickActionsLogic.choosing/setting/validated`), ustawienia w osobnej karcie okna (`QuickActionsTab`); hasło z `SystemRandomNumberGenerator`, w schowku jako `ConcealedType`, kasowane po 90 s; tryb ciemny przez System Events (Apple Events); ikony biurka = `CreateDesktop` Findera + `killall Finder`; zrzut całego ekranu i nagrywanie najpierw `requestCollapse` |
+| Szybkie akcje | `WyspaQuickActions` | Nagrywanie ekranu (przy pierwszym zrzucie) | zrzut `screencapture -i` (każde wywołanie przez `runScreencapture`); „Tekst ze zrzutu” = Vision `VNRecognizeTextRequest` (accurate, pl-PL + en-US, poza głównym wątkiem) → schowek, plik kasowany; skróty i widoczne kafelki zapisane po `rawValue` — nigdy nie zmieniaj istniejących nazw (test); 8 miejsc `ActionSlot` (akcja + przełącznik, najmniej 2 włączone, wybór zajętej akcji = zamiana; `QuickActionsLogic.choosing/setting/validated`), ustawienia w osobnej karcie okna (`QuickActionsTab`); hasło z `SystemRandomNumberGenerator`, w schowku jako `ConcealedType`, kasowane po 90 s; tryb ciemny przez System Events (Apple Events); ikony biurka = `CreateDesktop` Findera + `killall Finder`; zrzut całego ekranu i nagrywanie najpierw `requestCollapse` |
 
 ## Monitor Claude Code (etap 6, moduł `WyspaClaudeMonitor`)
 

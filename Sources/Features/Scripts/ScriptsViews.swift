@@ -1,25 +1,6 @@
 import SwiftUI
+import WyspaCore
 import WyspaUI
-
-struct ScriptProgressRing: View {
-    let fraction: Double?
-    let finished: Bool
-
-    var body: some View {
-        ZStack {
-            Circle().stroke(.white.opacity(0.2), lineWidth: 2.5)
-            Circle()
-                .trim(from: 0, to: finished ? 1 : (fraction ?? 0.25))
-                .stroke(Color.green, style: StrokeStyle(lineWidth: 2.5, lineCap: .round))
-                .rotationEffect(.degrees(-90))
-                .animation(.easeOut(duration: 0.3), value: fraction)
-            Image(systemName: finished ? "checkmark" : "terminal")
-                .font(.system(size: 7, weight: .bold))
-                .foregroundStyle(.white)
-        }
-        .frame(width: 16, height: 16)
-    }
-}
 
 /// Karta `wyspa notify` pod notchem. Podpisana „Skrypt”, żeby nie udawała powiadomienia aplikacji.
 struct ScriptNoticeCard: View {
@@ -82,7 +63,7 @@ struct ScriptsView: View {
                                 if item.isFinished {
                                     Image(systemName: "checkmark.circle.fill").foregroundStyle(.green)
                                 } else {
-                                    Text(ScriptsState.percentText(item.fraction))
+                                    Text(ProgressSummary.percentText(item.fraction))
                                         .font(.system(size: 11, weight: .semibold)).monospacedDigit()
                                         .foregroundStyle(.white.opacity(0.6))
                                 }

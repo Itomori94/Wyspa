@@ -88,6 +88,14 @@ struct FocusDigestTests {
         #expect(FocusDigest.release([], total: 0, at: now).isEmpty)
     }
 
+    @Test("Skupienie: wstrzymanie tylko przy chowanym banerze, inaczej bez karty (bez dubli)")
+    func disposition() {
+        #expect(FocusDigest.disposition(focusActive: false, hidesOriginal: true) == .show)
+        #expect(FocusDigest.disposition(focusActive: false, hidesOriginal: false) == .show)
+        #expect(FocusDigest.disposition(focusActive: true, hidesOriginal: true) == .hold)
+        #expect(FocusDigest.disposition(focusActive: true, hidesOriginal: false) == .skip)
+    }
+
     @Test("Odmiana liczby powiadomień")
     func countText() {
         #expect(FocusDigest.countText(1) == "1 powiadomienie")

@@ -47,10 +47,6 @@ struct NotificationCardView: View {
     }
 }
 
-private extension String {
-    var nilIfEmpty: String? { isEmpty ? nil : self }
-}
-
 struct NotificationsSettingsView: View {
     @Bindable var module: NotificationsModule
 
@@ -62,7 +58,8 @@ struct NotificationsSettingsView: View {
             }
             .fixedSize()
             Text("Podczas skupienia Pomodoro (Timer → „Wstrzymuj powiadomienia podczas skupienia”) karty czekają "
-                 + "i przychodzą po sesji z podsumowaniem.")
+                 + "i przychodzą po sesji z podsumowaniem — gdy systemowy baner jest chowany. Bez chowania baner "
+                 + "pokazuje system, a wyspa nie dubluje go kartą.")
                 .font(.caption).foregroundStyle(.secondary)
             Text("Przyciski z powiadomień (np. „Odpowiedz”) działają tylko w systemowym banerze — kliknięcie karty otwiera aplikację. "
                  + "Gdy nowa wersja macOS zmieni budowę banerów, moduł przestanie je widzieć, a powiadomienia działają zwyczajnie.")

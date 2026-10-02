@@ -31,7 +31,8 @@ struct QuickActionsView: View {
     }
 
     /// Ile kolumn mieści się w danej szerokości (kafelek najmniej 64 pt w widżecie, 110 pt na pełnej stronie).
-    static func columnCount(width: CGFloat, compact: Bool, tiles: Int) -> Int {
+    /// Czysta funkcja bez stanu widoku — `nonisolated`, żeby testy mogły ją wołać poza głównym aktorem.
+    nonisolated static func columnCount(width: CGFloat, compact: Bool, tiles: Int) -> Int {
         let minimum: CGFloat = compact ? 64 : 110
         let fitting = Int((width + 8) / (minimum + 8))
         return max(1, min(fitting, 4, tiles))

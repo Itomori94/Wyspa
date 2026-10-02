@@ -1,6 +1,7 @@
 import AppKit
 import SwiftUI
 import WyspaCore
+import WyspaUI
 
 /// Postęp pobierania w zwiniętej wyspie; po zakończeniu plik trafia na Półkę.
 ///
@@ -58,9 +59,9 @@ public final class DownloadsModule: IslandModule {
         guard !items.isEmpty else { return nil }
         let fraction = DownloadSummary.fraction(of: items)
         return LiveActivity(id: "downloads", priority: Self.priority, accent: .blue, wingWidth: 52) {
-            DownloadRing(fraction: fraction)
+            ProgressRing(fraction: fraction, tint: .blue, symbol: "arrow.down")
         } trailing: {
-            Text(items.count > 1 ? "\(items.count) × \(DownloadSummary.percentText(fraction))" : DownloadSummary.percentText(fraction))
+            Text(items.count > 1 ? "\(items.count) × \(ProgressSummary.percentText(fraction))" : ProgressSummary.percentText(fraction))
                 .font(.system(size: 11, weight: .semibold, design: .rounded))
                 .monospacedDigit()
                 .foregroundStyle(.white.opacity(0.85))

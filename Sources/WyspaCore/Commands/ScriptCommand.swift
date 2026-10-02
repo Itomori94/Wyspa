@@ -82,32 +82,42 @@ public enum ScriptCommand: Equatable, Sendable {
 
 /// Dostarcza polecenia `wyspa://` do modułu, który je obsługuje (moduły nie znają aplikacji ani siebie nawzajem).
 ///
-/// Polecenia, które przyszły przed startem modułu (np. adres uruchomił Wyspę), czekają w krótkim buforze.
+/// Polecenia, które przyszły tuż przed startem modułu (np. adres uruchomił Wyspę), czekają w krótkim buforze.
+/// Bufor jest ważny kilka sekund: polecenie wysłane przy wyłączonym module nie pokaże się po jego włączeniu godziny później.
 @MainActor
 public final class ScriptCommandCenter {
     public static let shared = ScriptCommandCenter()
     static let bufferLimit = 5
+    static let bufferLifetime: TimeInterval = 15
 
     private var handler: (@MainActor (ScriptCommand) -> Void)?
-    private var buffered: [ScriptCommand] = []
+    private var buffered: [(command: ScriptCommand, at: Date)] = []
+    private let now: () -> Date
 
-    init() {}
+    init(now: @escaping () -> Date = { Date() }) {
+        self.now = now
+    }
 
     public func post(_ command: ScriptCommand) {
         if let handler {
             handler(command)
         } else {
-            buffered = Array((buffered + [command]).suffix(Self.bufferLimit))
+            buffered = Array((fresh() + [(command: command, at: now())]).suffix(Self.bufferLimit))
         }
     }
 
-    /// Jeden odbiorca naraz; nowy zastępuje poprzedniego i dostaje polecenia z bufora.
+    /// Jeden odbiorca naraz; nowy zastępuje poprzedniego i dostaje świeże polecenia z bufora.
     public func setHandler(_ handler: (@MainActor (ScriptCommand) -> Void)?) {
         self.handler = handler
         guard let handler else { return }
-        let pending = buffered
+        let pending = fresh()
         buffered = []
-        pending.forEach(handler)
+        pending.forEach { handler($0.command) }
+    }
+
+    private func fresh() -> [(command: ScriptCommand, at: Date)] {
+        let date = now()
+        return buffered.filter { date.timeIntervalSince($0.at) <= Self.bufferLifetime }
     }
 }
 

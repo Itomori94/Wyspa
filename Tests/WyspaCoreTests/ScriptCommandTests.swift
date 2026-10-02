@@ -75,4 +75,18 @@ struct ScriptCommandTests {
         center.post(.done(id: "later"))
         #expect(received.count == 6)
     }
+
+    @Test("Centrum poleceń: stare polecenia z bufora przepadają (moduł włączony dużo później)")
+    @MainActor
+    func staleBuffer() {
+        final class Clock { var date = Date(timeIntervalSince1970: 0) }
+        let clock = Clock()
+        let center = ScriptCommandCenter(now: { clock.date })
+        center.post(.done(id: "old"))
+        clock.date = clock.date.addingTimeInterval(ScriptCommandCenter.bufferLifetime + 1)
+        center.post(.done(id: "new"))
+        var received: [ScriptCommand] = []
+        center.setHandler { received.append($0) }
+        #expect(received == [.done(id: "new")])
+    }
 }

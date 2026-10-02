@@ -1,4 +1,5 @@
 import SwiftUI
+import WyspaCore
 import WyspaUI
 
 /// Mała półka: strefa upuszczania z liczbą elementów i ostatnimi plikami; pełna półka na osobnej stronie.

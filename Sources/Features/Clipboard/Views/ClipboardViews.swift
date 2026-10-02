@@ -1,5 +1,6 @@
 import AppKit
 import SwiftUI
+import WyspaCore
 import WyspaUI
 
 struct ClipboardView: View {
@@ -133,11 +134,7 @@ struct ClipboardSettingsView: View {
                 HStack {
                     Text("Wklejanie wymaga uprawnienia Dostępność — bez niego kliknięcie tylko kopiuje.")
                         .font(.caption).foregroundStyle(.orange)
-                    Button("Otwórz: Dostępność") {
-                        if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility") {
-                            NSWorkspace.shared.open(url)
-                        }
-                    }
+                    Button("Otwórz: Dostępność") { PermissionCenter.openSettings(for: .accessibility) }
                     .controlSize(.small)
                 }
             }
