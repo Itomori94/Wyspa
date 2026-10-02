@@ -12,7 +12,7 @@ struct MediaExpandedView: View {
                 ArtworkView(image: module.artwork, size: metrics.artworkSize, cornerRadius: 16 * metrics.artworkSize / 92)
                     .shadow(color: (module.accent ?? .black).opacity(0.45), radius: 14, y: 4)
                 VStack(alignment: .leading, spacing: 8) {
-                    TrackInfo(nowPlaying: nowPlaying)
+                    TrackInfo(nowPlaying: nowPlaying, module: module)
                     Scrubber(nowPlaying: nowPlaying, accent: module.accent ?? .white, seek: module.seek)
                     Controls(isPlaying: nowPlaying.isPlaying, spacing: metrics.controlSpacing, send: module.send)
                 }
@@ -26,6 +26,7 @@ struct MediaExpandedView: View {
 
 private struct TrackInfo: View {
     let nowPlaying: NowPlaying
+    let module: MediaModule
 
     var body: some View {
         HStack(alignment: .top, spacing: 8) {
@@ -39,8 +40,41 @@ private struct TrackInfo: View {
                     .lineLimit(1)
             }
             Spacer(minLength: 4)
+            if module.supportsAirPlay { AirPlayMenu(module: module) }
             AppBadge(bundleIdentifier: nowPlaying.bundleIdentifier)
         }
+    }
+}
+
+/// Wybór głośników AirPlay Muzyki (jeden lub kilka naraz, jak w samej Muzyce).
+private struct AirPlayMenu: View {
+    let module: MediaModule
+
+    var body: some View {
+        Menu {
+            if module.airPlayDevices.isEmpty {
+                Text("Brak głośników — sprawdź zgodę na sterowanie Muzyką")
+            }
+            ForEach(module.airPlayDevices) { device in
+                Button {
+                    module.toggleAirPlay(device)
+                } label: {
+                    Label(device.name, systemImage: device.isSelected ? "checkmark" : device.symbol)
+                }
+                .disabled(!device.isAvailable)
+            }
+        } label: {
+            Image(systemName: "airplayaudio")
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundStyle(module.airPlayDevices.contains { $0.isSelected && $0.kind.lowercased() != "computer" }
+                                 ? Color.accentColor : .white.opacity(0.75))
+        }
+        .menuStyle(.borderlessButton)
+        .menuIndicator(.hidden)
+        .fixedSize()
+        .help("Głośniki AirPlay")
+        .onAppear(perform: module.refreshAirPlay)
+        .accessibilityLabel("Głośniki AirPlay")
     }
 }
 

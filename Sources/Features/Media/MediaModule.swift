@@ -27,6 +27,8 @@ public final class MediaModule: IslandModule {
     public private(set) var status: SourceStatus = .starting
     public private(set) var artwork: NSImage?
     public private(set) var accent: Color?
+    /// Głośniki AirPlay Muzyki; odczytywane na żądanie (otwarcie odtwarzacza, zmiana wyboru), bez odpytywania.
+    public private(set) var airPlayDevices: [AirPlayDevice] = []
 
     public var preference: MediaSourcePreference {
         didSet {
@@ -63,6 +65,7 @@ public final class MediaModule: IslandModule {
     @ObservationIgnored private var startTask: Task<Void, Never>?
     @ObservationIgnored private var artworkData: Data?
     @ObservationIgnored private let log = Log.logger("media")
+    @ObservationIgnored private let airPlayRunner = ScriptRunner()
 
     public required init(context: ModuleContext) {
         self.context = context
@@ -115,6 +118,31 @@ public final class MediaModule: IslandModule {
 
     public func seek(to seconds: TimeInterval) {
         displayedOrigin == .music ? musicCompanion?.seek(to: seconds) : source?.seek(to: seconds)
+    }
+
+    // MARK: - AirPlay
+
+    /// Wybór głośników jest dostępny tylko dla Muzyki (inne aplikacje nie dają go przez AppleScript).
+    public var supportsAirPlay: Bool { nowPlaying?.bundleIdentifier == ScriptablePlayer.music.rawValue }
+
+    public func refreshAirPlay() {
+        let musicRunning = !NSRunningApplication.runningApplications(withBundleIdentifier: ScriptablePlayer.music.rawValue).isEmpty
+        guard supportsAirPlay, musicRunning else {
+            airPlayDevices = []
+            return
+        }
+        Task {
+            let output = await airPlayRunner.run(AirPlayScript.listScript)?.stringValue ?? ""
+            airPlayDevices = AirPlayScript.parse(output)
+        }
+    }
+
+    public func toggleAirPlay(_ device: AirPlayDevice) {
+        let names = AirPlayScript.toggling(device.name, in: airPlayDevices)
+        Task {
+            _ = await airPlayRunner.run(AirPlayScript.selectScript(names))
+            refreshAirPlay()
+        }
     }
 
     // MARK: - Źródło

@@ -136,7 +136,7 @@ final class AppleScriptNowPlayingSource: NowPlayingSource {
 }
 
 /// NSAppleScript nie jest bezpieczny wątkowo: wszystkie skrypty idą przez jedną kolejkę szeregową.
-private final class ScriptRunner: @unchecked Sendable {
+final class ScriptRunner: @unchecked Sendable {
     private let queue = DispatchQueue(label: "pl.net.kurant.wyspa.applescript", qos: .utility)
     private let log = Log.logger("media.applescript")
 
