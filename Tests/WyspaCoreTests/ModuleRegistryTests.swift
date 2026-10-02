@@ -390,3 +390,27 @@ final class SlowPermissions: PermissionProviding {
         #expect(shown.showsInExpandedHeader && !hidden.showsInExpandedHeader)
     }
 }
+
+@Suite("Aktywność w nagłówku rozwiniętej wyspy")
+@MainActor
+struct HeaderActivityTests {
+    let timer = LiveActivity(id: "timer", priority: .timer, leading: { EmptyView() }, trailing: { EmptyView() })
+
+    @Test("Moduł widoczny na stronie nie dubluje się w nagłówku")
+    func hiddenWhenOnPage() {
+        #expect(!ModuleRegistry.showsInHeader(timer, from: "timer", pageModuleIDs: ["notes", "timer"]))
+    }
+
+    @Test("Na innej stronie aktywność zostaje w nagłówku")
+    func shownElsewhere() {
+        #expect(ModuleRegistry.showsInHeader(timer, from: "timer", pageModuleIDs: ["media"]))
+        #expect(ModuleRegistry.showsInHeader(timer, from: "timer", pageModuleIDs: []))
+    }
+
+    @Test("Aktywność, która sama nie chce nagłówka, nie pojawia się nigdzie")
+    func optOut() {
+        let media = LiveActivity(id: "media", priority: .media, showsInExpandedHeader: false,
+                                 leading: { EmptyView() }, trailing: { EmptyView() })
+        #expect(!ModuleRegistry.showsInHeader(media, from: "media", pageModuleIDs: ["timer"]))
+    }
+}

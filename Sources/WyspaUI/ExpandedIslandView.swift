@@ -63,9 +63,13 @@ struct ExpandedIslandView: View {
         model.notch.isPhysical ? model.notch.size.width : 12
     }
 
-    /// Aktywność pokazywana w nagłówku: nie ta, której treść dubluje rozwinięty widok (np. okładka mediów).
+    /// Aktywność pokazywana w nagłówku: nie ta, której treść dubluje widoczną stronę (np. timer obok widżetu timera).
     private var headerActivity: LiveActivity? {
-        model.activity.flatMap { $0.showsInExpandedHeader ? $0 : nil }
+        guard let current = model.registry.currentActivityWithSource else { return nil }
+        let pages = model.registry.pages
+        let pageModuleIDs = pages.isEmpty ? [] : pages[min(model.selectedTab, pages.count - 1)].moduleIDs
+        return ModuleRegistry.showsInHeader(current.activity, from: current.moduleID, pageModuleIDs: pageModuleIDs)
+            ? current.activity : nil
     }
 
     @ViewBuilder

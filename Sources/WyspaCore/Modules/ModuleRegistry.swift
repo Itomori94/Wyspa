@@ -76,10 +76,20 @@ public final class ModuleRegistry {
     public func isPending(_ id: String) -> Bool { pending.contains(id) }
 
     /// Aktywność o najwyższym priorytecie spośród działających modułów.
-    public var currentActivity: LiveActivity? {
+    public var currentActivity: LiveActivity? { currentActivityWithSource?.activity }
+
+    /// Bieżąca aktywność razem z identyfikatorem modułu, który ją zgłosił.
+    public var currentActivityWithSource: (activity: LiveActivity, moduleID: String)? {
         activeModules
-            .compactMap(\.liveActivity)
-            .max { $0.priority < $1.priority }
+            .compactMap { module in module.liveActivity.map { ($0, type(of: module).descriptor.id) } }
+            .max { $0.0.priority < $1.0.priority }
+            .map { (activity: $0.0, moduleID: $0.1) }
+    }
+
+    /// Czy pokazać aktywność w nagłówku rozwiniętej wyspy: nie, gdy dubluje treść widocznej strony
+    /// (moduł, który ją zgłosił, jest na tej stronie) albo gdy sama tego nie chce (np. okładka mediów).
+    public static func showsInHeader(_ activity: LiveActivity, from moduleID: String, pageModuleIDs: [String]) -> Bool {
+        activity.showsInExpandedHeader && !pageModuleIDs.contains(moduleID)
     }
 
     /// Układ wyspy: zapisany albo automatyczny z bieżących modułów.
