@@ -108,7 +108,10 @@ zaktualizuj też ten plik. Karty okna: **Ogólne · Wyspa · Moduły · Układ**
 - **Pogoda** — „Temperatura w zwiniętej wyspie” · „Dane z Open-Meteo (bez konta). Wysyłane są tylko współrzędne
   zaokrąglone do ok. 1 km; odświeżanie przy otwarciu wyspy, gdy dane mają ponad 15 minut. Kliknięcie pogody otwiera
   aplikację Pogoda.”
-- **Szybkie akcje** — skróty: Zrzut na Półkę / Tekst ze zrzutu / Pipeta koloru / Zablokuj ekran / Nie usypiaj (przełącz) · „Skróty
-  działają w całym systemie, także przy zwiniętej wyspie.”
+- **Szybkie akcje** — „Widoczne w wyspie (od 2 do 4)”: przełącznik przy każdej akcji — Zrzut na Półkę / Zrzut całego
+  ekranu / Tekst ze zrzutu / Nagrywanie ekranu / Pipeta koloru / Generator hasła / Tryb ciemny (przełącz) / Ikony na
+  biurku (przełącz) / Zablokuj ekran / Nie usypiaj (przełącz) · „Gdy widoczne są 4 akcje, wyłącz jedną, żeby włączyć
+  inną. Najmniej 2 muszą zostać.” · „Skróty klawiszowe” (te same akcje) · „Skróty działają w całym systemie, także przy
+  zwiniętej wyspie.”
 - **Skróty** — „Nie masz jeszcze żadnych skrótów. Utwórz je w aplikacji Skróty.” · „Ulubione (pokazywane w wyspie;
   bez ulubionych widać wszystkie)” · „Uruchom skrót „…”” · „Odśwież”
