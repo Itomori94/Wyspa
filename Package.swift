@@ -6,6 +6,7 @@ let package = Package(
     platforms: [.macOS(.v14)],
     products: [
         .executable(name: "Wyspa", targets: ["WyspaApp"]),
+        .executable(name: "wyspa-hook", targets: ["WyspaHook"]),
     ],
     targets: [
         .target(name: "WyspaCore", path: "Sources/WyspaCore"),
@@ -17,6 +18,10 @@ let package = Package(
         .target(name: "WyspaPower", dependencies: ["WyspaCore", "WyspaUI"], path: "Sources/Features/Power"),
         .target(name: "WyspaBluetooth", dependencies: ["WyspaCore", "WyspaUI"], path: "Sources/Features/Bluetooth"),
         .target(name: "WyspaNotifications", dependencies: ["WyspaCore", "WyspaUI"], path: "Sources/Features/Notifications"),
+        // Protokół hooka: tylko Foundation, żeby `wyspa-hook` startował szybko.
+        .target(name: "WyspaHookKit", path: "Sources/WyspaHookKit"),
+        .executableTarget(name: "WyspaHook", dependencies: ["WyspaHookKit"], path: "Sources/WyspaHook"),
+        .target(name: "WyspaClaudeMonitor", dependencies: ["WyspaCore", "WyspaUI", "WyspaHookKit"], path: "Sources/Features/ClaudeMonitor"),
         .target(name: "WyspaTimer", dependencies: ["WyspaCore", "WyspaUI"], path: "Sources/Features/Timer"),
         .target(name: "WyspaNotes", dependencies: ["WyspaCore", "WyspaUI"], path: "Sources/Features/Notes"),
         .target(name: "WyspaClipboard", dependencies: ["WyspaCore", "WyspaUI"], path: "Sources/Features/Clipboard"),
@@ -28,7 +33,7 @@ let package = Package(
             name: "WyspaFeatures",
             dependencies: [
                 "WyspaCore", "WyspaUI", "WyspaMedia", "WyspaShelf", "WyspaHUD", "WyspaPower", "WyspaBluetooth",
-                "WyspaTimer", "WyspaNotes", "WyspaNotifications", "WyspaClipboard", "WyspaShortcuts", "WyspaMirror", "WyspaCalendar", "WyspaReminders",
+                "WyspaTimer", "WyspaNotes", "WyspaNotifications", "WyspaClaudeMonitor", "WyspaClipboard", "WyspaShortcuts", "WyspaMirror", "WyspaCalendar", "WyspaReminders",
             ],
             path: "Sources/Features/Catalog"
         ),
@@ -49,6 +54,7 @@ let package = Package(
         .testTarget(name: "WyspaShortcutsTests", dependencies: ["WyspaShortcuts"], path: "Tests/WyspaShortcutsTests"),
         .testTarget(name: "WyspaCalendarTests", dependencies: ["WyspaCalendar"], path: "Tests/WyspaCalendarTests"),
         .testTarget(name: "WyspaRemindersTests", dependencies: ["WyspaReminders"], path: "Tests/WyspaRemindersTests"),
+        .testTarget(name: "WyspaClaudeMonitorTests", dependencies: ["WyspaClaudeMonitor", "WyspaHookKit"], path: "Tests/WyspaClaudeMonitorTests"),
         .testTarget(name: "WyspaBluetoothTests", dependencies: ["WyspaBluetooth"], path: "Tests/WyspaBluetoothTests"),
     ]
 )

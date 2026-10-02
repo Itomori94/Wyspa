@@ -31,6 +31,8 @@ rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources/mediaremote-adapter" \
     "$APP/Contents/Frameworks" "$APP/Contents/Helpers"
 cp "$BIN_DIR/Wyspa" "$APP/Contents/MacOS/Wyspa"
+# Hook Claude Code uruchamiany przez Claude Code (ścieżka wpisywana do ~/.claude/settings.json przy instalacji).
+cp "$BIN_DIR/wyspa-hook" "$APP/Contents/Helpers/wyspa-hook"
 cp Resources/Info.plist "$APP/Contents/Info.plist"
 
 # mediaremote-adapter: framework ładowany przez /usr/bin/perl (nie linkowany), skrypt, klient testowy, licencja.
@@ -52,6 +54,7 @@ fi
 # Kod zagnieżdżony podpisujemy przed pakietem (od środka na zewnątrz).
 codesign --force --timestamp=none --sign "$SIGN_ID" "$APP/Contents/Frameworks/MediaRemoteAdapter.framework"
 codesign --force --timestamp=none --sign "$SIGN_ID" "$APP/Contents/Helpers/MediaRemoteAdapterTestClient"
+codesign --force --timestamp=none --sign "$SIGN_ID" "$APP/Contents/Helpers/wyspa-hook"
 codesign --force --timestamp=none --sign "$SIGN_ID" "$APP"
 
 codesign --verify --strict "$APP"

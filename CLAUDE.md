@@ -168,6 +168,25 @@ APP=$PWD/build/Wyspa.app/Contents
 | Skróty | `WyspaShortcuts` | — | `/usr/bin/shortcuts list/run`, nazwy jako argumenty procesu (bez powłoki), ulubione w ustawieniach |
 | Lusterko | `WyspaMirror` | Kamera | sesja AVCapture tylko gdy widok zakładki jest w oknie |
 
+## Monitor Claude Code (etap 6, moduł `WyspaClaudeMonitor`)
+
+- **Hook** `wyspa-hook` (target `WyspaHook`, tylko Foundation + `WyspaHookKit`) w `Contents/Helpers`. Claude Code uruchamia go
+  bez powłoki (`args`). Wejście hooka ze stdin → jedna linia JSON przez gniazdo Unix
+  `~/Library/Application Support/Wyspa/claude.sock` (prawa 0600). Połączenie ~1 s (nieblokujący connect + poll);
+  brak Wyspy = natychmiastowe wyjście, kod 0, pusty stdout (Claude Code działa jak bez hooka).
+- **PermissionRequest** czeka na odpowiedź do `--decision-timeout` (ustawienie modułu, domyślnie 5 min; timeout hooka
+  w settings.json = decyzja + 15 s). `allow`/`deny` → `hookSpecificOutput.decision.behavior`; `ask`, brak odpowiedzi,
+  zamknięcie Wyspy → pusty stdout = zwykły prompt w terminalu. Zamknięcie połączenia przez hook zgłasza `onClosed`.
+- **Instalacja** (`HookInstaller`, czyste przekształcenia + plik): kopia `settings.json.wyspa-backup-<data>` przed każdym
+  zapisem, nieczytelny plik nie jest nadpisywany, wpisy Wyspy rozpoznawane po `wyspa-hook` w ścieżce, deinstalacja
+  przywraca stan sprzed instalacji (test). Zapis sortuje klucze (`.sortedKeys`) — kolejność kluczy w pliku może się zmienić.
+- **Stan sesji**: czysty reducer `SessionStore` (SessionStart/UserPromptSubmit/PreToolUse/PostToolUse/PermissionRequest/
+  Notification/Stop/SessionEnd). Martwe sesje (proces Claude Code zniknął bez SessionEnd) usuwane przez `kill(pid, 0)`.
+- **Terminal**: `__CFBundleIdentifier` z środowiska hooka → aplikacja; TTY procesu Claude z `sysctl` → karta w Terminal/iTerm2
+  (AppleScript), VS Code/Cursor przez `vscode://file/<cwd>` / `cursor://file/<cwd>`.
+- Testy integracyjne uruchamiają prawdziwy helper na gnieździe tymczasowym (`WYSPA_SOCKET_PATH`); `scripts/test.sh`
+  buduje `wyspa-hook` przed testami.
+
 ## Powiadomienia (w toku)
 
 Plan: moduł czyta banery macOS przez Dostępność i pokazuje je w wyspie (chowanie oryginału do wyboru).

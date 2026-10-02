@@ -1,5 +1,6 @@
 import WyspaBluetooth
 import WyspaCalendar
+import WyspaClaudeMonitor
 import WyspaClipboard
 import WyspaCore
 import WyspaHUD
@@ -26,6 +27,7 @@ public enum ModuleCatalog {
         ClipboardModule.self,
         ShortcutsModule.self,
         MirrorModule.self,
+        ClaudeMonitorModule.self,
         HUDModule.self,
         PowerModule.self,
         BluetoothModule.self,

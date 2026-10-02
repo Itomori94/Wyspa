@@ -50,6 +50,8 @@ Wyłączony moduł nie działa w tle.
 | Przypomnienia | **Przypomnienia** |
 | Kamera | **Lusterko** (tylko gdy zakładka jest otwarta) |
 | — | **Timer**, **Notatka**, **Historia schowka**, **Skróty** nie wymagają uprawnień |
+| — | **Claude Code** nie wymaga uprawnień systemowych; instalacja hooków zmienia `~/.claude/settings.json` (z kopią zapasową) |
+| Automatyzacja: Terminal, iTerm2 | **Claude Code**: przejście do właściwej karty terminala (system pyta przy pierwszym użyciu) |
 | Automatyzacja: Muzyka, Spotify | **Teraz odtwarzane** w trybie awaryjnym AppleScript (system pyta przy pierwszym użyciu) |
 
 Tabela rośnie wraz z kolejnymi modułami.
@@ -138,6 +140,21 @@ znika po wyłączeniu modułu albo aplikacji.
 
 Skróty: ulubione Skróty macOS jako przyciski (wybór w ustawieniach modułu). Lusterko: podgląd z kamery;
 kamera działa tylko, gdy zakładka Lusterka jest widoczna.
+
+### Claude Code
+
+Podgląd sesji Claude Code w wyspie: projekt, stan (pracuje, używa narzędzia, prosi o zgodę, czeka na Ciebie, skończyła)
+i ostatnie narzędzia. Kilka sesji naraz.
+
+- **Instalacja**: Ustawienia → Moduły → Claude Code → *Zainstaluj hooki*. Wyspa dopisuje swoje wpisy do
+  `~/.claude/settings.json`, robiąc obok kopię zapasową; Twoje inne hooki zostają. *Odinstaluj* usuwa tylko wpisy Wyspy.
+  Po przeniesieniu aplikacji (np. do /Applications) kliknij *Zaktualizuj ścieżkę*.
+- **Zgody z wyspy**: prośba o uprawnienie rozwija wyspę i pokazuje narzędzie z podglądem (polecenie, diff edycji,
+  początek nowego pliku). *Zezwól*, *Odrzuć* albo *W terminalu*. Brak decyzji w ustalonym czasie (domyślnie 5 min)
+  albo wyłączona Wyspa = zwykły prompt w terminalu, jak bez Wyspy.
+- **Dźwięk i pulsowanie**, gdy sesja czeka albo kończy; cisza, gdy terminal tej sesji jest na wierzchu.
+- **Kliknięcie sesji** przenosi do jej terminala: właściwa karta w Terminalu i iTerm2, właściwe okno w VS Code i Cursor;
+  w innych terminalach aplikacja przechodzi na wierzch.
 
 ## Znane ograniczenia
 
