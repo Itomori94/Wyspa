@@ -319,3 +319,14 @@ extension IslandBoard {
         return (try? withPage.inserting(moduleID: moduleID, intoPage: pageID, at: 0, minimum: minimum)) ?? self
     }
 }
+
+public extension Array where Element == BoardWidget {
+    /// Moduł, który reprezentuje stronę z widżetami (np. jej ikoną na pasku zakładek): najszerszy, przy remisie pierwszy.
+    var dominantModuleID: String? {
+        enumerated().max { lhs, rhs in
+            lhs.element.width.units != rhs.element.width.units
+                ? lhs.element.width.units < rhs.element.width.units
+                : lhs.offset > rhs.offset
+        }?.element.moduleID
+    }
+}

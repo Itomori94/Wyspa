@@ -159,7 +159,9 @@ public final class ModuleRegistry {
             }
             guard !resolved.isEmpty else { return nil }
             let name = resolved.map(\.name).joined(separator: " · ")
-            return IslandPage(id: page.id, name: name, symbol: "rectangle.split.3x1", content: .widgets(resolved),
+            let leading = resolved.map { BoardWidget(id: $0.id, moduleID: $0.moduleID, width: $0.width) }.dominantModuleID
+            let symbol = leading.flatMap { descriptor(for: $0)?.symbol } ?? "square.grid.2x2"
+            return IslandPage(id: page.id, name: name, symbol: symbol, content: .widgets(resolved),
                               moduleIDs: resolved.map(\.moduleID))
         }
     }

@@ -102,7 +102,7 @@ private struct PageBar: View {
         // Zawijanie do kolejnych wierszy: pasek nigdy nie poszerza edytora ponad okno.
         FlowLayout(spacing: 6) {
             ForEach(Array(board.pages.enumerated()), id: \.element.id) { index, page in
-                PageChip(title: title(of: page), symbol: symbol(of: page), isSelected: page.id == selected,
+                PageChip(title: title(of: page), symbols: symbols(of: page), isSelected: page.id == selected,
                          select: { select(page.id) }, remove: { apply { board.removingPage(page.id) } })
                     .draggable(EditorPayload.page(page.id).text)
                     .dropDestination(for: String.self) { items, _ in
@@ -179,17 +179,19 @@ private struct PageBar: View {
         }
     }
 
-    private func symbol(of page: BoardPage) -> String {
+    /// Ikony modułów na stronie, w kolejności widżetów.
+    private func symbols(of page: BoardPage) -> [String] {
         switch page.content {
-        case .module(let id): registry.descriptor(for: id)?.symbol ?? "square"
-        case .widgets: "rectangle.split.3x1"
+        case .module(let id): [registry.descriptor(for: id)?.symbol ?? "square"]
+        case .widgets(let widgets):
+            widgets.isEmpty ? ["square.dashed"] : widgets.map { registry.descriptor(for: $0.moduleID)?.symbol ?? "square" }
         }
     }
 }
 
 private struct PageChip: View {
     let title: String
-    let symbol: String
+    let symbols: [String]
     let isSelected: Bool
     let select: () -> Void
     let remove: () -> Void
@@ -197,7 +199,9 @@ private struct PageChip: View {
 
     var body: some View {
         HStack(spacing: 6) {
-            Image(systemName: symbol)
+            HStack(spacing: 3) {
+                ForEach(Array(symbols.enumerated()), id: \.offset) { Image(systemName: $0.element) }
+            }
             Text(title.count > 32 ? title.prefix(31) + "…" : title).lineLimit(1)
             // Miejsce na krzyżyk jest zawsze zarezerwowane: gdyby karta poszerzała się po najechaniu,
             // pasek stron mógłby przenieść ją do następnego wiersza, spod kursora.

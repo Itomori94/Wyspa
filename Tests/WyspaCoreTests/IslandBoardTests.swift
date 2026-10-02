@@ -166,3 +166,19 @@ struct IslandBoardTests {
         #expect(full.normalized() == full)
     }
 }
+
+@Suite("Ikona strony z widżetami")
+struct DominantModuleTests {
+    private func widget(_ id: String, _ units: Int) -> BoardWidget { BoardWidget(moduleID: id, width: WidgetWidth(units: units)) }
+
+    @Test("Ikoną strony jest najszerszy widżet")
+    func widest() {
+        #expect([widget("timer", 30), widget("media", 60), widget("notes", 30)].dominantModuleID == "media")
+    }
+
+    @Test("Przy równych szerokościach wygrywa pierwszy, pusta strona nie ma modułu")
+    func tieAndEmpty() {
+        #expect([widget("bluetooth", 40), widget("timer", 40), widget("notes", 40)].dominantModuleID == "bluetooth")
+        #expect([BoardWidget]().dominantModuleID == nil)
+    }
+}
