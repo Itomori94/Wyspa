@@ -6,7 +6,6 @@ public struct IslandView: View {
     private static let collapsedBottomRadius: CGFloat = 10
     private static let peekBottomRadius: CGFloat = 13
     private static let expandedBottomRadius: CGFloat = 28
-    private static let contentInset: CGFloat = 20
 
     @Bindable var model: IslandViewModel
     @Namespace private var namespace
@@ -28,7 +27,7 @@ public struct IslandView: View {
                 }
 
             content
-                .padding(.horizontal, model.phase == .expanded ? topRadius + Self.contentInset : topRadius)
+                .padding(.horizontal, model.phase == .expanded ? topRadius + IslandLayout.expandedContentInset : topRadius)
                 // Najpierw rama o rozmiarze wyspy, potem przycięcie do jej kształtu: cokolwiek narysuje moduł,
                 // nie wyjdzie poza wyspę (clipShape bez ramy przycina do granic samej treści, które mogą urosnąć).
                 .frame(width: size.width, height: size.height, alignment: .top)
@@ -45,6 +44,7 @@ public struct IslandView: View {
         }
         .onDrop(of: model.registry.dropTypes, delegate: IslandDropDelegate(model: model, types: model.registry.dropTypes))
         .environment(\.islandDropTarget, model.dropTarget)
+        .onExitCommand(perform: model.onEscape)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .environment(\.colorScheme, .dark)
     }

@@ -55,7 +55,10 @@ binarka ma `minos 14.0` dla obu architektur (sprawdź: `vtool -arch x86_64 -show
   elementów wyciąganych z wyspy z powrotem na nią.
 - **Gesty**: lokalny monitor `scrollWheel` filtrowany do panelu → `SwipeRecognizer` (jeden kierunek na gest).
 - **Skrót globalny**: Carbon `RegisterEventHotKey` (bez Accessibility).
-- **Panel**: poziom `mainMenu + 3`, `canJoinAllSpaces`, `fullScreenAuxiliary`, `nonactivatingPanel`, `canBecomeKey = false`.
+- **Panel**: poziom `mainMenu + 3`, `canJoinAllSpaces`, `fullScreenAuxiliary`, `nonactivatingPanel`.
+  Klawiatura: `canBecomeKey` tylko w rozwiniętej wyspie + `becomesKeyOnlyIfNeeded`, więc fokus przechodzi do wyspy
+  wyłącznie po kliknięciu pola tekstowego (przyciski go nie zabierają). Podczas pisania (`IslandState.isEditing`)
+  zjechanie kursorem nie zwija wyspy; po zwinięciu klawiatura wraca do poprzedniej aplikacji. Esc zwija.
 - **Podpis**: certyfikat „Wyspa Development” (stały designated requirement → zgody TCC przetrwają rebuild).
   Bez hardened runtime (nie notaryzujemy; runtime wymagałby entitlements dla kamery i Apple Events).
 - **Swift 6 language mode**: callbacki C (Carbon, event tap) wchodzą na MainActor przez `MainActor.assumeIsolated`.
@@ -133,9 +136,24 @@ APP=$PWD/build/Wyspa.app/Contents
 - Nagłówek rozwiniętej wyspy: lewa połowa | przerwa pod notchem | prawa połowa, każda połowa to `ViewThatFits`
   z wariantami od najbogatszego; ostatni wariant mieści się zawsze. Prawa połowa: zakładki ze skrzydłem →
   kompaktowe ze skrzydłem → same zakładki → przewijany pasek (zakładki mają pierwszeństwo przed ozdobnym skrzydłem).
+- **Zakładki**: kolejność i widoczność w `SettingsStore` (`tabOrder`, `hiddenTabs`), karta „Zakładki” w ustawieniach
+  (przeciąganie). Prawa połowa nagłówka według `TabStripPlan` (czysta funkcja): pełny pasek ze skrzydłem → kompaktowy →
+  bez skrzydła → część zakładek + menu „⋯”; wybrana zakładka zawsze widoczna. Bez przewijania.
 - Test wizualny `WyspaUITests/IslandOverflowTests`: renderuje wyspę poza ekranem (fazy × rozmiary × 0–10 zakładek ×
   szerokości skrzydeł) i wymaga braku jasnych pikseli poza kształtem. Podgląd klatek:
   `WYSPA_RENDER_DIR=/katalog swift test --filter IslandOverflowTests`.
+
+## Produktywność (etap 5)
+
+| Moduł | Target | Uprawnienie | Uwagi |
+|---|---|---|---|
+| Kalendarz | `WyspaCalendar` | Kalendarze | `UpcomingEventPolicy`: aktywność od 10 min przed startem do 5 min po; jedno zaplanowane wybudzenie na następną granicę albo północ |
+| Przypomnienia | `WyspaReminders` | Przypomnienia | zaległe + dziś, odhaczanie `EKEventStore.save` |
+| Timer | `WyspaTimer` | — | niemutowalna `TimerSession` liczona z dat (przetrwa restart), jedno zadanie do końca odliczania, Pomodoro 25/5/15 × 4 |
+| Notatka | `WyspaNotes` | — | plik `Application Support/Wyspa/Notes/notatka.md`, autozapis po 0,6 s, zapis przy wyłączeniu |
+| Historia schowka | `WyspaClipboard` | — | `changeCount` co 0,75 s tylko gdy włączony (zaakceptowany wyjątek); pomija Concealed/Transient; limit 10–500; tylko w pamięci; wyszukiwanie z „ł”→„l” |
+| Skróty | `WyspaShortcuts` | — | `/usr/bin/shortcuts list/run`, nazwy jako argumenty procesu (bez powłoki), ulubione w ustawieniach |
+| Lusterko | `WyspaMirror` | Kamera | sesja AVCapture tylko gdy widok zakładki jest w oknie |
 
 ## Prywatne API — rejestr
 

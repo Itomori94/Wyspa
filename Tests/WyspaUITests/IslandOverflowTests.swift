@@ -89,9 +89,19 @@ private class TabModuleBase {
     var liveActivity: LiveActivity? { nil }
 }
 
+@MainActor @Observable private final class Tab10: TabModuleBase, IslandModule {
+    static let descriptor = ModuleDescriptor(id: "t10", name: "T10", summary: "", symbol: "checklist")
+    var liveActivity: LiveActivity? { nil }
+}
+@MainActor @Observable private final class Tab11: TabModuleBase, IslandModule {
+    static let descriptor = ModuleDescriptor(id: "t11", name: "T11", summary: "", symbol: "headphones")
+    var liveActivity: LiveActivity? { nil }
+}
+
 @MainActor
 private let allTabModules: [any IslandModule.Type] = [
     Tab0.self, Tab1.self, Tab2.self, Tab3.self, Tab4.self, Tab5.self, Tab6.self, Tab7.self, Tab8.self, Tab9.self,
+    Tab10.self, Tab11.self,
 ]
 
 @MainActor
@@ -112,7 +122,7 @@ struct IslandOverflowTests {
         var result: [Case] = []
         for phase in [IslandPhase.collapsed, .expanded] {
             for size in IslandSize.allCases {
-                for tabCount in [0, 1, 4, 10] {
+                for tabCount in [0, 1, 4, 12] {
                     for wing in [nil, IslandLayout.wingWidth, 70, IslandLayout.maxWingWidth] as [CGFloat?] {
                         result.append(Case(phase: phase, size: size, tabCount: tabCount, wing: wing))
                     }

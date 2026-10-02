@@ -20,6 +20,8 @@ public final class SettingsStore {
         static let virtualNotchMode = "screens.virtualNotch"
         static let toggleShortcut = "shortcut.toggle"
         static let enabledModules = "modules.enabled"
+        static let tabOrder = "island.tabOrder"
+        static let hiddenTabs = "island.hiddenTabs"
     }
 
     @ObservationIgnored private let defaults: UserDefaults
@@ -42,6 +44,14 @@ public final class SettingsStore {
     public private(set) var enabledModules: Set<String> {
         didSet { defaults.set(enabledModules.sorted(), forKey: Key.enabledModules) }
     }
+    /// Kolejność zakładek w rozwiniętej wyspie (identyfikatory modułów); nieznane moduły trafiają na koniec.
+    public private(set) var tabOrder: [String] {
+        didSet { defaults.set(tabOrder, forKey: Key.tabOrder) }
+    }
+    /// Moduły, które działają, ale nie mają zakładki w wyspie.
+    public private(set) var hiddenTabs: Set<String> {
+        didSet { defaults.set(hiddenTabs.sorted(), forKey: Key.hiddenTabs) }
+    }
 
     public init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
@@ -58,6 +68,28 @@ public final class SettingsStore {
             ? .defaultToggle
             : Self.read(HotkeyShortcut.self, key: Key.toggleShortcut, from: defaults)
         enabledModules = Set(defaults.stringArray(forKey: Key.enabledModules) ?? [])
+        tabOrder = defaults.stringArray(forKey: Key.tabOrder) ?? []
+        hiddenTabs = Set(defaults.stringArray(forKey: Key.hiddenTabs) ?? [])
+    }
+
+    public func setTabOrder(_ order: [String]) {
+        var seen = Set<String>()
+        tabOrder = order.filter { seen.insert($0).inserted }
+    }
+
+    public func setTab(_ id: String, visible: Bool) {
+        hiddenTabs = visible ? hiddenTabs.subtracting([id]) : hiddenTabs.union([id])
+    }
+
+    /// Układa identyfikatory według zapisanej kolejności; brakujące zostają na końcu w kolejności wejścia.
+    public func orderedTabs(_ ids: [String]) -> [String] {
+        let rank = Dictionary(tabOrder.enumerated().map { ($1, $0) }, uniquingKeysWith: { first, _ in first })
+        return ids.enumerated()
+            .sorted { lhs, rhs in
+                (rank[lhs.element] ?? tabOrder.count + lhs.offset, lhs.offset)
+                    < (rank[rhs.element] ?? tabOrder.count + rhs.offset, rhs.offset)
+            }
+            .map(\.element)
     }
 
     public func isModuleEnabled(_ id: String) -> Bool {

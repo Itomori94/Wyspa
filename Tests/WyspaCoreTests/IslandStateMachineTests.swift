@@ -145,4 +145,20 @@ struct IslandStateMachineTests {
         let expanded = IslandState(phase: .expanded, tabCount: 2, selectedTab: 0)
         #expect(reduce(expanded, .dragEntered(preferredTab: 1)).state.selectedTab == 1)
     }
+
+    @Test("Podczas pisania zjechanie kursorem nie zwija wyspy")
+    func editingKeepsExpanded() {
+        let editing = reduce(IslandState(phase: .expanded), .editingChanged(true))
+        #expect(editing.state.isEditing && editing.effects == [.cancel(.collapse)])
+        #expect(reduce(editing.state, .pointerExited).effects.isEmpty)
+        let done = reduce(editing.state, .editingChanged(false))
+        #expect(reduce(done.state, .pointerExited).effects == [.schedule(.collapse, after: 0.4)])
+    }
+
+    @Test("Zwinięcie kończy pisanie")
+    func collapseEndsEditing() {
+        let state = IslandState(phase: .expanded, isEditing: true)
+        let result = reduce(state, .swipe(.up))
+        #expect(result.state.phase == .collapsed && !result.state.isEditing)
+    }
 }

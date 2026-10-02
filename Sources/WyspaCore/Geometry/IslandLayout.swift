@@ -34,6 +34,8 @@ public enum IslandLayout {
     /// Wklęsłe górne rogi, którymi wyspa wtapia się w pasek menu.
     public static let collapsedTopRadius: CGFloat = 6
     public static let expandedTopRadius: CGFloat = 14
+    /// Wewnętrzny margines treści rozwiniętej wyspy (poza promieniem rogu).
+    public static let expandedContentInset: CGFloat = 20
     public static let peekGrowth = CGSize(width: 18, height: 4)
     /// Pasek pod wirtualnym notchem, na który można najechać, gdy wyspa jest ukryta.
     public static let hiddenHotZoneHeight: CGFloat = 3
@@ -57,6 +59,12 @@ public enum IslandLayout {
         case .expanded:
             return CGSize(width: max(expanded.width, collapsed.width), height: max(expanded.height, notch.height))
         }
+    }
+
+    /// Szerokość jednej połowy nagłówka rozwiniętej wyspy (po odjęciu marginesów i przerwy pod notchem).
+    public static func headerSideWidth(islandWidth: CGFloat, notchGap: CGFloat) -> CGFloat {
+        let inner = islandWidth - 2 * (expandedTopRadius + expandedContentInset)
+        return max(0, (inner - notchGap) / 2)
     }
 
     /// Okno musi pomieścić największy możliwy stan i cień: rozwiniętą wyspę albo podgląd

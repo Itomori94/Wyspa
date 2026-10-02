@@ -32,6 +32,8 @@ public enum IslandEvent: Equatable, Sendable {
     case activityChanged(hasActivity: Bool)
     case tabCountChanged(Int)
     case tabSelected(Int)
+    /// Pole tekstowe w wyspie dostało albo straciło klawiaturę.
+    case editingChanged(Bool)
 }
 
 public enum IslandEffect: Equatable, Sendable {
@@ -60,12 +62,15 @@ public struct IslandState: Equatable, Sendable {
     public let hasActivity: Bool
     public let tabCount: Int
     public let selectedTab: Int
+    /// Użytkownik pisze w polu tekstowym wyspy: zjechanie kursorem nie zwija wyspy.
+    public let isEditing: Bool
 
-    public init(phase: IslandPhase, hasActivity: Bool = false, tabCount: Int = 0, selectedTab: Int = 0) {
+    public init(phase: IslandPhase, hasActivity: Bool = false, tabCount: Int = 0, selectedTab: Int = 0, isEditing: Bool = false) {
         self.phase = phase
         self.hasActivity = hasActivity
         self.tabCount = tabCount
         self.selectedTab = selectedTab
+        self.isEditing = isEditing
     }
 
     public static func initial(config: IslandConfig) -> IslandState {
@@ -76,13 +81,15 @@ public struct IslandState: Equatable, Sendable {
         phase: IslandPhase? = nil,
         hasActivity: Bool? = nil,
         tabCount: Int? = nil,
-        selectedTab: Int? = nil
+        selectedTab: Int? = nil,
+        isEditing: Bool? = nil
     ) -> IslandState {
         IslandState(
             phase: phase ?? self.phase,
             hasActivity: hasActivity ?? self.hasActivity,
             tabCount: tabCount ?? self.tabCount,
-            selectedTab: selectedTab ?? self.selectedTab
+            selectedTab: selectedTab ?? self.selectedTab,
+            isEditing: isEditing ?? self.isEditing
         )
     }
 }
@@ -125,6 +132,9 @@ public enum IslandStateMachine {
         case .tabSelected(let index):
             guard state.tabCount > 0, (0..<state.tabCount).contains(index) else { return (state, []) }
             return (state.with(selectedTab: index), [])
+        case .editingChanged(let editing):
+            // Koniec pisania przy kursorze poza wyspą zgłasza kontroler osobnym `pointerExited`.
+            return (state.with(isEditing: editing), editing ? [.cancel(.collapse)] : [])
         }
     }
 
@@ -152,7 +162,7 @@ public enum IslandStateMachine {
             let resting = restingPhase(hasActivity: state.hasActivity, config: config)
             return (state.with(phase: resting), [.cancel(.expand)])
         case .expanded:
-            return (state, [.schedule(.collapse, after: config.collapseDelay)])
+            return state.isEditing ? (state, []) : (state, [.schedule(.collapse, after: config.collapseDelay)])
         case .hidden, .collapsed:
             return (state, [])
         }
@@ -190,6 +200,6 @@ public enum IslandStateMachine {
 
     private static func collapse(_ state: IslandState, config: IslandConfig) -> Result {
         let resting = restingPhase(hasActivity: state.hasActivity, config: config)
-        return (state.with(phase: resting), [.cancel(.expand), .cancel(.collapse)])
+        return (state.with(phase: resting, isEditing: false), [.cancel(.expand), .cancel(.collapse)])
     }
 }

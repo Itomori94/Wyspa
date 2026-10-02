@@ -19,6 +19,9 @@ final class IslandWindowController {
     private var timers: [IslandTimer: Task<Void, Never>] = [:]
     private var swipeRecognizer = SwipeRecognizer()
     private var scrollMonitor: Any?
+    private var keyObservers: [NSObjectProtocol] = []
+    /// Aplikacja, która miała klawiaturę, zanim wyspa ją przejęła (do oddania po zakończeniu pisania).
+    private var appBeforeEditing: NSRunningApplication?
     private var isAlive = true
 
     init(screen: ScreenInfo, settings: SettingsStore, registry: ModuleRegistry, openSettings: @escaping () -> Void) {
@@ -43,6 +46,7 @@ final class IslandWindowController {
         model.onDragExited = { [weak self] in self?.send(.dragExited) }
         model.onDropFinished = { [weak self] in self?.container.resyncPointer() }
 
+
         panel.contentView = container
         container.onPointerEntered = { [weak self] in self?.send(.pointerEntered) }
         container.onPointerExited = { [weak self] in self?.send(.pointerExited) }
@@ -50,6 +54,7 @@ final class IslandWindowController {
         layout()
         panel.orderFrontRegardless()
         installScrollMonitor()
+        observeKeyboardFocus()
         observeModules()
         syncModuleState()
     }
@@ -76,6 +81,8 @@ final class IslandWindowController {
         timers = [:]
         if let scrollMonitor { NSEvent.removeMonitor(scrollMonitor) }
         scrollMonitor = nil
+        keyObservers.forEach(NotificationCenter.default.removeObserver)
+        keyObservers = []
         panel.orderOut(nil)
         panel.close()
     }
@@ -89,6 +96,8 @@ final class IslandWindowController {
             withAnimation(IslandMotion.animation(to: next.phase)) {
                 model.phase = next.phase
             }
+            panel.acceptsKeyboard = next.phase == .expanded
+            if previous.phase == .expanded, panel.isKeyWindow { returnKeyboard() }
         }
         if next.selectedTab != model.selectedTab {
             model.selectedTab = next.selectedTab
@@ -122,6 +131,44 @@ final class IslandWindowController {
     private static func config(for screen: ScreenInfo, settings: SettingsStore) -> IslandConfig {
         let hides = !screen.notch.isPhysical && settings.virtualNotchMode == .whenActive
         return settings.islandConfig(hidesWhenIdle: hides)
+    }
+
+    // MARK: - Klawiatura
+
+    private func observeKeyboardFocus() {
+        let center = NotificationCenter.default
+        keyObservers = [
+            center.addObserver(forName: NSWindow.didBecomeKeyNotification, object: panel, queue: .main) { [weak self] _ in
+                MainActor.assumeIsolated {
+                    // Panel nie aktywuje aplikacji, więc na pierwszym planie wciąż jest ta, której oddamy klawiaturę.
+                    self?.appBeforeEditing = NSWorkspace.shared.frontmostApplication
+                    self?.send(.editingChanged(true))
+                }
+            },
+            center.addObserver(forName: NSWindow.didResignKeyNotification, object: panel, queue: .main) { [weak self] _ in
+                MainActor.assumeIsolated { self?.editingEnded() }
+            },
+        ]
+        model.onEscape = { [weak self] in
+            guard self?.state.phase == .expanded else { return }
+            self?.send(.toggleRequested)
+        }
+    }
+
+    private func editingEnded() {
+        guard state.isEditing else { return }
+        send(.editingChanged(false))
+        // Kursor mógł opuścić wyspę w trakcie pisania (zdarzenie zostało wtedy zignorowane).
+        if state.phase == .expanded, !container.isPointerOverIsland { send(.pointerExited) }
+    }
+
+    /// Oddaje klawiaturę aplikacji, która miała ją przed pisaniem w wyspie.
+    private func returnKeyboard() {
+        let target = appBeforeEditing ?? NSWorkspace.shared.frontmostApplication
+        appBeforeEditing = nil
+        if target?.processIdentifier != ProcessInfo.processInfo.processIdentifier {
+            target?.activate()
+        }
     }
 
     // MARK: - Moduły

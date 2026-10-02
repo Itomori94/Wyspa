@@ -304,4 +304,24 @@ struct ModuleRegistryTests {
         let activity = LiveActivity(id: "x", priority: .status, wingWidth: 500, leading: { EmptyView() }, trailing: { EmptyView() })
         #expect(activity.wingWidth == IslandLayout.maxWingWidth)
     }
+
+    @Test("Zakładki według kolejności z ustawień, ukryte nie trafiają do wyspy, ale moduł działa")
+    func tabOrderAndVisibility() async {
+        let settings = makeSettings()
+        let registry = ModuleRegistry(
+            catalog: [PlainModule.self, DropModule.self], settings: settings,
+            permissions: FakePermissions(), requestExpand: {}
+        )
+        await registry.setEnabled("plain", true)
+        await registry.setEnabled("drop", true)
+        #expect(registry.tabs.map(\.id) == ["plain", "drop"])
+
+        settings.setTabOrder(["drop", "plain"])
+        #expect(registry.tabs.map(\.id) == ["drop", "plain"])
+
+        settings.setTab("plain", visible: false)
+        #expect(registry.tabs.map(\.id) == ["drop"])
+        #expect(registry.allTabs.map(\.id) == ["drop", "plain"])
+        #expect(registry.entries.first { $0.id == "plain" }?.isActive == true)
+    }
 }

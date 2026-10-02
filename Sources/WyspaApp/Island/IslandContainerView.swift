@@ -66,6 +66,12 @@ final class IslandContainerView: NSView {
         setPointerInside(interactiveRect.contains(location))
     }
 
+    /// Czy kursor jest teraz nad wyspą (stan faktyczny, nie z ostatniego zdarzenia).
+    var isPointerOverIsland: Bool {
+        guard let window else { return false }
+        return interactiveRect.contains(convert(window.mouseLocationOutsideOfEventStream, from: nil))
+    }
+
     private func setPointerInside(_ inside: Bool) {
         guard inside != isPointerInside else { return }
         isPointerInside = inside

@@ -46,6 +46,10 @@ Wyłączony moduł nie działa w tle.
 | Dostępność | **HUD głośności i jasności** (przechwytywanie klawiszy). Po nadaniu w Ustawieniach systemowych moduł startuje sam |
 | — | **Zasilanie** nie wymaga uprawnień |
 | Bluetooth | **Bluetooth** (podłączenie urządzeń i poziom baterii słuchawek) |
+| Kalendarze | **Kalendarz** |
+| Przypomnienia | **Przypomnienia** |
+| Kamera | **Lusterko** (tylko gdy zakładka jest otwarta) |
+| — | **Timer**, **Notatka**, **Historia schowka**, **Skróty** nie wymagają uprawnień |
 | Automatyzacja: Muzyka, Spotify | **Teraz odtwarzane** w trybie awaryjnym AppleScript (system pyta przy pierwszym użyciu) |
 
 Tabela rośnie wraz z kolejnymi modułami.
@@ -92,6 +96,38 @@ Zakładka z poziomem baterii i szacowanym czasem ładowania albo pracy.
 
 Krótka aktywność po podłączeniu i odłączeniu urządzenia: ikona (AirPods, słuchawki, klawiatura, mysz…) i poziom baterii.
 Zakładka z listą połączonych urządzeń i baterią lewej i prawej słuchawki oraz etui.
+
+### Zakładki w wyspie
+
+Ustawienia → Zakładki: przeciągnij moduły, żeby ustalić kolejność, i wyłącz zakładki, których nie chcesz widzieć
+po najechaniu (moduł działa dalej, np. pokazuje aktywności w zwiniętej wyspie). Jeśli zakładek jest więcej, niż mieści
+nagłówek, pozostałe są w menu ⋯; zakładka wybrana z menu pojawia się w pasku.
+
+### Kalendarz i Przypomnienia
+
+Plan dnia z przyciskiem „Dołącz” dla Meet, Zoom, Teams, Webex, Whereby, Jitsi i FaceTime. Na 10 minut przed spotkaniem
+zwinięta wyspa pokazuje odliczanie. Przypomnienia: zaległe i na dziś, odhaczane jednym kliknięciem.
+
+### Timer
+
+Minutnik (gotowe 1–60 min albo dowolny czas), stoper i Pomodoro (25 min skupienia, 5 min przerwy, 15 min co 4 sesje).
+Odliczanie widać w zwiniętej wyspie; koniec sygnalizuje dźwięk i rozwinięcie wyspy. Timer przetrwa restart aplikacji.
+
+### Notatka
+
+Kliknij w tekst, żeby pisać — dopiero wtedy wyspa przejmuje klawiaturę. Zapis automatyczny. Esc zwija wyspę i oddaje
+klawiaturę poprzedniej aplikacji.
+
+### Historia schowka
+
+Ostatnie teksty, pliki i obrazy z wyszukiwaniem (bez rozróżniania polskich znaków). Kliknięcie kopiuje ponownie.
+Hasła z menedżerów haseł (oznaczone jako poufne) i treści tymczasowe nie są zapisywane. Historia jest tylko w pamięci —
+znika po wyłączeniu modułu albo aplikacji.
+
+### Skróty i Lusterko
+
+Skróty: ulubione Skróty macOS jako przyciski (wybór w ustawieniach modułu). Lusterko: podgląd z kamery;
+kamera działa tylko, gdy zakładka Lusterka jest widoczna.
 
 ## Znane ograniczenia
 

@@ -18,9 +18,13 @@ final class IslandPanel: NSPanel {
         level = NSWindow.Level(rawValue: NSWindow.Level.mainMenu.rawValue + 3)
         collectionBehavior = [.canJoinAllSpaces, .stationary, .fullScreenAuxiliary, .ignoresCycle]
         animationBehavior = .none
+        // Klawiatura tylko po kliknięciu w pole tekstowe; przyciski nie zabierają fokusu innej aplikacji.
+        becomesKeyOnlyIfNeeded = true
     }
 
-    // Wyspa nigdy nie zabiera fokusu aktywnej aplikacji.
-    override var canBecomeKey: Bool { false }
+    /// Ustawiane przez kontroler: tylko rozwinięta wyspa może przyjąć klawiaturę (notatka, wyszukiwanie).
+    var acceptsKeyboard = false
+
+    override var canBecomeKey: Bool { acceptsKeyboard }
     override var canBecomeMain: Bool { false }
 }

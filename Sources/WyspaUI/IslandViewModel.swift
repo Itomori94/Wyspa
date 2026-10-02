@@ -21,6 +21,8 @@ public final class IslandViewModel {
     @ObservationIgnored public var onDragEntered: () -> Void = {}
     @ObservationIgnored public var onDragExited: () -> Void = {}
     @ObservationIgnored public var onDropFinished: () -> Void = {}
+    /// Esc w wyspie przyjmującej klawiaturę.
+    @ObservationIgnored public var onEscape: () -> Void = {}
 
     public init(phase: IslandPhase, notch: NotchMetrics, expandedSize: CGSize, registry: ModuleRegistry) {
         self.phase = phase

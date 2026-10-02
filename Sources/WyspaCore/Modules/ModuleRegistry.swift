@@ -67,13 +67,21 @@ public final class ModuleRegistry {
             .max { $0.priority < $1.priority }
     }
 
+    /// Zakładki widoczne w wyspie, w kolejności z ustawień.
     public var tabs: [ModuleTab] {
-        activeModules.compactMap { module in
+        allTabs.filter { !settings.hiddenTabs.contains($0.id) }
+    }
+
+    /// Wszystkie zakładki działających modułów (także ukryte), w kolejności z ustawień — do edycji w ustawieniach.
+    public var allTabs: [ModuleTab] {
+        let tabs = activeModules.compactMap { module -> ModuleTab? in
             let descriptor = type(of: module).descriptor
             return module.makeExpandedView().map {
                 ModuleTab(id: descriptor.id, name: descriptor.name, symbol: descriptor.symbol, content: $0)
             }
         }
+        let order = settings.orderedTabs(tabs.map(\.id))
+        return order.compactMap { id in tabs.first { $0.id == id } }
     }
 
     // MARK: - Przeciąganie
