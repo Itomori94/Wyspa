@@ -173,7 +173,7 @@ struct IslandOverflowTests {
             let (empty, page) = IslandBoard().addingWidgetPage()
             var board = empty
             // Wszystkie moduły testowe znoszą ćwiartkę wyspy.
-            let minimum: IslandBoard.Minimum = { _ in .quarter }
+            let minimum: IslandBoard.Minimum = { _ in WidgetWidth(units: 20) }
             for id in ids.prefix(count) {
                 board = try board.inserting(moduleID: id, intoPage: page, at: .max, minimum: minimum)
             }

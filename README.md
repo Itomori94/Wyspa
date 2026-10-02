@@ -107,8 +107,9 @@ Ustawienia → Układ to graficzny edytor rozwiniętej wyspy, podobny do NotchNo
 - **Podgląd w skali**: edytor rysuje wyspę w Twoim rozmiarze, z zaznaczonym notchem i prawdziwymi widżetami.
 - **Przeciąganie**: moduł z listy poniżej przeciągnij na stronę; widżety przeciągaj, żeby zmienić kolejność albo
   przenieść na inną stronę (upuść na nazwie strony u góry); przeciągnij widżet z powrotem na listę, żeby go usunąć.
-- **Szerokość**: przeciągnij uchwyt między widżetami albo wybierz szerokość z menu na widżecie
-  (¼, ⅓, ½, ⅔, ¾, całość). Edytor nie pozwoli ułożyć więcej, niż się zmieści.
+- **Szerokość**: przeciągnij uchwyt między widżetami — szerokość zmienia się płynnie, a w trakcie widać procent.
+  Każdy widżet ma minimalną szerokość; edytor nie pozwoli zwęzić go bardziej.
+- Odtwarzacz na dużej szerokości (np. sam na stronie) wygląda jak pełny odtwarzacz z paskiem przewijania.
 - Nowo włączony moduł pojawia się na końcu jako osobna strona — przenieś go, gdzie chcesz.
 
 ### Kalendarz i Przypomnienia

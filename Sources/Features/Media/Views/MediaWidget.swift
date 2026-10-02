@@ -1,8 +1,27 @@
 import SwiftUI
 import WyspaUI
 
-/// Kompaktowy odtwarzacz: okładka, tytuł, wykonawca, cienki pasek postępu i sterowanie.
+/// Widżet odtwarzacza: przy dużej szerokości pełny odtwarzacz (jak na osobnej stronie),
+/// w wąskim miejscu wersja kompaktowa.
 struct MediaWidget: View {
+    static let fullLayoutMinWidth: CGFloat = 340
+
+    let module: MediaModule
+
+    var body: some View {
+        // Decyduje faktyczna szerokość widżetu (szerokość idealna rośnie z długością tytułu).
+        GeometryReader { proxy in
+            if proxy.size.width >= Self.fullLayoutMinWidth {
+                MediaExpandedView(module: module)
+            } else {
+                CompactMediaWidget(module: module)
+            }
+        }
+    }
+}
+
+/// Kompaktowy odtwarzacz: okładka, tytuł, wykonawca, cienki pasek postępu i sterowanie.
+private struct CompactMediaWidget: View {
     let module: MediaModule
 
     var body: some View {

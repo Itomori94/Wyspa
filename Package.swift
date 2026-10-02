@@ -16,6 +16,7 @@ let package = Package(
         .target(name: "WyspaHUD", dependencies: ["WyspaCore", "WyspaUI"], path: "Sources/Features/HUD"),
         .target(name: "WyspaPower", dependencies: ["WyspaCore", "WyspaUI"], path: "Sources/Features/Power"),
         .target(name: "WyspaBluetooth", dependencies: ["WyspaCore", "WyspaUI"], path: "Sources/Features/Bluetooth"),
+        .target(name: "WyspaNotifications", dependencies: ["WyspaCore", "WyspaUI"], path: "Sources/Features/Notifications"),
         .target(name: "WyspaTimer", dependencies: ["WyspaCore", "WyspaUI"], path: "Sources/Features/Timer"),
         .target(name: "WyspaNotes", dependencies: ["WyspaCore", "WyspaUI"], path: "Sources/Features/Notes"),
         .target(name: "WyspaClipboard", dependencies: ["WyspaCore", "WyspaUI"], path: "Sources/Features/Clipboard"),
@@ -27,13 +28,13 @@ let package = Package(
             name: "WyspaFeatures",
             dependencies: [
                 "WyspaCore", "WyspaUI", "WyspaMedia", "WyspaShelf", "WyspaHUD", "WyspaPower", "WyspaBluetooth",
-                "WyspaTimer", "WyspaNotes", "WyspaClipboard", "WyspaShortcuts", "WyspaMirror", "WyspaCalendar", "WyspaReminders",
+                "WyspaTimer", "WyspaNotes", "WyspaNotifications", "WyspaClipboard", "WyspaShortcuts", "WyspaMirror", "WyspaCalendar", "WyspaReminders",
             ],
             path: "Sources/Features/Catalog"
         ),
         .executableTarget(
             name: "WyspaApp",
-            dependencies: ["WyspaCore", "WyspaUI", "WyspaFeatures"],
+            dependencies: ["WyspaCore", "WyspaUI", "WyspaFeatures", "WyspaNotifications"],
             path: "Sources/WyspaApp"
         ),
         .testTarget(name: "WyspaCoreTests", dependencies: ["WyspaCore"], path: "Tests/WyspaCoreTests"),

@@ -1,32 +1,31 @@
 import CoreGraphics
 import Foundation
 
-/// Szerokość widżetu w dwunastkach wnętrza rozwiniętej wyspy (stopnie: ¼, ⅓, ½, ⅔, ¾, całość).
-public enum WidgetWidth: Int, Codable, CaseIterable, Comparable, Sendable {
-    case quarter = 3
-    case third = 4
-    case half = 6
-    case twoThirds = 8
-    case threeQuarters = 9
-    case full = 12
+/// Szerokość widżetu w jednostkach wnętrza rozwiniętej wyspy (120 jednostek = cała szerokość).
+///
+/// Szerokość jest płynna (regulowana dzielnikiem); 120 dzieli się przez 1–6, więc równy podział jest zawsze dokładny.
+public struct WidgetWidth: Codable, Equatable, Hashable, Comparable, Sendable {
+    public static let totalUnits = 120
+    public static let full = WidgetWidth(units: totalUnits)
 
-    public static let totalUnits = 12
+    public let units: Int
 
-    public var units: Int { rawValue }
-    public var fraction: CGFloat { CGFloat(rawValue) / CGFloat(Self.totalUnits) }
-
-    public var displayName: String {
-        switch self {
-        case .quarter: "¼"
-        case .third: "⅓"
-        case .half: "½"
-        case .twoThirds: "⅔"
-        case .threeQuarters: "¾"
-        case .full: "całość"
-        }
+    public init(units: Int) {
+        self.units = min(max(units, 1), Self.totalUnits)
     }
 
-    public static func < (lhs: WidgetWidth, rhs: WidgetWidth) -> Bool { lhs.rawValue < rhs.rawValue }
+    public var fraction: CGFloat { CGFloat(units) / CGFloat(Self.totalUnits) }
+
+    public static func < (lhs: WidgetWidth, rhs: WidgetWidth) -> Bool { lhs.units < rhs.units }
+
+    public init(from decoder: Decoder) throws {
+        self.init(units: try decoder.singleValueContainer().decode(Int.self))
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.singleValueContainer()
+        try container.encode(units)
+    }
 }
 
 public struct BoardWidget: Codable, Equatable, Identifiable, Sendable {
@@ -81,7 +80,7 @@ public enum BoardError: Error, Equatable, Sendable {
 
     public var message: String {
         switch self {
-        case .noRoom: "Na tej stronie brak miejsca. Zmniejsz albo usuń inny widżet, albo dodaj nową stronę."
+        case .noRoom: "Na tej stronie brak miejsca. Zwęź albo usuń inny widżet, albo dodaj nową stronę."
         case .unknownPage: "Ta strona już nie istnieje."
         case .unknownWidget: "Ten widżet już nie istnieje."
         case .notAWidgetPage: "Na stronie z pełnym widokiem modułu nie ma miejsca na widżety."
@@ -95,27 +94,55 @@ public enum BoardError: Error, Equatable, Sendable {
 public struct IslandBoard: Codable, Equatable, Sendable {
     public typealias Minimum = (String) -> WidgetWidth
 
+    /// Skala zapisu szerokości; starsze układy zapisywano w dwunastkach.
+    static let unitScale = WidgetWidth.totalUnits
+    static let legacyUnitScale = 12
+
     public let pages: [BoardPage]
 
     public init(pages: [BoardPage] = []) {
         self.pages = pages
     }
 
+    private enum CodingKeys: String, CodingKey { case pages, unitScale }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        let decoded = try container.decode([BoardPage].self, forKey: .pages)
+        let scale = try container.decodeIfPresent(Int.self, forKey: .unitScale) ?? Self.legacyUnitScale
+        guard scale != Self.unitScale, scale > 0 else {
+            pages = decoded
+            return
+        }
+        // Przeliczenie układu zapisanego w innej skali (np. dwunastkach) na bieżącą.
+        pages = decoded.map { page in
+            guard case .widgets(let widgets) = page.content else { return page }
+            return page.with(widgets: widgets.map {
+                $0.with(width: WidgetWidth(units: $0.width.units * Self.unitScale / scale))
+            })
+        }
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(pages, forKey: .pages)
+        try container.encode(Self.unitScale, forKey: .unitScale)
+    }
+
     // MARK: - Widżety
 
-    /// Dodaje widżet na stronę. Gdy brak wolnego miejsca, wyrównuje szerokości wszystkich widżetów na stronie.
+    /// Dodaje widżet na stronę: zajmuje wolne miejsce, a gdy go brak — wszystkie widżety dzielą stronę po równo.
     public func inserting(moduleID: String, intoPage pageID: UUID, at index: Int, minimum: Minimum) throws(BoardError) -> IslandBoard {
         let page = try widgetPage(pageID)
         let widgets = page.widgets
         let remaining = WidgetWidth.totalUnits - page.usedUnits
         let insertAt = min(max(index, 0), widgets.count)
 
-        if let width = WidgetWidth.allCases.filter({ $0.units <= remaining && $0 >= minimum(moduleID) }).max() {
+        if remaining >= minimum(moduleID).units {
             var next = widgets
-            next.insert(BoardWidget(moduleID: moduleID, width: width), at: insertAt)
+            next.insert(BoardWidget(moduleID: moduleID, width: WidgetWidth(units: remaining)), at: insertAt)
             return replacing(page.with(widgets: next))
         }
-        // Brak wolnego miejsca: równy podział, jeśli każdy widżet go zniesie.
         var next = widgets
         next.insert(BoardWidget(moduleID: moduleID, width: .full), at: insertAt)
         guard let equal = Self.equalWidth(count: next.count),
@@ -138,15 +165,7 @@ public struct IslandBoard: Codable, Equatable, Sendable {
             widgets.insert(widget, at: min(max(adjusted, 0), widgets.count))
             return replacing(source.with(widgets: widgets))
         }
-        let withoutSource = replacing(source.with(widgets: source.widgets.filter { $0.id != widgetID }))
-        let target = try withoutSource.widgetPage(pageID)
-        let remaining = WidgetWidth.totalUnits - target.usedUnits
-        var widgets = target.widgets
-        if widget.width.units <= remaining {
-            widgets.insert(widget, at: min(max(index, 0), widgets.count))
-            return withoutSource.replacing(target.with(widgets: widgets))
-        }
-        // Za szeroki na wolne miejsce: spróbuj węższej szerokości, potem równego podziału.
+        let withoutSource = removing(widget: widgetID)
         return try withoutSource.inserting(moduleID: widget.moduleID, intoPage: pageID, at: index, minimum: minimum)
     }
 
@@ -161,42 +180,8 @@ public struct IslandBoard: Codable, Equatable, Sendable {
         return replacing(page.with(widgets: Self.filling(remaining, freedAt: index, keepEqual: wasEqual)))
     }
 
-    /// Strony z wolnym miejscem (np. układ zapisany przed wypełnianiem po usunięciu) wypełnione do pełnej szerokości.
-    public func normalized() -> IslandBoard {
-        IslandBoard(pages: pages.map { page in
-            let widgets = page.widgets
-            guard !widgets.isEmpty, page.usedUnits < WidgetWidth.totalUnits else { return page }
-            let allEqual = Set(widgets.map(\.width)).count == 1
-            return page.with(widgets: Self.filling(widgets, freedAt: widgets.count, keepEqual: allEqual))
-        })
-    }
-
-    /// Rozdziela wolne miejsce strony tak, żeby widżety znów zajmowały całą szerokość.
-    static func filling(_ widgets: [BoardWidget], freedAt index: Int, keepEqual: Bool) -> [BoardWidget] {
-        guard !widgets.isEmpty else { return widgets }
-        let free = WidgetWidth.totalUnits - widgets.map(\.width.units).reduce(0, +)
-        guard free > 0 else { return widgets }
-        if keepEqual, let equal = equalWidth(count: widgets.count) {
-            return widgets.map { $0.with(width: equal) }
-        }
-        // Najpierw sąsiad z lewej, potem z prawej, potem dowolny widżet, który przyjmie całe wolne miejsce.
-        let neighbours = [index - 1, index] + Array(widgets.indices)
-        for candidate in neighbours where widgets.indices.contains(candidate) {
-            if let wider = WidgetWidth(rawValue: widgets[candidate].width.units + free) {
-                var result = widgets
-                result[candidate] = widgets[candidate].with(width: wider)
-                return result
-            }
-        }
-        // Wolnego miejsca nie da się oddać jednemu widżetowi w stopniach — równy podział, jeśli możliwy.
-        if let equal = equalWidth(count: widgets.count), widgets.allSatisfy({ $0.width <= equal }) {
-            return widgets.map { $0.with(width: equal) }
-        }
-        return widgets
-    }
-
-    /// Przesuwa dzielnik między widżetami `dividerIndex` i `dividerIndex + 1` o `delta` dwunastek.
-    /// Szerokości przeskakują do najbliższych dozwolonych stopni; suma pary się nie zmienia.
+    /// Przesuwa dzielnik między widżetami `dividerIndex` i `dividerIndex + 1` o `delta` jednostek (płynnie).
+    /// Suma pary się nie zmienia, oba widżety zachowują swoje minima.
     public func movingDivider(onPage pageID: UUID, after dividerIndex: Int, by delta: Int, minimum: Minimum) throws(BoardError) -> IslandBoard {
         let page = try widgetPage(pageID)
         var widgets = page.widgets
@@ -204,28 +189,13 @@ public struct IslandBoard: Codable, Equatable, Sendable {
         let left = widgets[dividerIndex]
         let right = widgets[dividerIndex + 1]
         let pair = left.width.units + right.width.units
-        let target = left.width.units + delta
-
-        let candidates = WidgetWidth.allCases.compactMap { newLeft -> (WidgetWidth, WidgetWidth)? in
-            guard let newRight = WidgetWidth(rawValue: pair - newLeft.units),
-                  newLeft >= minimum(left.moduleID), newRight >= minimum(right.moduleID)
-            else { return nil }
-            return (newLeft, newRight)
-        }
-        guard let best = candidates.min(by: { abs($0.0.units - target) < abs($1.0.units - target) }) else { return self }
-        widgets[dividerIndex] = left.with(width: best.0)
-        widgets[dividerIndex + 1] = right.with(width: best.1)
+        let lowest = minimum(left.moduleID).units
+        let highest = pair - minimum(right.moduleID).units
+        guard lowest <= highest else { return self }
+        let newLeft = min(max(left.width.units + delta, lowest), highest)
+        widgets[dividerIndex] = left.with(width: WidgetWidth(units: newLeft))
+        widgets[dividerIndex + 1] = right.with(width: WidgetWidth(units: pair - newLeft))
         return replacing(page.with(widgets: widgets))
-    }
-
-    /// Ustawia szerokość widżetu, jeśli zmieści się na stronie.
-    public func resizing(widget widgetID: UUID, to width: WidgetWidth, minimum: Minimum) throws(BoardError) -> IslandBoard {
-        guard let page = pages.first(where: { $0.widgets.contains { $0.id == widgetID } }),
-              let widget = page.widgets.first(where: { $0.id == widgetID })
-        else { throw .unknownWidget }
-        guard width >= minimum(widget.moduleID) else { return self }
-        guard page.usedUnits - widget.width.units + width.units <= WidgetWidth.totalUnits else { throw .noRoom }
-        return replacing(page.with(widgets: page.widgets.map { $0.id == widgetID ? $0.with(width: width) : $0 }))
     }
 
     // MARK: - Strony
@@ -265,17 +235,43 @@ public struct IslandBoard: Codable, Equatable, Sendable {
         }
     }
 
+    /// Strony z wolnym miejscem (np. starszy zapis) wypełnione do pełnej szerokości.
+    public func normalized() -> IslandBoard {
+        IslandBoard(pages: pages.map { page in
+            let widgets = page.widgets
+            guard !widgets.isEmpty, page.usedUnits != WidgetWidth.totalUnits else { return page }
+            let allEqual = Set(widgets.map(\.width)).count == 1
+            return page.with(widgets: Self.filling(widgets, freedAt: widgets.count, keepEqual: allEqual))
+        })
+    }
+
     // MARK: - Pomocnicze
 
-    /// Najwęższa dozwolona szerokość, która przy danym wnętrzu wyspy ma co najmniej `points` punktów.
+    /// Najmniejsza szerokość, która przy danym wnętrzu wyspy ma co najmniej `points` punktów.
     public static func minimumWidth(points: CGFloat, innerWidth: CGFloat) -> WidgetWidth {
         guard innerWidth > 0 else { return .full }
-        return WidgetWidth.allCases.first { $0.fraction * innerWidth >= points } ?? .full
+        let units = Int((points / innerWidth * CGFloat(WidgetWidth.totalUnits)).rounded(.up))
+        return WidgetWidth(units: max(units, 1))
     }
 
     static func equalWidth(count: Int) -> WidgetWidth? {
         guard count > 0, WidgetWidth.totalUnits % count == 0 else { return nil }
-        return WidgetWidth(rawValue: WidgetWidth.totalUnits / count)
+        return WidgetWidth(units: WidgetWidth.totalUnits / count)
+    }
+
+    /// Rozdziela wolne (albo nadmiarowe) miejsce strony tak, żeby widżety zajmowały dokładnie całą szerokość.
+    static func filling(_ widgets: [BoardWidget], freedAt index: Int, keepEqual: Bool) -> [BoardWidget] {
+        guard !widgets.isEmpty else { return widgets }
+        if keepEqual, let equal = equalWidth(count: widgets.count) {
+            return widgets.map { $0.with(width: equal) }
+        }
+        let difference = WidgetWidth.totalUnits - widgets.map(\.width.units).reduce(0, +)
+        guard difference != 0 else { return widgets }
+        // Miejsce dostaje sąsiad z lewej (albo pierwszy z prawej).
+        let target = widgets.indices.contains(index - 1) ? index - 1 : min(index, widgets.count - 1)
+        var result = widgets
+        result[target] = widgets[target].with(width: WidgetWidth(units: widgets[target].width.units + difference))
+        return result
     }
 
     func widgetPage(_ pageID: UUID) throws(BoardError) -> BoardPage {

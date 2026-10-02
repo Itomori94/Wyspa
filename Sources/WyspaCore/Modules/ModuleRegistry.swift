@@ -95,7 +95,7 @@ public final class ModuleRegistry {
     }
 
     /// Moduły, które w układzie startowym lepiej wyglądają na pełnej stronie niż w widżecie.
-    static let preferredFullPages: Set<String> = ["shelf", "clipboard"]
+    static let preferredFullPages: Set<String> = ["media", "shelf", "clipboard"]
 
     /// Strony do wyświetlenia: tylko działające moduły; puste strony są pomijane.
     public var pages: [IslandPage] {

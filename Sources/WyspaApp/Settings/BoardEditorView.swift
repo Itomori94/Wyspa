@@ -296,6 +296,8 @@ private struct ModulePagePreview: View {
 }
 
 private struct WidgetsPreview: View {
+    private static let coordinateSpace = "widgetsPreview"
+
     let page: BoardPage
     let widgets: [BoardWidget]
     let board: IslandBoard
@@ -305,32 +307,40 @@ private struct WidgetsPreview: View {
     let innerHeight: CGFloat
     let apply: (() throws -> IslandBoard) -> Void
     @State private var dropIndex: Int?
-    @State private var dragStart: IslandBoard?
+    /// Szkic układu w trakcie przeciągania dzielnika: rysowany od razu, zapisywany dopiero po puszczeniu.
+    @State private var draft: IslandBoard?
+    @State private var draggedDivider: Int?
+
+    private var shown: [BoardWidget] {
+        draft?.pages.first { $0.id == page.id }?.widgets ?? widgets
+    }
 
     private var gap: CGFloat { WidgetRow.dividerSpacing }
-    private var unit: CGFloat { max(0, innerWidth - CGFloat(max(widgets.count - 1, 0)) * gap) / CGFloat(WidgetWidth.totalUnits) }
+    private var unit: CGFloat { max(0, innerWidth - CGFloat(max(shown.count - 1, 0)) * gap) / CGFloat(WidgetWidth.totalUnits) }
 
     var body: some View {
+        let shown = shown
         HStack(spacing: 0) {
-            ForEach(Array(widgets.enumerated()), id: \.element.id) { index, widget in
+            ForEach(Array(shown.enumerated()), id: \.element.id) { index, widget in
                 if index > 0 { divider(after: index - 1) }
                 WidgetCard(widget: widget, registry: registry, scale: scale,
                            realSize: CGSize(width: unit * CGFloat(widget.width.units), height: innerHeight),
                            isDropBefore: dropIndex == index,
-                           remove: { apply { board.removing(widget: widget.id) } },
-                           resize: { width in apply { try board.resizing(widget: widget.id, to: width, minimum: registry.minimumWidth(for:)) } })
+                           showsWidth: draggedDivider.map { $0 == index || $0 + 1 == index } ?? false,
+                           remove: { apply { board.removing(widget: widget.id) } })
             }
-            if widgets.isEmpty {
+            if shown.isEmpty {
                 RoundedRectangle(cornerRadius: 12)
                     .strokeBorder(style: StrokeStyle(lineWidth: 1.5, dash: [6, 4]))
                     .foregroundStyle(.white.opacity(dropIndex == nil ? 0.3 : 0.8))
                     .overlay(Text("Przeciągnij tu widżety z listy poniżej").font(.callout).foregroundStyle(.white.opacity(0.6)))
-            } else if dropIndex == widgets.count {
+            } else if dropIndex == shown.count {
                 Capsule().fill(Color.accentColor).frame(width: 3).padding(.vertical, 6)
             }
             Spacer(minLength: 0)
         }
         .frame(height: innerHeight * scale)
+        .coordinateSpace(.named(Self.coordinateSpace))
         .dropDestination(for: String.self) { items, location in
             defer { dropIndex = nil }
             guard let payload = items.first.flatMap(EditorPayload.init) else { return false }
@@ -347,7 +357,6 @@ private struct WidgetsPreview: View {
         } isTargeted: { targeted in
             if !targeted { dropIndex = nil }
         }
-        .onContinuousHover { _ in }
     }
 
     /// Miejsce wstawienia: liczba widżetów, których środek leży na lewo od kursora.
@@ -361,23 +370,29 @@ private struct WidgetsPreview: View {
         return widgets.count
     }
 
-    /// Dzielnik z uchwytem: przeciąganie zmienia szerokości sąsiednich widżetów skokowo.
+    /// Dzielnik z uchwytem: płynna zmiana szerokości sąsiednich widżetów.
+    ///
+    /// Przesunięcie liczone we współrzędnych całego wiersza (dzielnik sam się przesuwa, więc jego własne
+    /// współrzędne dawałyby skaczący punkt odniesienia), a układ zapisywany raz, po puszczeniu.
     private func divider(after index: Int) -> some View {
         ZStack {
-            Capsule().fill(.white.opacity(0.18)).frame(width: 2).padding(.vertical, 10)
-            Capsule().fill(.white.opacity(0.85)).frame(width: 6, height: 26)
+            Capsule().fill(.white.opacity(draggedDivider == index ? 0.4 : 0.18)).frame(width: 2).padding(.vertical, 10)
+            Capsule().fill(.white.opacity(draggedDivider == index ? 1 : 0.85)).frame(width: 6, height: 26)
         }
         .frame(width: gap * scale)
         .contentShape(Rectangle())
         .onHover { inside in inside ? NSCursor.resizeLeftRight.push() : NSCursor.pop() }
-        .gesture(DragGesture(minimumDistance: 2)
+        .gesture(DragGesture(minimumDistance: 1, coordinateSpace: .named(Self.coordinateSpace))
             .onChanged { value in
-                let base = dragStart ?? board
-                if dragStart == nil { dragStart = board }
+                draggedDivider = index
                 let delta = Int((value.translation.width / (unit * scale)).rounded())
-                apply { try base.movingDivider(onPage: page.id, after: index, by: delta, minimum: registry.minimumWidth(for:)) }
+                draft = try? board.movingDivider(onPage: page.id, after: index, by: delta, minimum: registry.minimumWidth(for:))
             }
-            .onEnded { _ in dragStart = nil })
+            .onEnded { _ in
+                if let draft { apply { draft } }
+                draft = nil
+                draggedDivider = nil
+            })
         .help("Przeciągnij, żeby zmienić szerokość widżetów")
     }
 }
@@ -388,8 +403,9 @@ private struct WidgetCard: View {
     let scale: CGFloat
     let realSize: CGSize
     let isDropBefore: Bool
+    /// Procent szerokości pokazywany w trakcie przeciągania sąsiedniego dzielnika.
+    let showsWidth: Bool
     let remove: () -> Void
-    let resize: (WidgetWidth) -> Void
     @State private var isHovered = false
 
     var body: some View {
@@ -412,28 +428,24 @@ private struct WidgetCard: View {
                 }
             }
             .background(RoundedRectangle(cornerRadius: 10).fill(.white.opacity(isHovered ? 0.08 : 0.03)))
-            .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(.white.opacity(isHovered ? 0.5 : 0.12), lineWidth: 1))
-
-            if isHovered {
-                HStack(spacing: 4) {
-                    Menu {
-                        ForEach(WidgetWidth.allCases, id: \.self) { width in
-                            Button(width.displayName) { resize(width) }
-                                .disabled(width < registry.minimumWidth(for: widget.moduleID))
-                        }
-                    } label: {
-                        Text(widget.width.displayName).font(.caption2.weight(.bold))
-                    }
-                    .menuStyle(.borderlessButton)
-                    .fixedSize()
-                    .help("Szerokość widżetu")
-                    Button(action: remove) { Image(systemName: "xmark.circle.fill") }
-                        .buttonStyle(.plain)
-                        .help("Usuń z wyspy")
+            .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(.white.opacity(isHovered || showsWidth ? 0.5 : 0.12), lineWidth: 1))
+            .overlay {
+                if showsWidth {
+                    Text("\(Int((widget.width.fraction * 100).rounded()))%")
+                        .font(.caption.weight(.bold)).monospacedDigit()
+                        .padding(.horizontal, 8).padding(.vertical, 3)
+                        .background(Capsule().fill(.black.opacity(0.75)))
                 }
-                .padding(4)
-                .background(Capsule().fill(.black.opacity(0.7)))
-                .padding(4)
+            }
+
+            if isHovered && !showsWidth {
+                Button(action: remove) {
+                    Image(systemName: "xmark.circle.fill").font(.title3)
+                        .symbolRenderingMode(.palette).foregroundStyle(.white, .black.opacity(0.7))
+                }
+                .buttonStyle(.plain)
+                .help("Usuń z wyspy")
+                .padding(6)
             }
         }
         .overlay(alignment: .leading) {

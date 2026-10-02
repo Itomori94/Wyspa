@@ -137,14 +137,16 @@ APP=$PWD/build/Wyspa.app/Contents
   z wariantami od najbogatszego; ostatni wariant mieści się zawsze. Prawa połowa: zakładki ze skrzydłem →
   kompaktowe ze skrzydłem → same zakładki → przewijany pasek (zakładki mają pierwszeństwo przed ozdobnym skrzydłem).
 - **Układ wyspy** (`WyspaCore/Board/IslandBoard.swift`, niemutowalny, testowany): strony z widżetami obok siebie
-  albo pełnym widokiem modułu. Szerokości w dwunastkach wnętrza wyspy, stopnie ¼ ⅓ ½ ⅔ ¾ całość; minimalna szerokość
-  widżetu z `ModuleDescriptor.widgetMinWidth` (punkty → stopień przez `IslandBoard.minimumWidth`). Wstawianie bierze
-  wolne miejsce, a gdy go brak — równy podział; dzielnik przesuwa szerokości skokowo, suma pary bez zmian.
+  albo pełnym widokiem modułu. Szerokości płynne w 120 jednostkach wnętrza wyspy (120 dzieli się przez 1–6, więc
+  równy podział jest dokładny); starszy zapis w dwunastkach przeliczany przy odczycie (`unitScale`). Minimalna
+  szerokość z `ModuleDescriptor.widgetMinWidth` (punkty → jednostki). Wstawianie bierze wolne miejsce, a gdy go brak —
+  równy podział; dzielnik przesuwa szerokości płynnie, suma pary bez zmian; usunięcie oddaje miejsce pozostałym.
   Zapis w `SettingsStore.board`; bez zapisu `ModuleRegistry.board` buduje układ startowy. Nowo włączony moduł
   spoza układu dostaje stronę na końcu. `ModuleRegistry.pages` pomija wyłączone moduły i puste strony.
 - **Edytor układu** (`WyspaApp/Settings/BoardEditorView.swift`, karta „Układ”): podgląd wyspy w skali z prawdziwymi
-  widżetami (bez interakcji), przeciąganie z palety, między stronami i z powrotem na paletę (usuwa), uchwyty dzielników,
-  menu szerokości, strony przeciągane w pasku. Każda zmiana przez `apply { … }` — błąd `BoardError` jako komunikat.
+  widżetami (bez interakcji), przeciąganie z palety, między stronami i z powrotem na paletę (usuwa), uchwyty dzielników
+  (gest liczony we współrzędnych wiersza, nie dzielnika — inaczej punkt odniesienia skacze i podgląd miga; w trakcie
+  przeciągania tylko lokalny szkic, zapis raz po puszczeniu), strony przeciągane w pasku. Każda zmiana przez `apply { … }` — błąd `BoardError` jako komunikat.
 - Pasek stron w nagłówku: `TabStripPlan` (czysta funkcja) — pełny → kompaktowy → bez skrzydła → część + menu „⋯”.
 - **Pułapka kompilatora (Swift 6.4)**: ścieżka klucza do statycznej właściwości na `any IslandModule.Type`
   (`catalog.map(\.descriptor.id)`) wywala `swift-frontend` (SILGen). Używaj zamknięcia `{ $0.descriptor.id }`.
@@ -163,6 +165,13 @@ APP=$PWD/build/Wyspa.app/Contents
 | Historia schowka | `WyspaClipboard` | — | `changeCount` co 0,75 s tylko gdy włączony (zaakceptowany wyjątek); pomija Concealed/Transient; limit 10–500; tylko w pamięci; wyszukiwanie z „ł”→„l” |
 | Skróty | `WyspaShortcuts` | — | `/usr/bin/shortcuts list/run`, nazwy jako argumenty procesu (bez powłoki), ulubione w ustawieniach |
 | Lusterko | `WyspaMirror` | Kamera | sesja AVCapture tylko gdy widok zakładki jest w oknie |
+
+## Powiadomienia (w toku)
+
+Plan: moduł czyta banery macOS przez Dostępność i pokazuje je w wyspie (chowanie oryginału do wyboru).
+Diagnostyka struktury banerów: `open -n build/Wyspa.app --args --dump-notification-ax` (60 s, zapis do
+`~/Library/Logs/Wyspa/notification-ax.txt`, tylko okna procesów NotificationCenter/UIKitSystem — plik zawiera treść
+powiadomień, usuwać po analizie). Na macOS 27.2 pierwsze próby nie wykazały okien banerów — do ustalenia.
 
 ## Prywatne API — rejestr
 
