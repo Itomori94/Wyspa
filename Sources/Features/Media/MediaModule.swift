@@ -68,6 +68,8 @@ public final class MediaModule: IslandModule {
     @ObservationIgnored private let airPlayRunner = ScriptRunner()
     @ObservationIgnored private var artworkLookups: [String: Data?] = [:]
     @ObservationIgnored private var artworkLookupsInFlight: Set<String> = []
+    /// Zadania w tle (okładki, AirPlay) — anulowane przy wyłączeniu modułu.
+    @ObservationIgnored private var backgroundTasks: [UUID: Task<Void, Never>] = [:]
     private static let artworkLookupLimit = 50
 
     public required init(context: ModuleContext) {
@@ -89,6 +91,20 @@ public final class MediaModule: IslandModule {
         artwork = nil
         accent = nil
         artworkData = nil
+        backgroundTasks.values.forEach { $0.cancel() }
+        backgroundTasks = [:]
+        artworkLookups = [:]
+        artworkLookupsInFlight = []
+        airPlayDevices = []
+    }
+
+    /// Uruchamia zadanie w tle tak, żeby `deactivate()` mogło je anulować.
+    private func runInBackground(_ operation: @escaping @MainActor () async -> Void) {
+        let id = UUID()
+        backgroundTasks[id] = Task { [weak self] in
+            await operation()
+            self?.backgroundTasks[id] = nil
+        }
     }
 
     public var liveActivity: LiveActivity? {
@@ -134,17 +150,21 @@ public final class MediaModule: IslandModule {
             airPlayDevices = []
             return
         }
-        Task {
-            let output = await airPlayRunner.run(AirPlayScript.listScript)?.stringValue ?? ""
-            airPlayDevices = AirPlayScript.parse(output)
+        runInBackground { [weak self] in
+            guard let self else { return }
+            let output = await self.airPlayRunner.run(AirPlayScript.listScript)?.stringValue ?? ""
+            guard !Task.isCancelled else { return }
+            self.airPlayDevices = AirPlayScript.parse(output)
         }
     }
 
     public func selectAirPlay(_ device: AirPlayDevice) {
         let names = AirPlayScript.selecting(device.name)
-        Task {
-            _ = await airPlayRunner.run(AirPlayScript.selectScript(names))
-            refreshAirPlay()
+        runInBackground { [weak self] in
+            guard let self else { return }
+            _ = await self.airPlayRunner.run(AirPlayScript.selectScript(names))
+            guard !Task.isCancelled else { return }
+            self.refreshAirPlay()
         }
     }
 
@@ -264,9 +284,9 @@ public final class MediaModule: IslandModule {
         }
         guard !artworkLookupsInFlight.contains(key) else { return }
         artworkLookupsInFlight.insert(key)
-        Task { [weak self] in
+        runInBackground { [weak self] in
             let data = await ArtworkLookup.fetch(title: track.title, artist: track.artist)
-            guard let self else { return }
+            guard let self, !Task.isCancelled else { return }
             self.artworkLookupsInFlight.remove(key)
             if self.artworkLookups.count >= Self.artworkLookupLimit { self.artworkLookups = [:] }
             self.artworkLookups[key] = .some(data)

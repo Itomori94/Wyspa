@@ -142,8 +142,8 @@ public enum IslandStateMachine {
         case .cardChanged(let hasCard):
             let updated = state.with(hasCard: hasCard)
             if hasCard, state.phase == .peek { return (updated, [.cancel(.expand)]) }
-            // Karta zniknęła, a kursor nadal jest nad wyspą: wraca zwykłe rozwijanie po najechaniu.
-            if !hasCard, state.phase == .peek, config.expandOnHover { return (updated, [.schedule(.expand, after: config.hoverDelay)]) }
+            // Karta zniknęła spod kursora (np. po kliknięciu „otwórz”): nie rozwijamy wyspy na otwartą aplikację.
+            // Rozwinie ją dopiero ponowne najechanie albo kliknięcie.
             return (updated, [])
         case .tabCountChanged(let count):
             let selected = count == 0 ? 0 : min(state.selectedTab, count - 1)

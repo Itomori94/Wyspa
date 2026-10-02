@@ -54,6 +54,8 @@ public final class HookServer: @unchecked Sendable {
     private let onMessage: MessageHandler
     private let onClosed: @Sendable (UInt64) -> Void
     private var listener: Int32 = -1
+    /// Tożsamość naszego pliku gniazda: `stop()` usuwa tylko je, nigdy gniazda innej kopii Wyspy.
+    private var socketIdentity: (device: dev_t, inode: ino_t)?
     private var acceptSource: DispatchSourceRead?
     private var clients: [UInt64: Client] = [:]
     private var nextID: UInt64 = 1
@@ -77,14 +79,18 @@ public final class HookServer: @unchecked Sendable {
         // `attributes` działa tylko przy zakładaniu; katalog mógł już istnieć (np. założony przez Notatki) z 0755.
         // Zaciskamy go do 0700, ale tylko gdy należy do nas — cudzych katalogów (np. /tmp w testach) nie ruszamy.
         var directoryInfo = stat()
-        if stat(directory, &directoryInfo) == 0, directoryInfo.st_uid == getuid(), directoryInfo.st_mode & 0o777 != 0o700,
-           chmod(directory, 0o700) != 0 {
-            throw .socket("nie udało się ustawić uprawnień katalogu: \(String(cString: strerror(errno)))")
+        if lstat(directory, &directoryInfo) == 0, directoryInfo.st_uid == getuid() {
+            // Nasz katalog podmieniony na dowiązanie: nie zakładamy gniazda w nieznanym miejscu.
+            guard directoryInfo.st_mode & S_IFMT == S_IFDIR else { throw .socket("katalog gniazda nie jest katalogiem") }
+            if directoryInfo.st_mode & 0o777 != 0o700, chmod(directory, 0o700) != 0 {
+                throw .socket("nie udało się ustawić uprawnień katalogu: \(String(cString: strerror(errno)))")
+            }
         }
-        // Usuwamy tylko stare gniazdo, nigdy zwykły plik ani dowiązanie podstawione pod tę ścieżkę.
+        // Usuwamy tylko stare, martwe gniazdo — nigdy zwykły plik, dowiązanie ani gniazdo działającej kopii Wyspy.
         var info = stat()
         if lstat(path, &info) == 0 {
             guard info.st_mode & S_IFMT == S_IFSOCK else { throw .socket("pod ścieżką gniazda jest coś innego niż gniazdo") }
+            if Self.isListening(path) { throw .socket("inna kopia Wyspy już obsługuje hooki Claude Code") }
             unlink(path)
         }
         let fd = socket(AF_UNIX, SOCK_STREAM, 0)
@@ -103,12 +109,14 @@ public final class HookServer: @unchecked Sendable {
         let bound = withUnsafePointer(to: &address) {
             $0.withMemoryRebound(to: sockaddr.self, capacity: 1) { bind(fd, $0, socklen_t(MemoryLayout<sockaddr_un>.size)) }
         }
-        guard bound == 0, chmod(path, 0o600) == 0, listen(fd, 16) == 0 else {
+        var boundInfo = stat()
+        guard bound == 0, chmod(path, 0o600) == 0, lstat(path, &boundInfo) == 0, listen(fd, 16) == 0 else {
             let reason = String(cString: strerror(errno))
             close(fd)
             throw .socket(reason)
         }
         _ = fcntl(fd, F_SETFL, fcntl(fd, F_GETFL) | O_NONBLOCK)
+        socketIdentity = (boundInfo.st_dev, boundInfo.st_ino)
         listener = fd
         let source = DispatchSource.makeReadSource(fileDescriptor: fd, queue: queue)
         source.setEventHandler { [weak self] in self?.acceptClients() }
@@ -129,8 +137,30 @@ public final class HookServer: @unchecked Sendable {
             acceptSource?.cancel()
             acceptSource = nil
             listener = -1
-            unlink(path)
+            var info = stat()
+            if let socketIdentity, lstat(path, &info) == 0, info.st_dev == socketIdentity.device, info.st_ino == socketIdentity.inode {
+                unlink(path)
+            }
+            socketIdentity = nil
         }
+    }
+
+    /// Czy pod ścieżką słucha żywy serwer (inna kopia Wyspy).
+    static func isListening(_ path: String) -> Bool {
+        let fd = socket(AF_UNIX, SOCK_STREAM, 0)
+        guard fd >= 0 else { return false }
+        defer { close(fd) }
+        var address = sockaddr_un()
+        address.sun_family = sa_family_t(AF_UNIX)
+        let bytes = Array(path.utf8)
+        guard bytes.count < MemoryLayout.size(ofValue: address.sun_path) else { return false }
+        withUnsafeMutableBytes(of: &address.sun_path) { buffer in
+            buffer.copyBytes(from: bytes)
+            buffer[bytes.count] = 0
+        }
+        return withUnsafePointer(to: &address) {
+            $0.withMemoryRebound(to: sockaddr.self, capacity: 1) { connect(fd, $0, socklen_t(MemoryLayout<sockaddr_un>.size)) }
+        } == 0
     }
 
     // MARK: - Na kolejce gniazda

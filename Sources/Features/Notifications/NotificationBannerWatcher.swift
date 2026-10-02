@@ -19,6 +19,16 @@ final class NotificationBannerWatcher {
     /// Okno banerów przesunięte poza ekran i jego pierwotne położenie — wraca, gdy banerów już nie ma.
     /// (Na macOS 27 to okno ma rozmiar całego ekranu i to w nim otwiera się Centrum powiadomień.)
     private var hiddenWindow: (window: AXUIElement, origin: CGPoint)?
+    /// Okno dalej niż tu uznajemy za schowane przez nas (np. po awarii Wyspy) i przywracamy przy starcie.
+    private static let offscreenThreshold: CGFloat = -10_000
+    /// Po schowaniu: jednorazowe sprawdzenie, gdyby system nie zgłosił zniknięcia banera.
+    private static let restoreCheckDelay: Duration = .seconds(8)
+    private static let attachRetries = 3
+    private var observedElement: AXUIElement?
+    private var retryTask: Task<Void, Never>?
+    private var restoreCheckTask: Task<Void, Never>?
+    private static let observedNotifications = [kAXWindowCreatedNotification, kAXCreatedNotification,
+                                                kAXLayoutChangedNotification, kAXUIElementDestroyedNotification]
     private var launchObserver: NSObjectProtocol?
     private let log = Log.logger("notifications")
 
@@ -28,7 +38,7 @@ final class NotificationBannerWatcher {
     }
 
     func start() {
-        attach()
+        attach(attempt: 1)
         let bundleID = Self.bundleID
         // Centrum powiadomień bywa restartowane przez system — podpinamy się ponownie.
         launchObserver = NSWorkspace.shared.notificationCenter.addObserver(
@@ -36,20 +46,24 @@ final class NotificationBannerWatcher {
         ) { [weak self] note in
             let launched = note.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication
             guard launched?.bundleIdentifier == bundleID else { return }
-            MainActor.assumeIsolated { self?.attach() }
+            MainActor.assumeIsolated { self?.attach(attempt: 1) }
         }
     }
 
     func stop() {
-        restoreHiddenWindow()
+        retryTask?.cancel()
+        restoreCheckTask?.cancel()
         detach()
         if let launchObserver { NSWorkspace.shared.notificationCenter.removeObserver(launchObserver) }
         launchObserver = nil
         seen = []
     }
 
-    private func attach() {
+    /// Podpina obserwatora. Tuż po uruchomieniu Centrum powiadomień rejestracja potrafi się nie udać — wtedy
+    /// kilka jednorazowych ponowień (bez stałego zegara).
+    private func attach(attempt: Int) {
         detach()
+        retryTask?.cancel()
         guard let app = NSRunningApplication.runningApplications(withBundleIdentifier: Self.bundleID).first else {
             log.error("Brak procesu Centrum powiadomień")
             return
@@ -66,18 +80,47 @@ final class NotificationBannerWatcher {
         }
         let element = AXUIElementCreateApplication(pid)
         let refcon = Unmanaged.passUnretained(self).toOpaque()
-        for name in [kAXWindowCreatedNotification, kAXCreatedNotification, kAXLayoutChangedNotification,
-                     kAXUIElementDestroyedNotification] {
-            AXObserverAddNotification(created, element, name as CFString, refcon)
+        let registered = Self.observedNotifications.filter { name in
+            AXObserverAddNotification(created, element, name as CFString, refcon) == .success
+        }
+        guard !registered.isEmpty else {
+            log.error("Centrum powiadomień nie przyjęło obserwatora (próba \(attempt))")
+            guard attempt < Self.attachRetries else { return }
+            retryTask = Task { [weak self] in
+                try? await Task.sleep(for: .seconds(attempt))
+                guard !Task.isCancelled else { return }
+                self?.attach(attempt: attempt + 1)
+            }
+            return
         }
         CFRunLoopAddSource(CFRunLoopGetMain(), AXObserverGetRunLoopSource(created), .defaultMode)
         observer = created
+        observedElement = element
+        healOffscreenWindows(of: element)
+    }
+
+    /// Okno banerów zostawione poza ekranem (np. po awarii Wyspy w trakcie chowania) wraca na miejsce.
+    private func healOffscreenWindows(of app: AXUIElement) {
+        for window in AX.children(app, kAXWindowsAttribute) {
+            guard let position = AX.position(window), position.x <= Self.offscreenThreshold else { continue }
+            var origin = CGPoint.zero
+            if let value = AXValueCreate(.cgPoint, &origin) {
+                AXUIElementSetAttributeValue(window, kAXPositionAttribute as CFString, value)
+            }
+        }
     }
 
     private func detach() {
+        restoreHiddenWindow()
         if let observer {
+            if let observedElement {
+                for name in Self.observedNotifications {
+                    AXObserverRemoveNotification(observer, observedElement, name as CFString)
+                }
+            }
             CFRunLoopRemoveSource(CFRunLoopGetMain(), AXObserverGetRunLoopSource(observer), .defaultMode)
         }
+        observedElement = nil
         observer = nil
     }
 
@@ -112,7 +155,15 @@ final class NotificationBannerWatcher {
 
     /// Chowa baner, przesuwając jego okno poza ekran — powiadomienie zostaje w Centrum powiadomień.
     private func hide(_ window: AXUIElement) {
-        if hiddenWindow == nil, let origin = AX.position(window) { hiddenWindow = (window, origin) }
+        if hiddenWindow == nil, let origin = AX.position(window), origin.x > Self.offscreenThreshold {
+            hiddenWindow = (window, origin)
+        }
+        restoreCheckTask?.cancel()
+        restoreCheckTask = Task { [weak self] in
+            try? await Task.sleep(for: Self.restoreCheckDelay)
+            guard !Task.isCancelled else { return }
+            self?.scan()
+        }
         var offscreen = CGPoint(x: -20_000, y: -20_000)
         guard let value = AXValueCreate(.cgPoint, &offscreen) else { return }
         let result = AXUIElementSetAttributeValue(window, kAXPositionAttribute as CFString, value)

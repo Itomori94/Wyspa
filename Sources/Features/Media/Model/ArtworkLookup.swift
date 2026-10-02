@@ -44,15 +44,36 @@ public enum ArtworkLookup {
             .trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
+    /// Sesja bez pamięci podręcznej i ciasteczek — wyszukiwania nie zostają na dysku.
+    static let session = URLSession(configuration: .ephemeral)
+
     /// Wyszukanie i pobranie okładki; `nil` przy braku dopasowania albo błędzie sieci.
-    public static func fetch(title: String, artist: String?, session: URLSession = .shared) async -> Data? {
+    public static func fetch(title: String, artist: String?) async -> Data? {
         let country = Locale.current.region?.identifier ?? "US"
         guard let search = searchURL(title: title, artist: artist, country: country),
-              let (json, _) = try? await session.data(from: search), json.count <= maxBytes,
-              let artworkURL = artworkURL(from: json, title: title, artist: artist),
-              let (image, response) = try? await session.data(from: artworkURL), image.count <= maxBytes,
-              (response as? HTTPURLResponse)?.statusCode == 200
+              let json = await download(search, allowedHost: { $0 == "itunes.apple.com" }),
+              let artworkURL = artworkURL(from: json, title: title, artist: artist)
         else { return nil }
-        return image
+        return await download(artworkURL, allowedHost: { $0.hasSuffix(".mzstatic.com") })
+    }
+
+    /// Pobiera najwyżej `maxBytes` (przerywa wcześniej); po przekierowaniach adres końcowy musi nadal być
+    /// https na dozwolonym serwerze.
+    static func download(_ url: URL, allowedHost: (String) -> Bool) async -> Data? {
+        guard let (bytes, response) = try? await session.bytes(from: url),
+              let http = response as? HTTPURLResponse, http.statusCode == 200,
+              let final = http.url, final.scheme == "https", let host = final.host, allowedHost(host),
+              http.expectedContentLength <= Int64(maxBytes)
+        else { return nil }
+        var data = Data()
+        do {
+            for try await byte in bytes {
+                data.append(byte)
+                if data.count > maxBytes { return nil }
+            }
+        } catch {
+            return nil
+        }
+        return data
     }
 }

@@ -9,21 +9,30 @@ final class TranscriptWatcher {
 
     init(path: String, onChange: @escaping @MainActor (_ interrupted: Bool) -> Void) {
         self.path = path
-        let descriptor = open(path, O_EVTONLY)
-        let handle = FileHandle(forReadingAtPath: path)
-        guard descriptor >= 0, let handle else {
+        // Ścieżka przychodzi z hooka: otwieramy tylko zwykły plik należący do nas, bez dowiązań i bez blokowania
+        // (np. kolejka FIFO nazwana „x.jsonl” zawiesiłaby główny wątek na zwykłym `open`).
+        let descriptor = open(path, O_RDONLY | O_NONBLOCK | O_NOFOLLOW | O_CLOEXEC)
+        var info = stat()
+        guard descriptor >= 0, fstat(descriptor, &info) == 0, info.st_mode & S_IFMT == S_IFREG, info.st_uid == getuid() else {
             if descriptor >= 0 { close(descriptor) }
             self.source = nil
             self.handle = nil
             return
         }
-        let source = DispatchSource.makeFileSystemObjectSource(fileDescriptor: descriptor, eventMask: [.write, .extend],
+        let handle = FileHandle(fileDescriptor: descriptor, closeOnDealloc: false)
+        let source = DispatchSource.makeFileSystemObjectSource(fileDescriptor: descriptor, eventMask: [.write, .extend, .delete, .rename],
                                                                queue: .main)
-        source.setEventHandler {
+        source.setEventHandler { [weak source] in
+            // Plik usunięty albo przeniesiony: dalsze obserwowanie nie ma sensu, deskryptor się zamyka.
+            if let source, !source.data.intersection([.delete, .rename]).isEmpty {
+                source.cancel()
+                return
+            }
             MainActor.assumeIsolated {
                 onChange(TranscriptTail.readTail(of: handle).map(TranscriptTail.endsWithInterrupt) ?? false)
             }
         }
+        // Jeden deskryptor do zdarzeń i odczytu; zamykany tylko tutaj.
         source.setCancelHandler { close(descriptor) }
         source.resume()
         self.source = source
@@ -32,6 +41,9 @@ final class TranscriptWatcher {
 
     func cancel() {
         source?.cancel()
-        try? handle?.close()
+    }
+
+    isolated deinit {
+        source?.cancel()
     }
 }

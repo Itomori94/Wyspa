@@ -17,7 +17,7 @@ struct QuickActionsView: View {
                            action: module.lockScreen)
                 ActionTile(symbol: module.isKeepingAwake ? "cup.and.saucer.fill" : "cup.and.saucer",
                            title: module.isKeepingAwake ? "Nie usypia" : "Nie usypiaj", tint: .orange, compact: compact,
-                           isOn: module.isKeepingAwake, action: module.toggleKeepAwake)
+                           isOn: module.isKeepingAwake, action: { module.toggleKeepAwake() })
             }
             if let feedback = module.feedback {
                 Text(feedback)

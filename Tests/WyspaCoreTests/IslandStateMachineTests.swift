@@ -172,13 +172,14 @@ struct IslandStateMachineTests {
         #expect(reduce(hovered.state, .toggleRequested).state.phase == .expanded)
     }
 
-    @Test("Karta pojawia się pod kursorem: zaplanowane rozwinięcie zostaje anulowane; znika — wraca")
+    @Test("Karta pojawia się pod kursorem: rozwinięcie anulowane; znika spod kursora — wyspa się nie rozwija sama")
     func cardAppearsAndGoes() {
         let peek = reduce(IslandState(phase: .collapsed), .pointerEntered).state
         let withCard = reduce(peek, .cardChanged(true))
         #expect(withCard.state.hasCard && withCard.effects == [.cancel(.expand)])
         let without = reduce(withCard.state, .cardChanged(false))
-        #expect(!without.state.hasCard && without.effects == [.schedule(.expand, after: config.hoverDelay)])
+        #expect(!without.state.hasCard && without.effects.isEmpty && without.state.phase == .peek)
+        #expect(reduce(without.state, .clicked).state.phase == .expanded)
     }
 
     @Test("Prośba modułu o rozwinięcie działa także, gdy wisi karta; rozwinięta nie zwija się")

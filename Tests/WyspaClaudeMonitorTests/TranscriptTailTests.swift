@@ -51,4 +51,24 @@ struct TranscriptTailTests {
         var iterator = result.stream.makeAsyncIterator()
         #expect(await iterator.next() == true)
     }
+
+    @Test("Kolejka FIFO i dowiązanie nie są otwierane (bez blokowania głównego wątku)")
+    @MainActor
+    func rejectsSpecialFiles() throws {
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent("wyspa-fifo-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let fifo = directory.appendingPathComponent("x.jsonl").path
+        #expect(mkfifo(fifo, 0o600) == 0)
+        var fired = false
+        let fifoWatcher = TranscriptWatcher(path: fifo) { _ in fired = true }
+        fifoWatcher.cancel()
+        let target = directory.appendingPathComponent("cel.txt")
+        try Data("x".utf8).write(to: target)
+        let link = directory.appendingPathComponent("link.jsonl").path
+        try FileManager.default.createSymbolicLink(atPath: link, withDestinationPath: target.path)
+        let linkWatcher = TranscriptWatcher(path: link) { _ in fired = true }
+        linkWatcher.cancel()
+        #expect(!fired)
+    }
 }

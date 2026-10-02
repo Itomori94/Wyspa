@@ -1,6 +1,7 @@
 import AppKit
 import IOKit.pwr_mgt
 import SwiftUI
+import UniformTypeIdentifiers
 import WyspaCore
 
 /// Szybkie akcje: zrzut zaznaczenia na Półkę, pipeta koloru, blokada ekranu, „nie usypiaj Maca”.
@@ -45,6 +46,8 @@ public final class QuickActionsModule: IslandModule {
     @ObservationIgnored private var sampler: NSColorSampler?
     @ObservationIgnored private let log = Log.logger("quickactions")
     @ObservationIgnored private var hotkeys: [GlobalHotkey] = []
+    /// Trwające zaznaczanie zrzutu (przerywane przy wyłączeniu modułu).
+    @ObservationIgnored private var captureProcess: Process?
 
     public required init(context: ModuleContext) {
         self.context = context
@@ -58,6 +61,8 @@ public final class QuickActionsModule: IslandModule {
 
     public func deactivate() {
         hotkeys = []
+        captureProcess?.terminate()
+        captureProcess = nil
         if isKeepingAwake { toggleKeepAwake() }
         feedbackTask?.cancel()
         sampler = nil
@@ -84,8 +89,7 @@ public final class QuickActionsModule: IslandModule {
         case .pickColor: pickColor()
         case .lock: lockScreen()
         case .keepAwake:
-            toggleKeepAwake()
-            show(isKeepingAwake ? "Mac nie zaśnie" : "Usypianie jak zwykle")
+            if toggleKeepAwake() { show(isKeepingAwake ? "Mac nie zaśnie" : "Usypianie jak zwykle") }
         }
     }
 
@@ -110,27 +114,41 @@ public final class QuickActionsModule: IslandModule {
 
     /// Zaznaczenie obszaru systemowym `screencapture`; plik trafia na Półkę, a bez Półki — do schowka.
     func captureToShelf() {
+        guard captureProcess == nil else { return }
         let url = QuickActionsLogic.screenshotURL(in: FileManager.default.temporaryDirectory, at: Date())
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/usr/sbin/screencapture")
         process.arguments = ["-i", "-x", url.path]
-        process.terminationHandler = { [weak self] _ in
-            Task { @MainActor in self?.screenshotFinished(url) }
+        process.terminationHandler = { [weak self] finished in
+            Task { @MainActor in
+                // Moduł wyłączony w trakcie zaznaczania: nic nie przekazujemy, tylko sprzątamy.
+                guard let self, self.captureProcess === finished else {
+                    try? FileManager.default.removeItem(at: url)
+                    return
+                }
+                self.captureProcess = nil
+                self.screenshotFinished(url)
+            }
         }
         do {
             try process.run()
+            captureProcess = process
         } catch {
             log.error("screencapture: \(error.localizedDescription, privacy: .public)")
             show("Nie udało się uruchomić zrzutu ekranu")
         }
     }
 
+    /// Zrzut trafia na Półkę jako dane (Półka trzyma własną kopię), plik tymczasowy znika od razu.
     private func screenshotFinished(_ url: URL) {
+        defer { try? FileManager.default.removeItem(at: url) }
         // Esc w trakcie zaznaczania: pliku nie ma, nic nie robimy.
-        guard FileManager.default.fileExists(atPath: url.path) else { return }
-        if let provider = NSItemProvider(contentsOf: url), context.deliver([provider], Self.shelfZone) {
+        guard let data = try? Data(contentsOf: url), !data.isEmpty else { return }
+        let provider = NSItemProvider(item: data as NSData, typeIdentifier: UTType.png.identifier)
+        provider.suggestedName = url.deletingPathExtension().lastPathComponent
+        if context.deliver([provider], Self.shelfZone) {
             show("Zrzut na Półce")
-        } else if let image = NSImage(contentsOf: url) {
+        } else if let image = NSImage(data: data) {
             NSPasteboard.general.clearContents()
             NSPasteboard.general.writeObjects([image])
             show("Półka wyłączona — zrzut w schowku")
@@ -166,16 +184,23 @@ public final class QuickActionsModule: IslandModule {
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/usr/bin/pmset")
         process.arguments = ["displaysleepnow"]
-        try? process.run()
+        do {
+            try process.run()
+        } catch {
+            log.error("pmset displaysleepnow: \(error.localizedDescription, privacy: .public)")
+            show("Nie udało się zablokować ekranu")
+        }
     }
 
     /// Nie usypiaj Maca ani ekranu (asercja zasilania, jak `caffeinate -d`); zwalniana przy wyłączeniu modułu.
-    func toggleKeepAwake() {
+    /// `false`, gdy system odmówił (komunikat już pokazany).
+    @discardableResult
+    func toggleKeepAwake() -> Bool {
         if isKeepingAwake {
             IOPMAssertionRelease(assertionID)
             assertionID = 0
             isKeepingAwake = false
-            return
+            return true
         }
         var id: IOPMAssertionID = 0
         let result = IOPMAssertionCreateWithName(kIOPMAssertionTypePreventUserIdleDisplaySleep as CFString,
@@ -183,10 +208,11 @@ public final class QuickActionsModule: IslandModule {
                                                  "Wyspa: nie usypiaj Maca" as CFString, &id)
         guard result == kIOReturnSuccess else {
             show("Nie udało się wyłączyć usypiania")
-            return
+            return false
         }
         assertionID = id
         isKeepingAwake = true
+        return true
     }
 
     private func show(_ message: String) {

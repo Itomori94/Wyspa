@@ -83,6 +83,8 @@ public final class NotificationsModule: IslandModule {
     }
 
     func next() {
+        // Karta znika spod kursora bez „zjechania” — inaczej następna nigdy by się sama nie schowała.
+        isPaused = false
         withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) { queue = queue.advancing() }
         if queue.current != nil { scheduleDismiss() } else { dismissTask?.cancel() }
     }

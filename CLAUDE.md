@@ -219,6 +219,13 @@ APP=$PWD/build/Wyspa.app/Contents
   zapis (`transcript_path`, `DispatchSource` na pliku) i czytamy ostatnie 32 KB: jeśli ostatnia wiadomość rozmowy to
   „[Request interrupted by user…”, sesja wraca do bezczynności (`TranscriptTail`, testy).
 
+## Wyjątki od „bez zegarów w spoczynku”
+
+- Historia schowka: odpytywanie schowka tylko przy włączonym module (decyzja użytkownika).
+- Bluetooth: odczyt baterii co 5 min tylko, gdy podłączone jest urządzenie podające baterię (system nie powiadamia
+  o zmianie poziomu); jednorazowe zadanie planowane po każdym odczycie, anulowane w `deactivate()`.
+- Powiadomienia: jednorazowe sprawdzenie 8 s po schowaniu banera (przywrócenie okna, gdyby system nie zgłosił zniknięcia).
+
 ## Prywatne API — rejestr
 
 | API | Gdzie | Ryzyko | Tryb awaryjny |

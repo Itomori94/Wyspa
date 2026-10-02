@@ -14,7 +14,10 @@ public enum NotificationBannerProbe {
     public static func run() {
         let output = FileManager.default.urls(for: .libraryDirectory, in: .userDomainMask)[0]
             .appendingPathComponent("Logs/Wyspa/notification-probe.txt")
-        try? FileManager.default.createDirectory(at: output.deletingLastPathComponent(), withIntermediateDirectories: true)
+        try? FileManager.default.createDirectory(at: output.deletingLastPathComponent(), withIntermediateDirectories: true,
+                                                 attributes: [.posixPermissions: 0o700])
+        // Stary plik mógłby mieć szersze prawa — `createFile` ustawia 0600 tylko nowemu plikowi.
+        try? FileManager.default.removeItem(at: output)
         guard let app = NSRunningApplication.runningApplications(withBundleIdentifier: "com.apple.notificationcenterui").first else {
             write(["Brak procesu Centrum powiadomień"], to: output)
             NSApp.terminate(nil)

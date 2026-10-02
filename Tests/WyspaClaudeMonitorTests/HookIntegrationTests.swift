@@ -101,6 +101,20 @@ struct HookIntegrationTests {
         #expect(socketMode == 0o600)
     }
 
+    @Test("Druga kopia nie przejmuje działającego gniazda; zatrzymanie usuwa tylko własne gniazdo")
+    func singleInstance() throws {
+        let path = socketPath()
+        let first = HookServer(path: path, onMessage: { _, _ in }, onClosed: { _ in })
+        try first.start()
+        defer { first.stop() }
+        let second = HookServer(path: path, onMessage: { _, _ in }, onClosed: { _ in })
+        #expect(throws: HookServer.StartError.self) { try second.start() }
+        second.stop()
+        #expect(HookServer.isListening(path))
+        first.stop()
+        #expect(!FileManager.default.fileExists(atPath: path))
+    }
+
     @Test("Odmowa z wyspy przekazuje powód do Claude Code")
     func denyFromIsland() async throws {
         let path = socketPath()

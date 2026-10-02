@@ -137,14 +137,12 @@ public final class BluetoothModule: IslandModule {
         let needsPolling = devices.contains { $0.battery.summary != nil }
         guard needsPolling != (batteryPollTask != nil) else { return }
         batteryPollTask?.cancel()
+        // Jednorazowe odczekanie; `refreshDevices()` po odczycie planuje kolejne, jeśli nadal jest co odczytywać.
         batteryPollTask = needsPolling ? Task { [weak self] in
-            while !Task.isCancelled {
-                try? await Task.sleep(for: Self.batteryPollInterval)
-                guard !Task.isCancelled else { return }
-                self?.batteryPollTask = nil
-                self?.refreshDevices()
-                return
-            }
+            try? await Task.sleep(for: Self.batteryPollInterval)
+            guard !Task.isCancelled else { return }
+            self?.batteryPollTask = nil
+            self?.refreshDevices()
         } : nil
     }
 }

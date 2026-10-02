@@ -37,6 +37,7 @@ public final class WeatherModule: IslandModule {
     @ObservationIgnored private let context: ModuleContext
     @ObservationIgnored private var locator: OneShotLocator?
     @ObservationIgnored private var isRefreshing = false
+    @ObservationIgnored private var fetchTask: Task<Void, Never>?
 
     public required init(context: ModuleContext) {
         self.context = context
@@ -49,6 +50,8 @@ public final class WeatherModule: IslandModule {
 
     public func deactivate() {
         locator = nil
+        fetchTask?.cancel()
+        fetchTask = nil
         isRefreshing = false
     }
 
@@ -91,22 +94,27 @@ public final class WeatherModule: IslandModule {
                 self.finish(nil, error: "Nie udało się ustalić lokalizacji.")
                 return
             }
-            Task { await self.fetch(latitude: location.coordinate.latitude, longitude: location.coordinate.longitude) }
+            self.fetchTask = Task { await self.fetch(latitude: location.coordinate.latitude, longitude: location.coordinate.longitude) }
         }
         self.locator = locator
         locator.start()
     }
 
     private func fetch(latitude: Double, longitude: Double) async {
-        guard let url = OpenMeteo.url(latitude: latitude, longitude: longitude) else { return }
+        guard let url = OpenMeteo.url(latitude: latitude, longitude: longitude) else {
+            finish(nil, error: "Nieprawidłowa lokalizacja.")
+            return
+        }
         do {
             let (data, response) = try await URLSession.shared.data(from: url)
+            guard !Task.isCancelled else { return }
             guard (response as? HTTPURLResponse)?.statusCode == 200, let forecast = OpenMeteo.parse(data, fetchedAt: Date()) else {
                 finish(nil, error: "Serwis pogody zwrócił nieoczekiwaną odpowiedź.")
                 return
             }
             finish(forecast, error: nil)
         } catch {
+            guard !Task.isCancelled else { return }
             finish(nil, error: "Brak połączenia z serwisem pogody.")
         }
     }
