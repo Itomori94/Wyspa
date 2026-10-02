@@ -70,6 +70,19 @@ struct IslandStateMachineTests {
         #expect(reduce(peek, .collapseRequested).effects.isEmpty)
     }
 
+    @Test("Strzałki zmieniają stronę z zawijaniem, tylko w rozwiniętej wyspie z kilkoma stronami")
+    func tabStepped() {
+        let expanded = IslandState(phase: .expanded, tabCount: 3, selectedTab: 0)
+        #expect(reduce(expanded, .tabStepped(-1)).state.selectedTab == 2)
+        #expect(reduce(expanded, .tabStepped(1)).state.selectedTab == 1)
+        #expect(reduce(reduce(expanded, .tabStepped(1)).state, .tabStepped(2)).state.selectedTab == 0)
+        #expect(reduce(expanded, .tabStepped(1)).effects.isEmpty)
+        let single = IslandState(phase: .expanded, tabCount: 1)
+        #expect(reduce(single, .tabStepped(1)).state == single)
+        let collapsed = IslandState(phase: .collapsed, tabCount: 3)
+        #expect(reduce(collapsed, .tabStepped(1)).state == collapsed)
+    }
+
     @Test("Timer zwinięcia zwija rozwiniętą wyspę")
     func collapseTimer() {
         #expect(reduce(IslandState(phase: .expanded), .timerFired(.collapse)).state.phase == .collapsed)

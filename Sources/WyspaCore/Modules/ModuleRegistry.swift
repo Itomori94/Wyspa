@@ -259,6 +259,25 @@ public final class ModuleRegistry {
         activeModules.compactMap { $0 as? any IslandDropHandling }
     }
 
+    // MARK: - Klawiatura
+
+    /// Moduł, do którego trafia pisanie w rozwiniętej wyspie (pierwszy działający, który je przyjmuje).
+    public var typedTextModuleID: String? {
+        activeModules.compactMap { $0 as? any IslandKeyboardHandling }
+            .first { type(of: $0).receivesTypedText }
+            .map { type(of: $0).descriptor.id }
+    }
+
+    /// Klawisz dla modułów widocznej strony; `true`, gdy któryś go obsłużył.
+    /// Zasłonięty moduł (tryb prywatny) klawiatury nie dostaje.
+    public func handleKey(_ key: IslandKey, moduleIDs: [String], whileEditingText: Bool = false) -> Bool {
+        for id in moduleIDs where !isMasked(id) {
+            if let module = instances[id] as? any IslandKeyboardHandling,
+               module.handleKey(key, whileEditingText: whileEditingText) { return true }
+        }
+        return false
+    }
+
     public func settingsView(for id: String) -> AnyView? {
         instances[id]?.makeSettingsView()
     }

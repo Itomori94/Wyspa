@@ -79,6 +79,19 @@ struct ClipboardHistoryTests {
         #expect(history.entries.allSatisfy { !$0.isPinned })
     }
 
+    @Test("Wybór strzałkami: od pierwszego wpisu, bez zawijania; Enter bez wyboru = pierwszy")
+    func keyboardSelection() {
+        #expect(ClipboardSelection.moved(nil, by: 1, count: 3) == 0)
+        #expect(ClipboardSelection.moved(nil, by: -1, count: 3) == 0)
+        #expect(ClipboardSelection.moved(1, by: 1, count: 3) == 2)
+        #expect(ClipboardSelection.moved(2, by: 1, count: 3) == 2)
+        #expect(ClipboardSelection.moved(0, by: -1, count: 3) == 0)
+        #expect(ClipboardSelection.moved(0, by: 1, count: 0) == nil)
+        #expect(ClipboardSelection.chosen(nil, count: 2) == 0)
+        #expect(ClipboardSelection.chosen(5, count: 2) == 1)
+        #expect(ClipboardSelection.chosen(nil, count: 0) == nil)
+    }
+
     @Test("Pliki i obrazy mają czytelny opis")
     func descriptions() {
         let files = ClipboardEntry(content: .files([URL(fileURLWithPath: "/tmp/raport.pdf")]), copiedAt: now)

@@ -50,7 +50,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             openSettings: { settingsWindow.show() }
         )
         hotkey = HotkeyController(settings: settings, settingsWindow: settingsWindow) {
-            screens.toggleUnderPointer()
+            screens.toggleWithKeyboardUnderPointer()
         }
 
         Task { await registry.startEnabledModules() }

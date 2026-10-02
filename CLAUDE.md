@@ -55,6 +55,10 @@ binarka ma `minos 14.0` dla obu architektur (sprawdź: `vtool -arch x86_64 -show
   Podświetlenie strefy: `@Environment(\.islandDropTarget)`. Po upuszczeniu `resyncPointer()` przywraca śledzenie
   kursora (AppKit wstrzymuje je podczas przeciągania). `IslandDragSession.isDraggingOut` blokuje upuszczenie
   elementów wyciąganych z wyspy z powrotem na nią.
+- **Klawiatura po skrócie**: `HotkeyController` → `toggleWithKeyboard()` (`makeKey` + `makeFirstResponder(nil)`); lokalny
+  monitor `keyDown` filtrowany do panelu → czysty `IslandKeyRouter` (←→ `.tabStepped`, Esc, ↑↓ Enter Backspace i pisanie
+  do modułów `IslandKeyboardHandling` widocznej strony; pisanie → `typedTextModuleID`, czyli schowek). W polu tekstowym
+  (`firstResponder is NSTextView`) do modułu idą tylko ↑↓ Enter. Zasłonięte moduły nie dostają klawiszy.
 - **Zwinięcie na prośbę modułu**: `ModuleContext.requestCollapse` → `ScreenCoordinator.collapseAll()` → `.collapseRequested`
   (zwija też w trakcie pisania). Po zwinięciu klawiatura wraca do aplikacji pod spodem — na tym opiera się wklejanie.
 - **Gesty**: lokalny monitor `scrollWheel` filtrowany do panelu → `SwipeRecognizer` (jeden kierunek na gest).

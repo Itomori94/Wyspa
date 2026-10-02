@@ -4,6 +4,7 @@ import WyspaUI
 
 struct ClipboardView: View {
     @Bindable var module: ClipboardModule
+    @FocusState private var searchFocused: Bool
 
     var body: some View {
         let entries = module.history.matching(module.query)
@@ -12,6 +13,9 @@ struct ClipboardView: View {
                 Image(systemName: "magnifyingglass").foregroundStyle(.white.opacity(0.4))
                 TextField("Szukaj w historii", text: $module.query)
                     .textFieldStyle(.plain)
+                    .focused($searchFocused)
+                    .onChange(of: searchFocused) { _, focused in module.isSearchFocused = focused }
+                    .onDisappear { module.isSearchFocused = false }
                 if let feedback = module.feedback {
                     Text(feedback).foregroundStyle(.green).lineLimit(1).transition(.opacity)
                 } else if module.history.entries.contains(where: { !$0.isPinned }) {
@@ -32,14 +36,22 @@ struct ClipboardView: View {
                     .foregroundStyle(.white.opacity(0.45))
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
-                ScrollView {
-                    LazyVStack(spacing: 2) {
-                        ForEach(entries) { entry in
-                            ClipboardRow(entry: entry, pastes: module.pastesOnClick,
-                                         choose: { module.choose(entry) },
-                                         togglePin: { module.togglePin(entry) },
-                                         remove: { module.remove(entry) })
+                ScrollViewReader { proxy in
+                    ScrollView {
+                        LazyVStack(spacing: 2) {
+                            ForEach(Array(entries.enumerated()), id: \.element.id) { index, entry in
+                                ClipboardRow(entry: entry, pastes: module.pastesOnClick,
+                                             isSelected: index == module.selectedIndex,
+                                             choose: { module.choose(entry) },
+                                             togglePin: { module.togglePin(entry) },
+                                             remove: { module.remove(entry) })
+                                    .id(entry.id)
+                            }
                         }
+                    }
+                    .onChange(of: module.selectedIndex) { _, index in
+                        guard let index, entries.indices.contains(index) else { return }
+                        withAnimation(.easeOut(duration: 0.15)) { proxy.scrollTo(entries[index].id) }
                     }
                 }
             }
@@ -50,6 +62,7 @@ struct ClipboardView: View {
 private struct ClipboardRow: View {
     let entry: ClipboardEntry
     let pastes: Bool
+    var isSelected = false
     let choose: () -> Void
     let togglePin: () -> Void
     let remove: () -> Void
@@ -82,7 +95,7 @@ private struct ClipboardRow: View {
         }
         .padding(.horizontal, 8)
         .padding(.vertical, 5)
-        .background(RoundedRectangle(cornerRadius: 8).fill(.white.opacity(isHovered ? 0.09 : 0)))
+        .background(RoundedRectangle(cornerRadius: 8).fill(.white.opacity(isSelected ? 0.16 : isHovered ? 0.09 : 0)))
         .contentShape(Rectangle())
         .onHover { isHovered = $0 }
         .onTapGesture(perform: choose)

@@ -154,3 +154,19 @@ enum SearchNormalizer {
             .replacingOccurrences(of: "ł", with: "l")
     }
 }
+
+/// Wybór wpisu strzałkami w wynikach (bez zawijania). Czyste funkcje.
+public enum ClipboardSelection {
+    /// Pierwsze ↓ wybiera pierwszy wpis, pierwsze ↑ też (lista zaczyna się od góry).
+    public static func moved(_ current: Int?, by step: Int, count: Int) -> Int? {
+        guard count > 0 else { return nil }
+        guard let current else { return 0 }
+        return min(max(current + step, 0), count - 1)
+    }
+
+    /// Enter bez wyboru wkleja pierwszy wynik; wybór poza zakresem (lista się skróciła) — ostatni.
+    public static func chosen(_ current: Int?, count: Int) -> Int? {
+        guard count > 0 else { return nil }
+        return min(current ?? 0, count - 1)
+    }
+}

@@ -38,6 +38,8 @@ public enum IslandEvent: Equatable, Sendable {
     case cardChanged(Bool)
     case tabCountChanged(Int)
     case tabSelected(Int)
+    /// Poprzednia/następna strona z klawiatury (zawija się, bez haptyki).
+    case tabStepped(Int)
     /// Pole tekstowe w wyspie dostało albo straciło klawiaturę.
     case editingChanged(Bool)
 }
@@ -155,6 +157,10 @@ public enum IslandStateMachine {
         case .tabSelected(let index):
             guard state.tabCount > 0, (0..<state.tabCount).contains(index) else { return (state, []) }
             return (state.with(selectedTab: index), [])
+        case .tabStepped(let step):
+            guard state.phase == .expanded, state.tabCount > 1 else { return (state, []) }
+            let next = ((state.selectedTab + step) % state.tabCount + state.tabCount) % state.tabCount
+            return (state.with(selectedTab: next), [])
         case .editingChanged(let editing):
             // Koniec pisania przy kursorze poza wyspą zgłasza kontroler osobnym `pointerExited`.
             return (state.with(isEditing: editing), editing ? [.cancel(.collapse)] : [])

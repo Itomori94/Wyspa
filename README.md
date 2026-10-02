@@ -51,6 +51,13 @@ Przy pierwszym podpisie macOS może zapytać, czy `codesign` może użyć klucza
 - **⌃⌥W** (domyślnie, do zmiany w ustawieniach): rozwija lub zwija wyspę na ekranie z kursorem.
 - Ikona w pasku menu: ustawienia i zamknięcie aplikacji.
 
+### Klawiatura po skrócie
+
+Skrót wyspy (domyślnie ⌃⌥W) rozwija ją od razu z klawiaturą, bez zabierania fokusu aplikacji, w której pracujesz:
+**← →** zmieniają strony, **pisanie** przechodzi do Historii schowka i szuka, **↑ ↓** wybierają wpis, **Enter** go wkleja
+(wyspa się zwija, a tekst trafia tam, gdzie był kursor), **Esc** zwija wyspę. W polu tekstowym (np. Notatka) klawisze
+należą do pola.
+
 ## Uprawnienia
 
 Każdy moduł wymagający uprawnienia jest domyślnie wyłączony i prosi o nie dopiero przy pierwszym włączeniu.

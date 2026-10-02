@@ -9,7 +9,7 @@ import WyspaCore
 /// więc sprawdzamy `changeCount` co 0,75 s — tylko wtedy, gdy moduł jest włączony.
 @MainActor
 @Observable
-public final class ClipboardModule: IslandModule {
+public final class ClipboardModule: IslandModule, IslandKeyboardHandling {
     public static let descriptor = ModuleDescriptor(
         id: "clipboard",
         name: "Historia schowka",
@@ -27,7 +27,11 @@ public final class ClipboardModule: IslandModule {
     static let pasteDelay: Duration = .milliseconds(180)
 
     public private(set) var history: ClipboardHistory
-    public var query = ""
+    public var query = "" {
+        didSet { if query != oldValue { selectedIndex = query.isEmpty ? nil : 0 } }
+    }
+    /// Wpis wybrany strzałkami (indeks w wynikach wyszukiwania); Enter go wkleja.
+    public private(set) var selectedIndex: Int?
     /// Kliknięcie wpisu wkleja go do aplikacji na pierwszym planie (inaczej tylko kopiuje).
     public var pastesOnClick: Bool { didSet { context.settings.set(pastesOnClick, for: Self.pasteKey) } }
     /// Krótki komunikat po kliknięciu („Wklejono”, „Skopiowano”).
@@ -112,6 +116,7 @@ public final class ClipboardModule: IslandModule {
             return
         }
         query = ""
+        selectedIndex = nil
         context.requestCollapse()
         pasteTask?.cancel()
         pasteTask = Task { [weak self] in
@@ -129,6 +134,40 @@ public final class ClipboardModule: IslandModule {
             let event = CGEvent(keyboardEventSource: source, virtualKey: key, keyDown: isDown)
             event?.flags = .maskCommand
             event?.post(tap: .cghidEventTap)
+        }
+    }
+
+    // MARK: - Klawiatura (po skrócie wyspy)
+
+    public static let receivesTypedText = true
+
+    /// Czy pole wyszukiwania ma klawiaturę (ustawiane przez widok).
+    @ObservationIgnored var isSearchFocused = false
+
+    public func handleKey(_ key: IslandKey, whileEditingText: Bool) -> Bool {
+        // Pisanie w innym polu (np. notatka na tej samej stronie) nie należy do schowka.
+        if whileEditingText && !isSearchFocused { return false }
+        let results = history.matching(query)
+        switch key {
+        case .text(let text):
+            query += text
+            return true
+        case .backspace:
+            guard !query.isEmpty else { return false }
+            query.removeLast()
+            return true
+        case .down:
+            guard !results.isEmpty else { return false }
+            selectedIndex = ClipboardSelection.moved(selectedIndex, by: 1, count: results.count)
+            return true
+        case .up:
+            guard !results.isEmpty else { return false }
+            selectedIndex = ClipboardSelection.moved(selectedIndex, by: -1, count: results.count)
+            return true
+        case .enter:
+            guard let index = ClipboardSelection.chosen(selectedIndex, count: results.count) else { return false }
+            choose(results[index])
+            return true
         }
     }
 
