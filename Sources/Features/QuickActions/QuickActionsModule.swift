@@ -19,15 +19,22 @@ public final class QuickActionsModule: IslandModule {
 
     static let shelfZone = "shelf.store"
     private static let shortcutsKey = "shortcuts"
+    private static let visibleKey = "visibleActions"
+    static let defaultVisible: [Action] = [.capture, .captureText, .password, .darkMode]
 
     public enum Action: String, CaseIterable, Codable, Sendable {
-        case capture, captureText, pickColor, lock, keepAwake
+        case capture, captureScreen, captureText, record, pickColor, password, darkMode, desktopIcons, lock, keepAwake
 
         public var displayName: String {
             switch self {
             case .capture: "Zrzut na Półkę"
+            case .captureScreen: "Zrzut całego ekranu"
             case .captureText: "Tekst ze zrzutu"
+            case .record: "Nagrywanie ekranu"
             case .pickColor: "Pipeta koloru"
+            case .password: "Generator hasła"
+            case .darkMode: "Tryb ciemny (przełącz)"
+            case .desktopIcons: "Ikony na biurku (przełącz)"
             case .lock: "Zablokuj ekran"
             case .keepAwake: "Nie usypiaj (przełącz)"
             }
@@ -36,6 +43,14 @@ public final class QuickActionsModule: IslandModule {
     static let feedbackDisplay: Duration = .seconds(3)
 
     public private(set) var isKeepingAwake = false
+    /// Kafelki w wyspie (2–4, w kolejności z `Action.allCases`); skróty działają dla wszystkich akcji.
+    public private(set) var visibleActions: [Action]
+    public private(set) var isDarkMode = false
+    public private(set) var desktopIconsVisible = true
+    /// Hasło znika ze schowka po tym czasie, jeśli nic innego nie zostało skopiowane.
+    static let passwordLifetime: Duration = .seconds(90)
+    /// Czas na zwinięcie wyspy, zanim zrobimy zrzut całego ekranu (żeby nie było jej na zrzucie).
+    static let collapseDelay: Duration = .milliseconds(450)
     /// Krótki komunikat po akcji („Skopiowano #1E90FF”).
     public private(set) var feedback: String?
     /// Globalne skróty akcji (bez domyślnych — ustawiasz je sam); działają tylko, gdy moduł jest włączony.
@@ -53,6 +68,9 @@ public final class QuickActionsModule: IslandModule {
 
     public required init(context: ModuleContext) {
         self.context = context
+        let storedVisible: [String] = context.settings.value(Self.visibleKey, default: Self.defaultVisible.map(\.rawValue))
+        let restored = Action.allCases.filter { storedVisible.contains($0.rawValue) }
+        visibleActions = QuickActionsLogic.visibleRange.contains(restored.count) ? restored : Self.defaultVisible
         let stored: [String: HotkeyShortcut] = context.settings.value(Self.shortcutsKey, default: [:])
         shortcuts = Dictionary(uniqueKeysWithValues: stored.compactMap { key, value in Action(rawValue: key).map { ($0, value) } })
     }
@@ -77,6 +95,20 @@ public final class QuickActionsModule: IslandModule {
 
     // MARK: - Skróty
 
+    func isVisible(_ action: Action) -> Bool { visibleActions.contains(action) }
+
+    /// Czy przełącznik akcji jest aktywny (nie da się zejść poniżej 2 ani przekroczyć 4).
+    func canToggle(_ action: Action) -> Bool {
+        QuickActionsLogic.toggling(action, in: visibleActions, order: Action.allCases) != nil
+    }
+
+    func setVisible(_ action: Action, _ visible: Bool) {
+        guard visible != isVisible(action),
+              let next = QuickActionsLogic.toggling(action, in: visibleActions, order: Action.allCases) else { return }
+        visibleActions = next
+        context.settings.set(next.map(\.rawValue), for: Self.visibleKey)
+    }
+
     func setShortcut(_ shortcut: HotkeyShortcut?, for action: Action) {
         var next = shortcuts
         next[action] = shortcut
@@ -88,7 +120,12 @@ public final class QuickActionsModule: IslandModule {
     func perform(_ action: Action) {
         switch action {
         case .capture: captureToShelf()
+        case .captureScreen: captureScreen()
         case .captureText: captureText()
+        case .record: startRecording()
+        case .password: copyPassword()
+        case .darkMode: toggleDarkMode()
+        case .desktopIcons: toggleDesktopIcons()
         case .pickColor: pickColor()
         case .lock: lockScreen()
         case .keepAwake:
@@ -125,13 +162,92 @@ public final class QuickActionsModule: IslandModule {
         startCapture { [weak self] url in self?.recognizeText(in: url) }
     }
 
-    /// Zaznaczenie obszaru; `completion` dostaje plik (może go nie być po Esc) i odpowiada za jego usunięcie.
-    private func startCapture(_ completion: @escaping @MainActor @Sendable (URL) -> Void) {
+    /// Cały ekran główny na Półkę (albo do schowka): wyspa najpierw się zwija, żeby nie było jej na zrzucie.
+    func captureScreen() {
+        context.requestCollapse()
+        Task { [weak self] in
+            try? await Task.sleep(for: Self.collapseDelay)
+            self?.startCapture(arguments: ["-m"]) { [weak self] url in self?.screenshotFinished(url) }
+        }
+    }
+
+    /// Systemowy pasek zrzutów i nagrywania (jak ⇧⌘5): wybór obszaru, nagrywanie, zapis jak w ustawieniach systemu.
+    func startRecording() {
+        context.requestCollapse()
+        let screenshotApp = URL(fileURLWithPath: "/System/Applications/Utilities/Screenshot.app")
+        NSWorkspace.shared.openApplication(at: screenshotApp, configuration: NSWorkspace.OpenConfiguration()) { [weak self] _, error in
+            guard error != nil else { return }
+            Task { @MainActor in self?.show("Nie udało się otworzyć paska nagrywania") }
+        }
+    }
+
+    /// Losowe hasło do schowka, oznaczone jako poufne (menedżery schowka, także historia Wyspy, je pomijają);
+    /// znika po 90 s, jeśli w międzyczasie nic innego nie skopiowano.
+    func copyPassword() {
+        let pasteboard = NSPasteboard.general
+        pasteboard.clearContents()
+        pasteboard.declareTypes([.string, NSPasteboard.PasteboardType("org.nspasteboard.ConcealedType")], owner: nil)
+        pasteboard.setString(QuickActionsLogic.password(), forType: .string)
+        pasteboard.setString("", forType: NSPasteboard.PasteboardType("org.nspasteboard.ConcealedType"))
+        let change = pasteboard.changeCount
+        show("Hasło w schowku — zniknie za 90 s")
+        Task {
+            try? await Task.sleep(for: Self.passwordLifetime)
+            if NSPasteboard.general.changeCount == change { NSPasteboard.general.clearContents() }
+        }
+    }
+
+    /// Przełącza tryb ciemny całego systemu przez System Events (przy pierwszym razie macOS pyta o zgodę).
+    func toggleDarkMode() {
+        let source = QuickActionsLogic.toggleDarkModeScript
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            var error: NSDictionary?
+            NSAppleScript(source: source)?.executeAndReturnError(&error)
+            let code = error?[NSAppleScript.errorNumber] as? Int
+            Task { @MainActor in
+                guard let self else { return }
+                self.refreshSystemState()
+                if code == -1743 {
+                    self.show("Zezwól Wyspie na sterowanie „System Events” (Ustawienia systemowe → Prywatność → Automatyzacja)")
+                } else if code != nil {
+                    self.show("Nie udało się przełączyć trybu ciemnego")
+                }
+            }
+        }
+    }
+
+    /// Chowa albo pokazuje pliki na biurku (ustawienie Findera) i przeładowuje Findera, żeby zadziałało od razu.
+    func toggleDesktopIcons() {
+        let show = !QuickActionsLogic.desktopIconsVisible(CFPreferencesCopyAppValue("CreateDesktop" as CFString, "com.apple.finder" as CFString))
+        CFPreferencesSetAppValue("CreateDesktop" as CFString, show as CFBoolean, "com.apple.finder" as CFString)
+        CFPreferencesAppSynchronize("com.apple.finder" as CFString)
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/killall")
+        process.arguments = ["Finder"]
+        do {
+            try process.run()
+        } catch {
+            log.error("killall Finder: \(error.localizedDescription, privacy: .public)")
+        }
+        desktopIconsVisible = show
+        self.show(show ? "Ikony na biurku widoczne" : "Ikony na biurku ukryte")
+    }
+
+    /// Stan przełączników systemowych (tryb ciemny, ikony na biurku) — przy otwarciu widoku i po zmianie.
+    func refreshSystemState() {
+        isDarkMode = UserDefaults.standard.string(forKey: "AppleInterfaceStyle") == "Dark"
+        desktopIconsVisible = QuickActionsLogic.desktopIconsVisible(
+            CFPreferencesCopyAppValue("CreateDesktop" as CFString, "com.apple.finder" as CFString))
+    }
+
+    /// Zrzut ekranu (domyślnie zaznaczenie obszaru); `completion` dostaje plik (może go nie być po Esc)
+    /// i odpowiada za jego usunięcie.
+    private func startCapture(arguments: [String] = ["-i"], _ completion: @escaping @MainActor @Sendable (URL) -> Void) {
         guard captureProcess == nil else { return }
         let url = QuickActionsLogic.screenshotURL(in: FileManager.default.temporaryDirectory, at: Date())
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/usr/sbin/screencapture")
-        process.arguments = ["-i", "-x", url.path]
+        process.arguments = arguments + ["-x", url.path]
         process.terminationHandler = { [weak self] finished in
             Task { @MainActor in
                 // Moduł wyłączony w trakcie zaznaczania: nic nie przekazujemy, tylko sprzątamy.

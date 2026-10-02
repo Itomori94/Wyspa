@@ -175,7 +175,7 @@ APP=$PWD/build/Wyspa.app/Contents
 | Historia schowka | `WyspaClipboard` | — | `changeCount` co 0,75 s tylko gdy włączony (zaakceptowany wyjątek); pomija Concealed/Transient; limit 10–500 (przypięte poza limitem, najwyżej 50, zostają po „Wyczyść”); tylko w pamięci; wyszukiwanie z „ł”→„l”; kliknięcie = kopiuj + `requestCollapse` + po 180 ms ⌘V przez `CGEvent` (tylko z Dostępnością, inaczej samo kopiowanie) |
 | Skróty | `WyspaShortcuts` | — | `/usr/bin/shortcuts list/run`, nazwy jako argumenty procesu (bez powłoki), ulubione w ustawieniach |
 | Lusterko | `WyspaMirror` | Kamera | sesja AVCapture tylko gdy widok zakładki jest w oknie |
-| Szybkie akcje | `WyspaQuickActions` | Nagrywanie ekranu (przy pierwszym zrzucie) | zrzut `screencapture -i`; „Tekst ze zrzutu” = Vision `VNRecognizeTextRequest` (accurate, pl-PL + en-US, poza głównym wątkiem) → schowek, plik kasowany; nowe akcje dopisywać na końcu enuma przed istniejącymi tylko wtedy, gdy rawValue się nie zmienia (zapis skrótów) |
+| Szybkie akcje | `WyspaQuickActions` | Nagrywanie ekranu (przy pierwszym zrzucie) | zrzut `screencapture -i`; „Tekst ze zrzutu” = Vision `VNRecognizeTextRequest` (accurate, pl-PL + en-US, poza głównym wątkiem) → schowek, plik kasowany; skróty i widoczne kafelki zapisane po `rawValue` — nigdy nie zmieniaj istniejących nazw (test); widocznych 2–4 (`QuickActionsLogic.toggling`); hasło z `SystemRandomNumberGenerator`, w schowku jako `ConcealedType`, kasowane po 90 s; tryb ciemny przez System Events (Apple Events); ikony biurka = `CreateDesktop` Findera + `killall Finder`; zrzut całego ekranu i nagrywanie najpierw `requestCollapse` |
 
 ## Monitor Claude Code (etap 6, moduł `WyspaClaudeMonitor`)
 

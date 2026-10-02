@@ -38,7 +38,7 @@
 	<key>LSUIElement</key>
 	<true/>
 	<key>NSAppleEventsUsageDescription</key>
-	<string>W trybie awaryjnym Wyspa odczytuje i steruje odtwarzaniem w Muzyce i Spotify.</string>
+	<string>Wyspa steruje odtwarzaniem w Muzyce i Spotify oraz — w Szybkich akcjach — przełącza tryb ciemny przez System Events.</string>
 	<key>NSBluetoothAlwaysUsageDescription</key>
 	<string>Wyspa pokazuje podłączenie słuchawek i innych urządzeń Bluetooth oraz poziom ich baterii.</string>
 	<key>NSCalendarsFullAccessUsageDescription</key>

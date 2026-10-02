@@ -268,17 +268,24 @@ w zwiniętej wyspie (domyślnie wyłączona).
 
 ### Szybkie akcje
 
-Strona albo widżet z pięcioma przyciskami:
+W wyspie widać od 2 do 4 przycisków (domyślnie: Zrzut na Półkę, Tekst ze zrzutu, Hasło, Tryb ciemny); które,
+wybierasz przełącznikami w ustawieniach modułu. Do wyboru:
 - **Zrzut na Półkę**: zaznaczasz obszar ekranu, zrzut ląduje na Półce (gdy Półka jest wyłączona — w schowku).
   Przy pierwszym użyciu macOS zapyta o zgodę na nagrywanie ekranu dla Wyspy.
+- **Cały ekran**: zrzut ekranu głównego na Półkę (wyspa najpierw się zwija, żeby nie było jej na zrzucie).
+- **Nagrywanie**: systemowy pasek zrzutów i nagrywania (jak ⇧⌘5).
+- **Hasło**: losowe hasło (20 znaków, bez mylących 0/O, 1/l/I) do schowka. Oznaczone jako poufne, więc historia
+  schowka go nie zapisuje; znika ze schowka po 90 s, jeśli nic innego nie skopiujesz.
+- **Tryb ciemny**: przełącza wygląd całego systemu (przy pierwszym razie macOS zapyta o zgodę na sterowanie „System Events”).
+- **Ikony na biurku**: chowa albo pokazuje pliki na biurku (np. przed udostępnianiem ekranu); Finder na chwilę się przeładowuje.
 - **Tekst ze zrzutu**: zaznaczasz obszar, rozpoznany tekst (polski i angielski) trafia do schowka. Rozpoznawanie działa
   na Macu (Vision), nic nie wychodzi do sieci, zrzut jest od razu kasowany.
 - **Pipeta koloru**: systemowa pipeta, kod HEX koloru trafia do schowka.
 - **Zablokuj ekran**: od razu blokuje Maca.
 - **Nie usypiaj**: Mac i ekran nie zasypiają (jak `caffeinate -d`), dopóki nie klikniesz ponownie albo nie wyłączysz modułu.
 
-Każdej akcji możesz przypisać globalny skrót klawiszowy w ustawieniach modułu (domyślnie brak); skróty działają
-tylko przy włączonym module.
+Każdej akcji — także niewidocznej w wyspie — możesz przypisać globalny skrót klawiszowy w ustawieniach modułu
+(domyślnie brak); skróty działają tylko przy włączonym module.
 
 ### Odinstalowanie
 

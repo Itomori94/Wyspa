@@ -7,19 +7,11 @@ struct QuickActionsView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            let columns = Array(repeating: GridItem(.flexible(), spacing: 8), count: compact ? 3 : 5)
+            let columns = Array(repeating: GridItem(.flexible(), spacing: 8), count: compact ? 2 : module.visibleActions.count)
             LazyVGrid(columns: columns, spacing: 8) {
-                ActionTile(symbol: "camera.viewfinder", title: compact ? "Zrzut" : "Zrzut na Półkę", tint: .blue, compact: compact,
-                           action: module.captureToShelf)
-                ActionTile(symbol: "text.viewfinder", title: compact ? "Tekst" : "Tekst ze zrzutu", tint: .green, compact: compact,
-                           action: module.captureText)
-                ActionTile(symbol: "eyedropper", title: compact ? "Pipeta" : "Pipeta koloru", tint: .pink, compact: compact,
-                           action: module.pickColor)
-                ActionTile(symbol: "lock.fill", title: compact ? "Blokada" : "Zablokuj ekran", tint: .gray, compact: compact,
-                           action: module.lockScreen)
-                ActionTile(symbol: module.isKeepingAwake ? "cup.and.saucer.fill" : "cup.and.saucer",
-                           title: module.isKeepingAwake ? "Nie usypia" : "Nie usypiaj", tint: .orange, compact: compact,
-                           isOn: module.isKeepingAwake, action: { module.toggleKeepAwake() })
+                ForEach(module.visibleActions, id: \.self) { action in
+                    tile(action)
+                }
             }
             if let feedback = module.feedback {
                 Text(feedback)
@@ -29,6 +21,42 @@ struct QuickActionsView: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        .onAppear(perform: module.refreshSystemState)
+    }
+
+    @ViewBuilder
+    private func tile(_ action: QuickActionsModule.Action) -> some View {
+        switch action {
+        case .capture:
+            ActionTile(symbol: "camera.viewfinder", title: compact ? "Zrzut" : "Zrzut na Półkę", tint: .blue, compact: compact,
+                       action: module.captureToShelf)
+        case .captureScreen:
+            ActionTile(symbol: "macwindow", title: "Cały ekran", tint: .blue, compact: compact, action: module.captureScreen)
+        case .captureText:
+            ActionTile(symbol: "text.viewfinder", title: compact ? "Tekst" : "Tekst ze zrzutu", tint: .green, compact: compact,
+                       action: module.captureText)
+        case .record:
+            ActionTile(symbol: "record.circle", title: "Nagrywanie", tint: .red, compact: compact, action: module.startRecording)
+        case .pickColor:
+            ActionTile(symbol: "eyedropper", title: compact ? "Pipeta" : "Pipeta koloru", tint: .pink, compact: compact,
+                       action: module.pickColor)
+        case .password:
+            ActionTile(symbol: "key.fill", title: "Hasło", tint: .yellow, compact: compact, action: module.copyPassword)
+        case .darkMode:
+            ActionTile(symbol: module.isDarkMode ? "moon.fill" : "sun.max.fill", title: module.isDarkMode ? "Tryb ciemny" : "Tryb jasny",
+                       tint: .indigo, compact: compact, isOn: module.isDarkMode, action: module.toggleDarkMode)
+        case .desktopIcons:
+            ActionTile(symbol: module.desktopIconsVisible ? "menubar.dock.rectangle" : "eye.slash",
+                       title: module.desktopIconsVisible ? "Ukryj biurko" : "Pokaż biurko",
+                       tint: .teal, compact: compact, isOn: !module.desktopIconsVisible, action: module.toggleDesktopIcons)
+        case .lock:
+            ActionTile(symbol: "lock.fill", title: compact ? "Blokada" : "Zablokuj ekran", tint: .gray, compact: compact,
+                       action: module.lockScreen)
+        case .keepAwake:
+            ActionTile(symbol: module.isKeepingAwake ? "cup.and.saucer.fill" : "cup.and.saucer",
+                       title: module.isKeepingAwake ? "Nie usypia" : "Nie usypiaj", tint: .orange, compact: compact,
+                       isOn: module.isKeepingAwake, action: { module.toggleKeepAwake() })
+        }
     }
 }
 
@@ -72,6 +100,17 @@ struct QuickActionsSettingsView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
+            Text("Widoczne w wyspie (od 2 do 4)").font(.headline)
+            ForEach(QuickActionsModule.Action.allCases, id: \.self) { action in
+                Toggle(action.displayName, isOn: Binding(get: { module.isVisible(action) },
+                                                         set: { module.setVisible(action, $0) }))
+                    .toggleStyle(.switch)
+                    .disabled(!module.canToggle(action))
+            }
+            Text("Gdy widoczne są 4 akcje, wyłącz jedną, żeby włączyć inną. Najmniej 2 muszą zostać.")
+                .font(.caption).foregroundStyle(.secondary)
+            Divider()
+            Text("Skróty klawiszowe").font(.headline)
             ForEach(QuickActionsModule.Action.allCases, id: \.self) { action in
                 LabeledContent(action.displayName) {
                     ShortcutRecorder(shortcut: Binding(
