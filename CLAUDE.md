@@ -209,6 +209,10 @@ APP=$PWD/build/Wyspa.app/Contents
 - Chowanie oryginału: przesunięcie okna banerów poza ekran (`kAXPositionAttribute`). Na macOS 27.2 to okno ma rozmiar
   całego ekranu i otwiera się w nim też Centrum powiadomień, więc gdy banerów już nie ma (`AXUIElementDestroyed`),
   okno wraca na zapamiętane miejsce. Akcja banera „Zamknij” odrzucona: może usuwać powiadomienie z Centrum.
+- Okno jest schowane tylko na czas karty w wyspie: gdy kolejka pustoszeje, `releaseHiddenWindow()` je przywraca
+  (alert w stylu „Alerty” pojawia się wtedy w rogu, jak ustawił użytkownik). Bezpiecznik: najwyżej 60 s.
+  Na żywo sprawdzone dla banerów (okno schowane w trakcie karty, potem system je zamyka); stylu „Alerty” nie testowano
+  na żywo (wymagałby zmiany ustawień powiadomień albo przypomnienia synchronizowanego przez iCloud).
 - Karta pod notchem (`IslandState.hasCard`): najechanie i kliknięcie nie rozwijają wyspy — klik obsługuje karta.
 - Karta: `LiveActivity` z `detail` (karta pod skrzydełkami, `IslandLayout.detailWidth`/`maxDetailHeight`), priorytet `.alert`,
   kolejka `NotificationQueue` (niemutowalna, limit 10 czekających), najechanie wstrzymuje odliczanie.

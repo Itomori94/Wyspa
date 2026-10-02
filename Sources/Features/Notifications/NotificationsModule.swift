@@ -94,7 +94,13 @@ public final class NotificationsModule: IslandModule {
         // Karta znika spod kursora bez „zjechania” — inaczej następna nigdy by się sama nie schowała.
         isPaused = false
         withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) { queue = queue.advancing() }
-        if queue.current != nil { scheduleDismiss() } else { dismissTask?.cancel() }
+        if queue.current != nil {
+            scheduleDismiss()
+        } else {
+            dismissTask?.cancel()
+            // Okno banerów jest schowane tylko na czas karty w wyspie.
+            watcher?.releaseHiddenWindow()
+        }
     }
 
     /// Najechanie na kartę zatrzymuje odliczanie; zjechanie zaczyna je od nowa.

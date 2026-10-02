@@ -21,8 +21,9 @@ final class NotificationBannerWatcher {
     private var hiddenWindow: (window: AXUIElement, origin: CGPoint)?
     /// Okno dalej niż tu uznajemy za schowane przez nas (np. po awarii Wyspy) i przywracamy przy starcie.
     private static let offscreenThreshold: CGFloat = -10_000
-    /// Po schowaniu: jednorazowe sprawdzenie, gdyby system nie zgłosił zniknięcia banera.
-    private static let restoreCheckDelay: Duration = .seconds(8)
+    /// Bezpiecznik: okno nigdy nie zostaje schowane dłużej (np. gdy karta wisi pod kursorem albo moduł nie oddał okna).
+    /// Normalnie wraca wcześniej — gdy karta znika z wyspy (`releaseHiddenWindow`) albo baner znika z systemu.
+    private static let maxHiddenDuration: Duration = .seconds(60)
     private static let attachRetries = 3
     private var observedElement: AXUIElement?
     private var retryTask: Task<Void, Never>?
@@ -160,14 +161,21 @@ final class NotificationBannerWatcher {
         }
         restoreCheckTask?.cancel()
         restoreCheckTask = Task { [weak self] in
-            try? await Task.sleep(for: Self.restoreCheckDelay)
+            try? await Task.sleep(for: Self.maxHiddenDuration)
             guard !Task.isCancelled else { return }
-            self?.scan()
+            self?.restoreHiddenWindow()
         }
         var offscreen = CGPoint(x: -20_000, y: -20_000)
         guard let value = AXValueCreate(.cgPoint, &offscreen) else { return }
         let result = AXUIElementSetAttributeValue(window, kAXPositionAttribute as CFString, value)
         if result != .success { log.error("Nie udało się schować banera: \(result.rawValue)") }
+    }
+
+    /// Karta zniknęła z wyspy: okno banerów wraca od razu. Baner w stylu „Alerty” (wisi do zamknięcia) pokaże się wtedy
+    /// w rogu ekranu — tak, jak użytkownik ustawił dla tej aplikacji — zamiast zostać schowany bez końca.
+    func releaseHiddenWindow() {
+        restoreCheckTask?.cancel()
+        restoreHiddenWindow()
     }
 
     private func restoreHiddenWindow() {
