@@ -61,9 +61,7 @@ zaktualizuj też ten plik. Karty okna: **Ogólne · Wyspa · Moduły · Układ**
 - **Teraz odtwarzane**
   - Pokazuj dźwięk z: Cały system / Tylko Apple Music — „Muzyka, filmy i podcasty z innych aplikacji nie będą
     pokazywane w wyspie.”
-  - Źródło danych: Automatycznie / Tylko mediaremote-adapter / Tylko AppleScript
-  - „Sprawdzanie adaptera…” · „Aktywne źródło: mediaremote-adapter (cały system) / AppleScript (Muzyka i Spotify)”
-  - „Przy pierwszym użyciu macOS zapyta o zgodę na sterowanie Muzyką i Spotify.”
+  - Gdy odtwarzanie nie działa: ostrzeżenie z powodem (np. „Brak plików adaptera w pakiecie aplikacji.”)
 - **HUD** — Głośność / Jasność ekranu / Podświetlenie klawiatury
   - „⇧⌥ z klawiszem zmienia poziom drobniejszymi krokami. Sam ⌥ otwiera ustawienia systemowe.”
   - „Niedostępne: brak wbudowanego ekranu albo DisplayServices w tej wersji macOS.”

@@ -69,7 +69,7 @@ W Ustawieniach → Moduły → Teraz odtwarzane wybierasz:
 - **Pokazuj dźwięk z**: *Cały system* (każda aplikacja, w tym przeglądarki) albo *Tylko Apple Music*.
   W trybie *Tylko Apple Music* wyspa pokazuje Muzykę wtedy, gdy to ona jest bieżącym odtwarzaczem w systemie;
   gdy gra inna aplikacja, wyspa zachowuje się, jakby nic nie grało.
-- **Źródło danych**: adapter MediaRemote albo AppleScript. Tam też widać, które źródło jest aktywne i dlaczego.
+- Źródło danych wybiera się samo: adapter MediaRemote, a gdy nie działa — AppleScript (Muzyka i Spotify).
 
 Przy utworze z Apple Music w odtwarzaczu jest przycisk **AirPlay**: wybór głośników (MacBook, Apple TV, HomePod),
 dźwięk przechodzi wyłącznie na wybrany głośnik.

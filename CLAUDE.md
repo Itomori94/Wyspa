@@ -82,7 +82,7 @@ binarka ma `minos 14.0` dla obu architektur (sprawdź: `vtool -arch x86_64 -show
   Moduł zna tylko protokół; nowe źródło = nowa implementacja + przypadek w `MediaSourceKind`.
 - **Wybór źródła** (`MediaSourceSelector`): Automatycznie → `test` adaptera (kod 0) → adapter, inaczej AppleScript.
   W trakcie działania przejście na AppleScript, gdy adapter padnie 3 razy z rzędu albo milczy ≥ 4 s,
-  choć Muzyka/Spotify zgłaszają odtwarzanie (`SilentAdapterDetector`). Aktywne źródło i powód widać w ustawieniach modułu.
+  choć Muzyka/Spotify zgłaszają odtwarzanie (`SilentAdapterDetector`). Wybór źródła nie jest pokazywany w ustawieniach (decyzja użytkownika z 2.10.2026); ustawienia pokazują tylko błąd, gdy żadne źródło nie działa. Aktywne źródło jest w logu (`media`).
 - **Bez odpytywania**: adapter `stream --no-diff --micros --debounce=100` wysyła dane tylko przy zmianach;
   AppleScript odświeża się po powiadomieniach rozproszonych `com.apple.Music.playerInfo` / `com.spotify.client.PlaybackStateChanged`.
   Pozycja odtwarzania jest liczona lokalnie z `elapsedTime + (teraz − timestamp) × playbackRate`.
