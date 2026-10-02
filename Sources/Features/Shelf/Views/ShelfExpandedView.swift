@@ -6,12 +6,13 @@ struct ShelfExpandedView: View {
     @Environment(\.islandDropTarget) private var dropTarget
 
     var body: some View {
-        HStack(spacing: 10) {
-            VStack(alignment: .leading, spacing: 6) {
-                ShelfToolbar(module: module)
+        // Pasek narzędzi nad całością, pod nim półka i AirDrop tej samej wysokości.
+        VStack(alignment: .leading, spacing: 6) {
+            ShelfToolbar(module: module)
+            HStack(spacing: 10) {
                 StoreZone(module: module, isTargeted: dropTarget == ShelfModule.Zone.store)
+                AirDropZone(module: module, isTargeted: dropTarget == ShelfModule.Zone.airDrop)
             }
-            AirDropZone(module: module, isTargeted: dropTarget == ShelfModule.Zone.airDrop)
         }
     }
 }
