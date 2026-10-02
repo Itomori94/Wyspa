@@ -174,3 +174,12 @@ private struct ReminderRow: View {
         return [item.listName, time].compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: " · ")
     }
 }
+
+#if DEBUG
+extension RemindersModule {
+    /// Dane demonstracyjne do zrzutów ekranu w README (tylko build debug).
+    func showDemo(_ demo: ReminderSections.Grouped) {
+        sections = demo
+    }
+}
+#endif

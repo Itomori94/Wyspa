@@ -441,10 +441,16 @@ extension HookEvent {
 #if DEBUG
 extension ClaudeMonitorModule {
     /// Dane demonstracyjne do zrzutów ekranu w README (tylko build debug).
-    func showDemo(store demoStore: SessionStore, limits demoLimits: ClaudeLimits?, finished: ClaudeSession?) {
+    func showDemo(store demoStore: SessionStore, limits demoLimits: ClaudeLimits?, finished: ClaudeSession?,
+                  permissions: [HookEvent] = [], questions: [(sessionID: String, questions: [ClaudeQuestion])] = []) {
         store = demoStore
         limits = demoLimits
         justFinished = finished
+        let channel = HookServer.ReplyChannel.demo(HookServer(path: "/tmp/wyspa-demo.sock", onMessage: { _, _ in }, onClosed: { _ in }))
+        pending = permissions.map { PendingPermission(id: UUID(), sessionID: $0.sessionID, event: $0, receivedAt: Date(), channel: channel) }
+        pendingQuestions = questions.map {
+            PendingQuestion(id: UUID(), sessionID: $0.sessionID, questions: $0.questions, receivedAt: Date(), channel: channel)
+        }
     }
 }
 #endif

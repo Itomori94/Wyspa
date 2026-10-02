@@ -5,20 +5,30 @@ Projekt open source (licencja MIT), dystrybucja poza App Store — budujesz i in
 
 ## Zrzuty ekranu
 
-| Zwinięta wyspa | |
+### Zwinięta wyspa
+
+| | |
 |---|---|
 | ![Muzyka](docs/screenshots/zwinieta-muzyka.png) Teraz odtwarzane | ![Głośność](docs/screenshots/zwinieta-glosnosc.png) Głośność |
 | ![Powiadomienie](docs/screenshots/zwinieta-powiadomienie.png) Powiadomienie | ![Claude](docs/screenshots/zwinieta-claude.png) Claude skończył |
-| ![Pobieranie](docs/screenshots/zwinieta-pobieranie.png) Pobieranie | ![Timer](docs/screenshots/zwinieta-timer.png) Pomodoro |
-| ![Bluetooth](docs/screenshots/zwinieta-bluetooth.png) AirPods | |
+| ![Spotkanie](docs/screenshots/zwinieta-spotkanie.png) Spotkanie za chwilę | ![Skrypt](docs/screenshots/zwinieta-skrypt.png) Karta ze skryptu (`wyspa notify`) |
+| ![Postęp skryptu](docs/screenshots/zwinieta-postep-skryptu.png) Postęp ze skryptu (`wyspa progress`) | ![Pobieranie](docs/screenshots/zwinieta-pobieranie.png) Pobieranie |
+| ![Pomodoro](docs/screenshots/zwinieta-timer.png) Pomodoro | ![Mikrofon](docs/screenshots/zwinieta-mikrofon.png) Wyciszony mikrofon |
+| ![Ładowanie](docs/screenshots/zwinieta-ladowanie.png) Ładowarka | ![Bluetooth](docs/screenshots/zwinieta-bluetooth.png) AirPods |
 
-| Rozwinięta wyspa | |
+### Rozwinięta wyspa
+
+| | |
 |---|---|
 | ![Odtwarzacz](docs/screenshots/odtwarzacz.png) Odtwarzacz z AirPlay | ![Widżety](docs/screenshots/widzety.png) Kilka widżetów na stronie |
-| ![Claude Code](docs/screenshots/claude-code.png) Claude Code z limitami planu | ![Pomodoro](docs/screenshots/pomodoro.png) Pomodoro i cel dnia |
-| ![Pogoda](docs/screenshots/pogoda.png) Pogoda | ![Schowek](docs/screenshots/schowek.png) Historia schowka |
-| ![Szybkie akcje](docs/screenshots/szybkie-akcje.png) Szybkie akcje | ![Bluetooth](docs/screenshots/bluetooth.png) Bluetooth |
-| ![Szybkie akcje obok odtwarzacza](docs/screenshots/szybkie-akcje-widzet.png) Szybkie akcje obok odtwarzacza | |
+| ![Claude Code](docs/screenshots/claude-code.png) Claude Code z limitami planu | ![Claude pyta](docs/screenshots/claude-pytanie.png) Pytanie Claude z opcjami |
+| ![Zgoda dla Claude](docs/screenshots/claude-zgoda.png) Prośba o zgodę (z powodem odmowy) | ![Kalendarz](docs/screenshots/kalendarz.png) Kalendarz z „Dołącz” |
+| ![Przypomnienia](docs/screenshots/przypomnienia.png) Przypomnienia | ![Notatka](docs/screenshots/notatka.png) Notatka |
+| ![Półka](docs/screenshots/polka.png) Półka z AirDrop | ![Pobierania](docs/screenshots/pobierania.png) Pobierania |
+| ![Pomodoro](docs/screenshots/pomodoro.png) Pomodoro i cel dnia | ![Pogoda](docs/screenshots/pogoda.png) Pogoda |
+| ![Schowek](docs/screenshots/schowek.png) Historia schowka | ![Tryb prywatny](docs/screenshots/tryb-prywatny.png) Tryb prywatny (udostępnianie ekranu) |
+| ![Szybkie akcje](docs/screenshots/szybkie-akcje.png) Szybkie akcje | ![Szybkie akcje obok odtwarzacza](docs/screenshots/szybkie-akcje-widzet.png) Szybkie akcje jako widżet |
+| ![Bluetooth](docs/screenshots/bluetooth.png) Bluetooth | |
 
 Zrzuty powstają z danych demonstracyjnych (`scripts/screenshots.sh`), więc nie zawierają prywatnych treści.
 

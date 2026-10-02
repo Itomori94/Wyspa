@@ -222,3 +222,15 @@ public final class ShelfModule: IslandModule, IslandDropHandling {
         selection = next
     }
 }
+
+#if DEBUG
+extension ShelfModule {
+    /// Dane demonstracyjne do zrzutów ekranu w README (tylko build debug): pliki demonstracyjne jako elementy półki.
+    func showDemo(files: [URL]) {
+        let demo = files.map { ShelfItem(id: UUID(), name: $0.lastPathComponent,
+                                         source: .stored(relativePath: $0.lastPathComponent), addedAt: Date()) }
+        items = demo
+        resolvedURLs = Dictionary(uniqueKeysWithValues: zip(demo.map(\.id), files))
+    }
+}
+#endif

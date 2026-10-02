@@ -108,3 +108,13 @@ public final class CalendarModule: IslandModule {
         )
     }
 }
+
+#if DEBUG
+extension CalendarModule {
+    /// Dane demonstracyjne do zrzutów ekranu w README (tylko build debug).
+    func showDemo(events demoEvents: [DayEvent], active demoActive: DayEvent?) {
+        events = demoEvents
+        active = demoActive
+    }
+}
+#endif

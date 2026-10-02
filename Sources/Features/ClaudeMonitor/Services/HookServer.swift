@@ -260,3 +260,12 @@ public final class HookServer: @unchecked Sendable {
         }
     }
 }
+
+#if DEBUG
+extension HookServer.ReplyChannel {
+    /// Kanał do zrzutów ekranu (nieuruchomiony serwer — nic nie zostanie wysłane).
+    static func demo(_ server: HookServer) -> HookServer.ReplyChannel {
+        HookServer.ReplyChannel(id: 0, server: server)
+    }
+}
+#endif

@@ -2,6 +2,13 @@ import AppKit
 import SwiftUI
 import Testing
 @testable import WyspaBluetooth
+@testable import WyspaCalendar
+@testable import WyspaMicrophone
+@testable import WyspaNotes
+@testable import WyspaPower
+@testable import WyspaReminders
+@testable import WyspaScripts
+@testable import WyspaShelf
 @testable import WyspaClaudeMonitor
 @testable import WyspaClipboard
 @testable import WyspaCore
@@ -84,6 +91,43 @@ private func slot(_ id: String, _ name: String, _ symbol: String) -> ModuleDescr
     var liveActivity: LiveActivity? { liveActivity(for: "bluetooth") }
     func makeExpandedView() -> AnyView? { Stage.expanded["bluetooth"] }
 }
+@MainActor @Observable private final class CalendarSlot: SlotBase, IslandModule {
+    static let descriptor = slot("calendar", "Kalendarz", "calendar")
+    var liveActivity: LiveActivity? { liveActivity(for: "calendar") }
+    func makeExpandedView() -> AnyView? { Stage.expanded["calendar"] }
+}
+@MainActor @Observable private final class RemindersSlot: SlotBase, IslandModule {
+    static let descriptor = slot("reminders", "Przypomnienia", "checklist")
+    var liveActivity: LiveActivity? { liveActivity(for: "reminders") }
+    func makeExpandedView() -> AnyView? { Stage.expanded["reminders"] }
+}
+@MainActor @Observable private final class NotesSlot: SlotBase, IslandModule {
+    static let descriptor = slot("notes", "Notatka", "note.text")
+    var liveActivity: LiveActivity? { liveActivity(for: "notes") }
+    func makeExpandedView() -> AnyView? { Stage.expanded["notes"] }
+}
+@MainActor @Observable private final class ShelfSlot: SlotBase, IslandModule {
+    static let descriptor = slot("shelf", "Półka", "tray.full.fill")
+    var liveActivity: LiveActivity? { liveActivity(for: "shelf") }
+    func makeExpandedView() -> AnyView? { Stage.expanded["shelf"] }
+}
+@MainActor @Observable private final class DownloadsSlot: SlotBase, IslandModule {
+    static let descriptor = slot("downloads", "Pobierania", "arrow.down.circle.fill")
+    var liveActivity: LiveActivity? { liveActivity(for: "downloads") }
+    func makeExpandedView() -> AnyView? { Stage.expanded["downloads"] }
+}
+@MainActor @Observable private final class ClaudeAskSlot: SlotBase, IslandModule {
+    static let descriptor = slot("claude-ask", "Claude Code", "terminal.fill")
+    var liveActivity: LiveActivity? { liveActivity(for: "claude-ask") }
+    func makeExpandedView() -> AnyView? { Stage.expanded["claude-ask"] }
+}
+/// Moduł osobisty — do zrzutu trybu prywatnego (zasłona).
+@MainActor @Observable private final class PrivateSlot: SlotBase, IslandModule {
+    static let descriptor = ModuleDescriptor(id: "private", name: "Historia schowka", summary: "", symbol: "doc.on.clipboard",
+                                             content: .personal, widgetMinWidth: 60)
+    var liveActivity: LiveActivity? { liveActivity(for: "private") }
+    func makeExpandedView() -> AnyView? { Stage.expanded["clipboard"] }
+}
 @MainActor @Observable private final class AlertSlot: SlotBase, IslandModule {
     static let descriptor = slot("alerts", "Powiadomienia", "bell.badge.fill")
     var liveActivity: LiveActivity? { liveActivity(for: "alerts") }
@@ -96,7 +140,9 @@ struct ScreenshotTests {
     static let notch = NotchMetrics(size: CGSize(width: 185, height: 38), isPhysical: true)
     static let expandedSize = IslandSize.medium.expandedSize
     static let catalog: [any IslandModule.Type] = [MediaSlot.self, TimerSlot.self, WeatherSlot.self, ClaudeSlot.self,
-                                                   ClipboardSlot.self, QuickSlot.self, BluetoothSlot.self, AlertSlot.self]
+                                                   ClipboardSlot.self, QuickSlot.self, BluetoothSlot.self, AlertSlot.self,
+                                                   CalendarSlot.self, RemindersSlot.self, NotesSlot.self, ShelfSlot.self,
+                                                   DownloadsSlot.self, ClaudeAskSlot.self, PrivateSlot.self]
 
     private func context(_ id: String) -> ModuleContext {
         ModuleContext(settings: SettingsStore(defaults: UserDefaults(suiteName: "wyspa.shots.\(id)")!).moduleSettings(for: id),
@@ -203,6 +249,98 @@ struct ScreenshotTests {
         let downloads = DownloadsModule(context: context("downloads"))
         downloads.showDemo([DownloadItem(id: UUID(), fileURL: URL(fileURLWithPath: "/Users/demo/Downloads/Wyspa.dmg.download"), fraction: 0.64)])
         Stage.downloadsActivity = downloads.liveActivity
+        downloads.showDemo([
+            DownloadItem(id: UUID(), fileURL: URL(fileURLWithPath: "/Users/demo/Downloads/Wyspa.dmg.download"), fraction: 0.64),
+            DownloadItem(id: UUID(), fileURL: URL(fileURLWithPath: "/Users/demo/Downloads/Prezentacja.key.crdownload"), fraction: 0.18),
+        ])
+        Stage.expanded["downloads"] = downloads.makeExpandedView()
+
+        let microphone = MicrophoneModule(context: context("microphone"))
+        microphone.showDemo(muted: true)
+        Stage.microphoneActivity = microphone.liveActivity
+
+        let scripts = ScriptsModule(context: context("scripts"))
+        scripts.showDemo(ScriptsState().applying(.notify(title: "Backup gotowy", body: "Zdjęcia skopiowane na dysk sieciowy"), at: now))
+        Stage.scriptNoticeActivity = scripts.liveActivity
+        scripts.showDemo(ScriptsState().applying(.progress(id: "build", fraction: 0.4, label: "Build aplikacji"), at: now))
+        Stage.scriptProgressActivity = scripts.liveActivity
+
+        let calendarModule = CalendarModule(context: context("calendar"))
+        let day = Calendar.current.startOfDay(for: now)
+        func at(_ hour: Int, _ minute: Int = 0) -> Date { Calendar.current.date(byAdding: .minute, value: hour * 60 + minute, to: day)! }
+        let standup = DayEvent(id: "1", title: "Daily z zespołem", start: now.addingTimeInterval(6 * 60), end: now.addingTimeInterval(21 * 60),
+                               joinURL: URL(string: "https://meet.example.com/abc"), color: [0.3, 0.6, 1])
+        let events = [
+            DayEvent(id: "0", title: "Siłownia", start: at(7), end: at(8), color: [0.95, 0.5, 0.2]),
+            standup,
+            DayEvent(id: "2", title: "Lunch z Olą", start: at(13), end: at(14), location: "Bistro Wyspa", color: [0.4, 0.8, 0.4]),
+            DayEvent(id: "3", title: "Przegląd projektu", start: at(16), end: at(17), color: [0.7, 0.4, 0.95]),
+        ]
+        calendarModule.showDemo(events: events, active: standup)
+        Stage.expanded["calendar"] = calendarModule.makeExpandedView()
+        Stage.calendarActivity = calendarModule.liveActivity
+
+        let reminders = RemindersModule(context: context("reminders"))
+        reminders.showDemo(ReminderSections.Grouped(
+            overdue: [ReminderItem(id: "a", title: "Opłacić rachunek za prąd", due: day.addingTimeInterval(-86_400), listName: "Dom", priority: 1)],
+            today: [ReminderItem(id: "b", title: "Odebrać paczkę", due: at(17), listName: "Dom"),
+                    ReminderItem(id: "c", title: "Zadzwonić do mechanika", due: at(18), listName: "Auto"),
+                    ReminderItem(id: "d", title: "Kupić kawę", due: nil, listName: "Zakupy")]))
+        Stage.expanded["reminders"] = reminders.makeExpandedView()
+
+        let notes = NotesModule(context: context("notes"))
+        notes.text = "Pomysły na weekend\n\n• rower nad jezioro\n• dokończyć zrzuty do README\n• kino w niedzielę o 19:00"
+        Stage.expanded["notes"] = notes.makeExpandedView()
+
+        let shelf = ShelfModule(context: context("shelf"))
+        shelf.showDemo(files: try demoFiles())
+        Stage.expanded["shelf"] = shelf.makeExpandedView()
+
+        let power = PowerModule(context: context("power"))
+        power.showDemo(state: PowerState(level: 47, isPluggedIn: true, isCharging: true, isCharged: false, minutesToFull: 58),
+                       event: .pluggedIn)
+        Stage.powerActivity = power.liveActivity
+
+        let asking = ClaudeMonitorModule(context: context("claude-ask"))
+        var askStore = SessionStore()
+        (askStore, _) = askStore.applying(envelope(["hook_event_name": "UserPromptSubmit", "session_id": "a", "cwd": "/Users/demo/wyspa"]),
+                                          at: now.addingTimeInterval(-3 * 60))
+        let permission = try HookEvent.parse([
+            "hook_event_name": "PermissionRequest", "session_id": "a", "cwd": "/Users/demo/wyspa", "tool_name": "Bash",
+            "tool_input": ["command": "git push origin master", "description": "Wysłanie zmian na GitHuba"],
+        ])
+        let question = ClaudeQuestion.parse(["questions": [[
+            "question": "Gdzie zapisywać przypięte wpisy schowka?", "header": "Schowek", "multiSelect": false,
+            "options": [["label": "Tylko w pamięci", "description": "Znikają po zamknięciu Wyspy"],
+                        ["label": "Na dysku", "description": "Przetrwają restart"]],
+        ]]])
+        asking.showDemo(store: askStore, limits: nil, finished: nil, questions: [(sessionID: "a", questions: question)])
+        Stage.claudeQuestion = asking.makeExpandedView()
+        let approving = ClaudeMonitorModule(context: context("claude-perm"))
+        approving.showDemo(store: askStore, limits: nil, finished: nil, permissions: [permission])
+        Stage.claudePermission = approving.makeExpandedView()
+    }
+
+    /// Kilka plików demonstracyjnych na Półkę (katalog tymczasowy testu).
+    private func demoFiles() throws -> [URL] {
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent("wyspa-demo-shelf", isDirectory: true)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        let picture = directory.appendingPathComponent("Wakacje.png")
+        try artwork().write(to: picture)
+        let notes = directory.appendingPathComponent("Plan podróży.txt")
+        try Data("Dzień 1: Gdańsk\nDzień 2: Hel".utf8).write(to: notes)
+        let report = directory.appendingPathComponent("Raport.pdf")
+        let pdf = NSMutableData()
+        var box = CGRect(x: 0, y: 0, width: 200, height: 260)
+        if let consumer = CGDataConsumer(data: pdf as CFMutableData), let context = CGContext(consumer: consumer, mediaBox: &box, nil) {
+            context.beginPDFPage(nil)
+            context.setFillColor(NSColor.systemBlue.cgColor)
+            context.fill(CGRect(x: 20, y: 200, width: 160, height: 24))
+            context.endPDFPage()
+            context.closePDF()
+        }
+        try (pdf as Data).write(to: report)
+        return [picture, notes, report]
     }
 
     // MARK: - Renderowanie
@@ -215,23 +353,30 @@ struct ScreenshotTests {
             board = try board.inserting(moduleID: id, intoPage: page, at: .max, minimum: { _ in WidgetWidth(units: 30) })
         }
         for id in ["claude", "timer", "weather", "clipboard", "quick", "bluetooth"] { board = board.addingModulePage(id) }
+        for id in ["calendar", "reminders", "notes", "shelf", "downloads", "claude-ask", "private"] { board = board.addingModulePage(id) }
         let (withQuick, quickPage) = board.addingWidgetPage()
         board = withQuick
         for id in ["media", "quick"] {
             board = try board.inserting(moduleID: id, intoPage: quickPage, at: .max, minimum: { _ in WidgetWidth(units: 30) })
         }
         let tabs = ["media": 0, "widgets": 1, "claude": 2, "timer": 3, "weather": 4, "clipboard": 5, "quick": 6, "bluetooth": 7,
-                    "quick-widget": 8]
+                    "calendar": 8, "reminders": 9, "notes": 10, "shelf": 11, "downloads": 12, "claude-ask": 13, "private": 14,
+                    "quick-widget": 15]
         return (board, tabs)
     }
 
-    private func render(_ name: String, phase: IslandPhase, tab: String? = nil, activity: (String, LiveActivity?)? = nil) async throws {
+    private func render(_ name: String, phase: IslandPhase, tab: String? = nil, activity: (String, LiveActivity?)? = nil,
+                        privateMode: Bool = false) async throws {
         Stage.activity = activity.flatMap { slot, activity in activity.map { (slot, $0) } }
         let settings = SettingsStore(defaults: UserDefaults(suiteName: "wyspa.shots.registry.\(UUID())")!)
         let registry = ModuleRegistry(catalog: Self.catalog, settings: settings, permissions: NoPermissions(), requestExpand: { _ in })
         for type in Self.catalog { await registry.setEnabled(type.descriptor.id, true) }
         let (board, tabs) = try board()
         registry.setBoard(board)
+        if privateMode {
+            settings.privacyMode = .always
+            registry.privacy.refresh()
+        }
         let model = IslandViewModel(phase: phase, notch: Self.notch, expandedSize: Self.expandedSize, registry: registry)
         model.selectedTab = tab.flatMap { tabs[$0] } ?? 0
         let panel = IslandLayout.panelSize(expanded: Self.expandedSize, notch: Self.notch.size, shadowMargin: 36)
@@ -279,6 +424,21 @@ struct ScreenshotTests {
         try await render("schowek", phase: .expanded, tab: "clipboard")
         try await render("szybkie-akcje", phase: .expanded, tab: "quick")
         try await render("szybkie-akcje-widzet", phase: .expanded, tab: "quick-widget")
+        try await render("zwinieta-mikrofon", phase: .collapsed, activity: ("media", Stage.microphoneActivity))
+        try await render("zwinieta-skrypt", phase: .collapsed, activity: ("media", Stage.scriptNoticeActivity))
+        try await render("zwinieta-postep-skryptu", phase: .collapsed, activity: ("media", Stage.scriptProgressActivity))
+        try await render("zwinieta-spotkanie", phase: .collapsed, activity: ("calendar", Stage.calendarActivity))
+        try await render("zwinieta-ladowanie", phase: .collapsed, activity: ("media", Stage.powerActivity))
+        try await render("kalendarz", phase: .expanded, tab: "calendar")
+        try await render("przypomnienia", phase: .expanded, tab: "reminders")
+        try await render("notatka", phase: .expanded, tab: "notes")
+        try await render("polka", phase: .expanded, tab: "shelf")
+        try await render("pobierania", phase: .expanded, tab: "downloads")
+        Stage.expanded["claude-ask"] = Stage.claudeQuestion
+        try await render("claude-pytanie", phase: .expanded, tab: "claude-ask")
+        Stage.expanded["claude-ask"] = Stage.claudePermission
+        try await render("claude-zgoda", phase: .expanded, tab: "claude-ask")
+        try await render("tryb-prywatny", phase: .expanded, tab: "private", privateMode: true)
         try await render("bluetooth", phase: .expanded, tab: "bluetooth")
     }
 }
@@ -292,4 +452,11 @@ private extension Stage {
     static var downloadsActivity: LiveActivity?
     static var timerActivity: LiveActivity?
     static var bluetoothActivity: LiveActivity?
+    static var microphoneActivity: LiveActivity?
+    static var scriptNoticeActivity: LiveActivity?
+    static var scriptProgressActivity: LiveActivity?
+    static var calendarActivity: LiveActivity?
+    static var powerActivity: LiveActivity?
+    static var claudeQuestion: AnyView?
+    static var claudePermission: AnyView?
 }

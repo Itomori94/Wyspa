@@ -106,3 +106,13 @@ private func powerSourceChanged(context: UnsafeMutableRawPointer?) {
     let module = Unmanaged<PowerModule>.fromOpaque(context).takeUnretainedValue()
     MainActor.assumeIsolated { module.refresh() }
 }
+
+#if DEBUG
+extension PowerModule {
+    /// Dane demonstracyjne do zrzutów ekranu w README (tylko build debug).
+    func showDemo(state demoState: PowerState, event demoEvent: PowerEvent?) {
+        state = demoState
+        event = demoEvent
+    }
+}
+#endif
