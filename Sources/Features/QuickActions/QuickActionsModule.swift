@@ -125,8 +125,8 @@ public final class QuickActionsModule: IslandModule {
         startCapture { [weak self] url in self?.recognizeText(in: url) }
     }
 
-    /// Zaznaczenie obszaru; `finished` dostaje plik (może go nie być po Esc) i odpowiada za jego usunięcie.
-    private func startCapture(_ finished: @escaping @MainActor @Sendable (URL) -> Void) {
+    /// Zaznaczenie obszaru; `completion` dostaje plik (może go nie być po Esc) i odpowiada za jego usunięcie.
+    private func startCapture(_ completion: @escaping @MainActor @Sendable (URL) -> Void) {
         guard captureProcess == nil else { return }
         let url = QuickActionsLogic.screenshotURL(in: FileManager.default.temporaryDirectory, at: Date())
         let process = Process()
@@ -140,7 +140,7 @@ public final class QuickActionsModule: IslandModule {
                     return
                 }
                 self.captureProcess = nil
-                finished(url)
+                completion(url)
             }
         }
         do {
