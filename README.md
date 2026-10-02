@@ -226,6 +226,10 @@ tylko przy włączonym module.
 - Haptyka działa tylko na gładzikach Force Touch i tylko wtedy, gdy palec dotyka gładzika.
 - Start przy logowaniu najlepiej działa, gdy aplikacja leży w `/Applications`.
 
+## Licencja
+
+Kod Wyspy: licencja MIT — zobacz [LICENSE](LICENSE).
+
 ## Licencje zewnętrzne
 
 - mediaremote-adapter © Jonas van den Berg i współtwórcy, BSD-3-Clause.
