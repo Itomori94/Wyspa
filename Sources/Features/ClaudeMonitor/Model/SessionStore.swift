@@ -34,6 +34,8 @@ public struct ClaudeSession: Equatable, Identifiable, Sendable {
     public let bundleID: String?
     public let lastMessage: String?
     public let transcriptPath: String?
+    /// Od kiedy sesja nieprzerwanie pracuje (czas pracy na liście sesji); nil, gdy nie pracuje.
+    public let busySince: Date?
 
     /// Claude coś robi (myśli albo używa narzędzia) — wtedy obserwujemy zapis sesji pod kątem przerwania.
     public var isBusy: Bool { state == .working || state.isRunningTool }
@@ -54,8 +56,16 @@ public struct ClaudeSession: Equatable, Identifiable, Sendable {
             claudePID: envelope?.claudePID ?? claudePID,
             bundleID: envelope?.bundleID ?? bundleID,
             lastMessage: lastMessage ?? self.lastMessage,
-            transcriptPath: envelope?.event.transcriptPath ?? transcriptPath
+            transcriptPath: envelope?.event.transcriptPath ?? transcriptPath,
+            busySince: Self.busySince(next: state ?? self.state, previous: self.state, since: busySince, at: date)
         )
+    }
+
+    static func busySince(next: State, previous: State, since: Date?, at date: Date) -> Date? {
+        let nextBusy = next == .working || next.isRunningTool
+        let wasBusy = previous == .working || previous.isRunningTool
+        guard nextBusy else { return nil }
+        return wasBusy ? (since ?? date) : date
     }
 }
 
@@ -86,7 +96,7 @@ public struct SessionStore: Equatable, Sendable {
         let current = sessions[event.sessionID] ?? ClaudeSession(
             id: event.sessionID, cwd: event.cwd, state: .idle, recentTools: [], lastEventAt: date,
             claudePID: envelope.claudePID, bundleID: envelope.bundleID, lastMessage: nil,
-            transcriptPath: event.transcriptPath
+            transcriptPath: event.transcriptPath, busySince: nil
         )
 
         let next: ClaudeSession?

@@ -25,6 +25,8 @@ public final class ClaudeMonitorModule: IslandModule {
     )
 
     static let finishedDisplay: Duration = .seconds(5)
+    static let previewDisplay: Duration = .seconds(8)
+    static let previewCardHeight: CGFloat = 54
     static let decisionMinutesRange = 1...30
     private static let decisionKey = "decisionMinutes"
     private static let soundsKey = "sounds"
@@ -112,10 +114,20 @@ public final class ClaudeMonitorModule: IslandModule {
             }
         }
         if let justFinished {
-            return LiveActivity(id: "claude.finished", priority: .alert, accent: .green, wingWidth: 56) {
-                Image(systemName: "checkmark.circle.fill").foregroundStyle(.green)
-            } trailing: {
+            let leading = { Image(systemName: "checkmark.circle.fill").foregroundStyle(.green) }
+            let trailing = {
                 Text(justFinished.projectName).font(.system(size: 10.5, weight: .semibold)).lineLimit(1).foregroundStyle(.green)
+            }
+            guard let preview = MessagePreview.make(justFinished.lastMessage) else {
+                return LiveActivity(id: "claude.finished", priority: .alert, accent: .green, wingWidth: 56,
+                                    leading: leading, trailing: trailing)
+            }
+            // Karta z początkiem odpowiedzi: klik przenosi do terminala, najechanie wstrzymuje znikanie.
+            return LiveActivity(id: "claude.finished", priority: .alert, accent: .green, wingWidth: 56,
+                                detailHeight: Self.previewCardHeight, leading: leading, trailing: trailing) {
+                FinishedCard(session: justFinished, preview: preview,
+                             open: { [weak self] in self?.openFinished(justFinished) },
+                             hover: { [weak self] in self?.setFinishedPaused($0) })
             }
         }
         let working = store.sessions.values.filter { $0.state == .working || $0.state.isRunningTool }.count
@@ -287,12 +299,28 @@ public final class ClaudeMonitorModule: IslandModule {
 
     private func showFinished(_ session: ClaudeSession) {
         withAnimation { justFinished = session }
+        scheduleFinishedDismiss()
+    }
+
+    /// Z podglądem odpowiedzi karta zostaje dłużej — jest co przeczytać.
+    private func scheduleFinishedDismiss() {
         finishedTask?.cancel()
+        let display = MessagePreview.make(justFinished?.lastMessage) == nil ? Self.finishedDisplay : Self.previewDisplay
         finishedTask = Task { [weak self] in
-            try? await Task.sleep(for: Self.finishedDisplay)
+            try? await Task.sleep(for: display)
             guard !Task.isCancelled else { return }
             withAnimation { self?.justFinished = nil }
         }
+    }
+
+    private func setFinishedPaused(_ paused: Bool) {
+        if paused { finishedTask?.cancel() } else if justFinished != nil { scheduleFinishedDismiss() }
+    }
+
+    private func openFinished(_ session: ClaudeSession) {
+        focus(session)
+        finishedTask?.cancel()
+        withAnimation { justFinished = nil }
     }
 
     /// Dźwięk przy oczekiwaniu i końcu; cisza, gdy terminal tej sesji jest na wierzchu.

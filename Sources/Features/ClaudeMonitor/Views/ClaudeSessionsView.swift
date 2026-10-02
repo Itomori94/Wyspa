@@ -51,6 +51,12 @@ private struct SessionRow: View {
                     StateDot(state: session.state)
                     Text(session.projectName).font(.system(size: 12.5, weight: .semibold)).lineLimit(1)
                     Spacer(minLength: 4)
+                    if let since = session.busySince {
+                        // Czas pracy odświeżany przez system (styl względny), bez własnego zegara.
+                        Text(since, style: .relative)
+                            .font(.system(size: 10, weight: .medium)).monospacedDigit()
+                            .foregroundStyle(.white.opacity(0.4)).lineLimit(1)
+                    }
                     Text(stateText).font(.system(size: 10.5, weight: .medium)).foregroundStyle(stateColor).lineLimit(1)
                 }
                 if !compact, !session.recentTools.isEmpty {
@@ -239,5 +245,35 @@ private struct DiffLines: View {
         .foregroundStyle(color)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(background)
+    }
+}
+
+/// Karta pod notchem po zakończeniu pracy: początek ostatniej odpowiedzi Claude.
+struct FinishedCard: View {
+    let session: ClaudeSession
+    let preview: String
+    let open: () -> Void
+    let hover: (Bool) -> Void
+    @State private var isHovered = false
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text("Claude skończył · \(session.projectName)")
+                .font(.system(size: 10.5, weight: .semibold))
+                .foregroundStyle(.green.opacity(0.85))
+            Text(preview)
+                .font(.system(size: 11.5))
+                .foregroundStyle(.white.opacity(0.8))
+                .lineLimit(2)
+        }
+        .padding(.vertical, 4)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .contentShape(Rectangle())
+        .onHover { inside in
+            isHovered = inside
+            hover(inside)
+        }
+        .onTapGesture(perform: open)
+        .help("Kliknij, żeby przejść do terminala")
     }
 }

@@ -130,6 +130,17 @@ struct SessionStoreTests {
         #expect(store.sessions["s1"]?.state == .working)
     }
 
+    @Test("Czas pracy liczony od wejścia w pracę, ciągły przez narzędzia, kasowany po Stop")
+    func busySince() {
+        let t1 = t0.addingTimeInterval(60), t2 = t0.addingTimeInterval(120)
+        var (store, _) = SessionStore().applying(envelope("UserPromptSubmit"), at: t0)
+        (store, _) = store.applying(envelope("PreToolUse", tool: "Bash", input: ["command": "ls"]), at: t1)
+        (store, _) = store.applying(envelope("PostToolUse", tool: "Bash"), at: t2)
+        #expect(store.sessions["s1"]?.busySince == t0)
+        (store, _) = store.applying(envelope("Stop"), at: t2)
+        #expect(store.sessions["s1"]?.busySince == nil)
+    }
+
     @Test("Przypomnienie o bezczynności po zakończeniu nie zapala „czeka”")
     func idleReminder() {
         var (store, _) = SessionStore().applying(envelope("Stop"), at: t0)
