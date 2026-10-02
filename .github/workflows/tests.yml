@@ -1,0 +1,19 @@
+name: Testy
+on:
+  push:
+    branches: [master]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: macos-26
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - name: Wersja Swift
+        run: swift --version && sw_vers
+      - name: Testy (scripts/test.sh)
+        run: scripts/test.sh
+      - name: Build pakietu (scripts/build-app.sh --native --debug)
+        run: scripts/build-app.sh --native --debug
