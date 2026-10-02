@@ -27,4 +27,4 @@ echo "Zainstalowano: $TARGET"
 echo
 echo "Po pierwszej instalacji w /Applications:"
 echo "  • Ustawienia → Ogólne: włącz ponownie „Uruchamiaj przy logowaniu” (dotyczy nowej lokalizacji)."
-echo "  • Ustawienia → Moduły → Claude Code: jeśli widać „Hooki wskazują inną kopię Wyspy”, kliknij „Zaktualizuj ścieżkę”."
+echo "  • Ustawienia → Moduły → Claude Code: jeśli widać „Hooki wymagają aktualizacji”, kliknij „Zaktualizuj ścieżkę”."
