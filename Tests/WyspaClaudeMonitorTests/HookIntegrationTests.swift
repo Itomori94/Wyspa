@@ -86,6 +86,19 @@ struct HookIntegrationTests {
         #expect(result.seconds < 4)
     }
 
+    @Test("Istniejący katalog gniazda z 0755 dostaje 0700 przy starcie serwera")
+    func tightensDirectory() throws {
+        let directory = "/tmp/wyspa-dir-\(UUID().uuidString.prefix(8))"
+        try FileManager.default.createDirectory(atPath: directory, withIntermediateDirectories: false,
+                                                attributes: [.posixPermissions: 0o755])
+        defer { try? FileManager.default.removeItem(atPath: directory) }
+        let server = HookServer(path: directory + "/s.sock", onMessage: { _, _ in }, onClosed: { _ in })
+        try server.start()
+        defer { server.stop() }
+        let permissions = try FileManager.default.attributesOfItem(atPath: directory)[.posixPermissions] as? Int
+        #expect(permissions == 0o700)
+    }
+
     @Test("Odmowa z wyspy przekazuje powód do Claude Code")
     func denyFromIsland() async throws {
         let path = socketPath()

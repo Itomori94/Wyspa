@@ -109,6 +109,26 @@ struct SessionStoreTests {
         #expect(alert == .needsInput)
     }
 
+    @Test("Przypomnienie o bezczynności po zakończeniu nie zapala „czeka”")
+    func idleReminder() {
+        var (store, _) = SessionStore().applying(envelope("Stop"), at: t0)
+        var alert: SessionAlert?
+        (store, alert) = store.applying(envelope("Notification", extra: ["notification_type": "idle_prompt",
+                                                                       "message": "Claude is waiting for your input"]), at: t0)
+        #expect(store.sessions["s1"]?.state == .finished && alert == nil)
+        (store, alert) = store.applying(envelope("Notification", extra: ["message": "Claude is waiting for your input"]), at: t0)
+        #expect(store.sessions["s1"]?.state == .finished && alert == nil)
+    }
+
+    @Test("Pytanie w trakcie pracy nadal zapala „czeka”")
+    func promptWhileWorking() {
+        var (store, _) = SessionStore().applying(envelope("UserPromptSubmit"), at: t0)
+        var alert: SessionAlert?
+        (store, alert) = store.applying(envelope("Notification", extra: ["notification_type": "permission_prompt",
+                                                                       "message": "Claude needs your permission"]), at: t0)
+        #expect(store.sessions["s1"]?.state.needsAttention == true && alert == .needsInput)
+    }
+
     @Test("Ostatnie narzędzia z limitem, długie opisy skracane")
     func recentTools() {
         var store = SessionStore()

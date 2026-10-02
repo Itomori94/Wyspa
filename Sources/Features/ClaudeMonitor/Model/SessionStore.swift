@@ -99,6 +99,9 @@ public struct SessionStore: Equatable, Sendable {
         case "PermissionRequest":
             next = current.with(state: .waitingForPermission, at: date, envelope: envelope)
             alert = .needsInput
+        case "Notification" where Self.isIdleReminder(event, current: current.state):
+            // Przypomnienie o bezczynności po skończonej pracy to nie prośba o uwagę — nie zapalamy „czeka”.
+            next = current.with(at: date, envelope: envelope)
         case "Notification":
             let message = event.message ?? "Claude czeka na Ciebie"
             next = current.with(state: .waitingForInput(message), at: date, envelope: envelope)
@@ -113,6 +116,13 @@ public struct SessionStore: Equatable, Sendable {
         var sessions = self.sessions
         sessions[event.sessionID] = next
         return (SessionStore(sessions: sessions), alert)
+    }
+
+    /// Claude Code ok. minutę po zakończeniu odpowiedzi przypomina „czekam na Ciebie” (`idle_prompt`).
+    /// Starsze wersje nie podają typu — wtedy rozpoznajemy je po tym, że sesja już skończyła odpowiedź.
+    static func isIdleReminder(_ event: HookEvent, current: ClaudeSession.State) -> Bool {
+        if let type = event.notificationType { return type == "idle_prompt" }
+        return current == .finished
     }
 
     /// Po decyzji w wyspie sesja wraca do pracy.

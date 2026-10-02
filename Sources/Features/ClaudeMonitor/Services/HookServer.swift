@@ -72,6 +72,13 @@ public final class HookServer: @unchecked Sendable {
         } catch {
             throw .socket(error.localizedDescription)
         }
+        // `attributes` działa tylko przy zakładaniu; katalog mógł już istnieć (np. założony przez Notatki) z 0755.
+        // Zaciskamy go do 0700, ale tylko gdy należy do nas — cudzych katalogów (np. /tmp w testach) nie ruszamy.
+        var directoryInfo = stat()
+        if stat(directory, &directoryInfo) == 0, directoryInfo.st_uid == getuid(), directoryInfo.st_mode & 0o777 != 0o700,
+           chmod(directory, 0o700) != 0 {
+            throw .socket("nie udało się ustawić uprawnień katalogu: \(String(cString: strerror(errno)))")
+        }
         // Usuwamy tylko stare gniazdo, nigdy zwykły plik ani dowiązanie podstawione pod tę ścieżkę.
         var info = stat()
         if lstat(path, &info) == 0 {
