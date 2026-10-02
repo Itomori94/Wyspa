@@ -53,6 +53,8 @@ public final class ModuleRegistry {
 
     /// Tryb prywatny dla modułów i wyspy.
     public let privacy: PrivacyState
+    /// Sesja skupienia wspólna dla modułów (Timer → Powiadomienia).
+    public let focus = FocusHold()
 
     public init(
         catalog: [any IslandModule.Type],
@@ -351,7 +353,8 @@ public final class ModuleRegistry {
                                     requestExpand: { [weak self] in self?.requestExpand(moduleID) },
                                     requestCollapse: { [weak self] in self?.requestCollapse() },
                                     deliver: { [weak self] providers, zoneID in self?.deliver(providers, toZone: zoneID) ?? false },
-                                    privacy: privacy)
+                                    privacy: privacy,
+                                    focus: focus)
         let module = type.init(context: context)
         do {
             try await module.activate()

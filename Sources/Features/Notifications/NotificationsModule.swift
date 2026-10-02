@@ -29,6 +29,9 @@ public final class NotificationsModule: IslandModule {
     @ObservationIgnored private var watcher: NotificationBannerWatcher?
     @ObservationIgnored private var dismissTask: Task<Void, Never>?
     @ObservationIgnored private var isPaused = false
+    /// Karty wstrzymane na czas skupienia (Pomodoro) i ich łączna liczba (pamiętamy najwyżej `FocusDigest.maxHeld`).
+    public private(set) var held: [NotificationCard] = []
+    @ObservationIgnored private var heldTotal = 0
 
     public required init(context: ModuleContext) {
         self.context = context
@@ -43,6 +46,8 @@ public final class NotificationsModule: IslandModule {
         }
         watcher.start()
         self.watcher = watcher
+        observeChanges({ [weak self] in _ = self?.context.focus.isActive },
+                       isActive: { [weak self] in self?.watcher != nil }) { [weak self] in self?.focusChanged() }
     }
 
     public func deactivate() {
@@ -50,6 +55,8 @@ public final class NotificationsModule: IslandModule {
         watcher = nil
         dismissTask?.cancel()
         queue = queue.cleared()
+        held = []
+        heldTotal = 0
     }
 
     public var liveActivity: LiveActivity? {
@@ -84,10 +91,25 @@ public final class NotificationsModule: IslandModule {
     // MARK: - Kolejka
 
     private func receive(_ card: NotificationCard) {
+        // Skupienie: karta czeka do końca sesji (systemowy baner i tak jest chowany, gdy to włączone).
+        if context.focus.isActive {
+            held = FocusDigest.holding(held, card)
+            heldTotal += 1
+            return
+        }
         context.privacy.refresh()
         let wasEmpty = queue.current == nil
         withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) { queue = queue.enqueueing(card) }
         if wasEmpty { scheduleDismiss() }
+    }
+
+    /// Koniec skupienia: podsumowanie i wstrzymane karty trafiają do zwykłej kolejki.
+    private func focusChanged() {
+        guard !context.focus.isActive, !held.isEmpty else { return }
+        let cards = FocusDigest.release(held, total: heldTotal, at: Date())
+        held = []
+        heldTotal = 0
+        cards.forEach(receive)
     }
 
     func next() {
@@ -135,6 +157,9 @@ public final class NotificationsModule: IslandModule {
     }
 
     static func icon(forAppNamed name: String) -> NSImage {
+        if name == FocusDigest.summaryAppName, let timer = NSImage(systemSymbolName: "timer", accessibilityDescription: nil) {
+            return timer
+        }
         if let url = appURL(named: name) { return NSWorkspace.shared.icon(forFile: url.path) }
         return NSImage(systemSymbolName: "bell.fill", accessibilityDescription: nil) ?? NSImage()
     }

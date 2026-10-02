@@ -33,6 +33,7 @@ public final class TimerModule: IslandModule {
     private static let finishedDisplay: Duration = .seconds(6)
     private static let statsKey = "focusStats"
     private static let goalKey = "dailyGoal"
+    private static let holdKey = "holdNotifications"
 
     public private(set) var session: TimerSession?
     /// Krótki komunikat po zakończeniu odliczania („Koniec”, „Czas na przerwę”).
@@ -46,6 +47,13 @@ public final class TimerModule: IslandModule {
     public var dailyGoal: Int {
         didSet { context.settings.set(dailyGoal, for: Self.goalKey) }
     }
+    /// Podczas fazy skupienia Pomodoro karty powiadomień czekają do końca sesji (moduł Powiadomienia).
+    public var holdsNotifications: Bool {
+        didSet {
+            context.settings.set(holdsNotifications, for: Self.holdKey)
+            syncFocus()
+        }
+    }
 
     @ObservationIgnored private let context: ModuleContext
     @ObservationIgnored private var completionTask: Task<Void, Never>?
@@ -56,6 +64,7 @@ public final class TimerModule: IslandModule {
         countdownDuration = context.settings.value(Self.durationKey, default: 5 * 60)
         stats = context.settings.value(Self.statsKey, default: FocusStats())
         dailyGoal = context.settings.value(Self.goalKey, default: FocusStats.defaultGoal)
+        holdsNotifications = context.settings.value(Self.holdKey, default: true)
     }
 
     public func activate() async throws {
@@ -66,6 +75,7 @@ public final class TimerModule: IslandModule {
         } else {
             scheduleCompletion()
         }
+        syncFocus()
     }
 
     public func deactivate() {
@@ -73,6 +83,7 @@ public final class TimerModule: IslandModule {
         messageTask?.cancel()
         completionTask = nil
         messageTask = nil
+        context.focus.set(false)
     }
 
     public var mode: Mode {
@@ -150,6 +161,12 @@ public final class TimerModule: IslandModule {
         withAnimation(.spring(response: 0.3, dampingFraction: 0.85)) { session = newSession }
         context.settings.set(newSession, for: Self.sessionKey)
         scheduleCompletion()
+        syncFocus()
+    }
+
+    /// Skupienie trwa tylko w uruchomionej fazie skupienia Pomodoro (pauza i przerwa je kończą).
+    private func syncFocus() {
+        context.focus.set(holdsNotifications && (session?.isFocusing ?? false))
     }
 
     /// Jedno zadanie czekające do końca odliczania — bez tyknięć co sekundę.

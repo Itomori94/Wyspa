@@ -59,3 +59,41 @@ struct NotificationQueueTests {
         #expect(queue.waiting.last?.id == "14" && queue.current?.id == "pierwsze")
     }
 }
+
+@Suite("Powiadomienia wstrzymane na czas skupienia")
+struct FocusDigestTests {
+    let now = Date(timeIntervalSince1970: 0)
+
+    private func card(_ id: Int, app: String) -> NotificationCard {
+        NotificationCard(id: "\(id)", appName: app, title: "t\(id)", subtitle: nil, body: nil, receivedAt: now)
+    }
+
+    @Test("Wstrzymane mają limit, starsze odpadają")
+    func holding() {
+        var held: [NotificationCard] = []
+        for index in 0..<(FocusDigest.maxHeld + 5) { held = FocusDigest.holding(held, card(index, app: "Mail")) }
+        #expect(held.count == FocusDigest.maxHeld)
+        #expect(held.first?.id == "5")
+    }
+
+    @Test("Po skupieniu: podsumowanie z łączną liczbą, aplikacje bez powtórzeń, potem najnowsze karty")
+    func release() {
+        let held = (0..<14).map { card($0, app: ["Mail", "Slack", "Mail", "Wiadomości", "Kalendarz", "Notatki"][$0 % 6]) }
+        let cards = FocusDigest.release(held, total: 60, at: now)
+        #expect(cards.first?.title == "Po skupieniu: 60 powiadomień")
+        #expect(cards.first?.appName == FocusDigest.summaryAppName)
+        #expect(cards.first?.body == "Mail, Slack, Wiadomości, Kalendarz +1")
+        #expect(cards.count == 1 + NotificationQueue.maxWaiting)
+        #expect(cards.last?.id == "13")
+        #expect(FocusDigest.release([], total: 0, at: now).isEmpty)
+    }
+
+    @Test("Odmiana liczby powiadomień")
+    func countText() {
+        #expect(FocusDigest.countText(1) == "1 powiadomienie")
+        #expect(FocusDigest.countText(3) == "3 powiadomienia")
+        #expect(FocusDigest.countText(5) == "5 powiadomień")
+        #expect(FocusDigest.countText(13) == "13 powiadomień")
+        #expect(FocusDigest.countText(24) == "24 powiadomienia")
+    }
+}

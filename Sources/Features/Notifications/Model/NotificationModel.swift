@@ -84,3 +84,51 @@ private extension String {
     var trimmed: String { trimmingCharacters(in: .whitespacesAndNewlines) }
     var nilIfEmpty: String? { isEmpty ? nil : self }
 }
+
+/// Powiadomienia wstrzymane na czas skupienia (Pomodoro) i ich podsumowanie po sesji. Czyste funkcje.
+public enum FocusDigest {
+    /// Ile wstrzymanych kart pamiętamy (starsze liczą się tylko w podsumowaniu).
+    public static let maxHeld = 50
+    public static let summaryAppName = "Pomodoro"
+
+    public static func holding(_ held: [NotificationCard], _ card: NotificationCard) -> [NotificationCard] {
+        Array((held + [card]).suffix(maxHeld))
+    }
+
+    /// Po skupieniu: karta z podsumowaniem, a za nią najnowsze wstrzymane (tyle, ile zmieści kolejka).
+    public static func release(_ held: [NotificationCard], total: Int, at date: Date) -> [NotificationCard] {
+        guard !held.isEmpty else { return [] }
+        let summary = NotificationCard(
+            id: "focus-digest-\(Int(date.timeIntervalSince1970))",
+            appName: summaryAppName,
+            title: "Po skupieniu: \(countText(total))",
+            subtitle: nil,
+            body: appsText(held),
+            receivedAt: date
+        )
+        return [summary] + held.suffix(NotificationQueue.maxWaiting)
+    }
+
+    /// „1 powiadomienie”, „3 powiadomienia”, „5 powiadomień”, „22 powiadomienia”.
+    public static func countText(_ count: Int) -> String {
+        let last = count % 10
+        let lastTwo = count % 100
+        let noun: String
+        if count == 1 {
+            noun = "powiadomienie"
+        } else if (2...4).contains(last) && !(12...14).contains(lastTwo) {
+            noun = "powiadomienia"
+        } else {
+            noun = "powiadomień"
+        }
+        return "\(count) \(noun)"
+    }
+
+    /// Aplikacje w kolejności pierwszego powiadomienia, najwyżej cztery („Mail, Slack, Wiadomości, Kalendarz +2”).
+    static func appsText(_ held: [NotificationCard]) -> String {
+        var seen: [String] = []
+        for card in held where !seen.contains(card.appName) { seen.append(card.appName) }
+        let shown = seen.prefix(4).joined(separator: ", ")
+        return seen.count > 4 ? "\(shown) +\(seen.count - 4)" : shown
+    }
+}

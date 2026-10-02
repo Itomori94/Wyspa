@@ -60,6 +60,11 @@ public struct TimerSession: Codable, Equatable, Sendable {
     }
 
     public var isRunning: Bool { startedAt != nil }
+    /// Uruchomiona faza skupienia Pomodoro.
+    public var isFocusing: Bool {
+        guard isRunning, case .pomodoro(.focus, _, _) = kind else { return false }
+        return true
+    }
     public var hasStarted: Bool { isRunning || accumulated > 0 }
 
     /// Długość odliczania; nil dla stopera.

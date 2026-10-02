@@ -163,7 +163,9 @@ zwinięta wyspa pokazuje odliczanie. Przypomnienia: zaległe i na dziś, odhacza
 Minutnik (gotowe 1–60 min albo dowolny czas), stoper i Pomodoro (25 min skupienia, 5 min przerwy, 15 min co 4 sesje).
 Odliczanie widać w zwiniętej wyspie; koniec sygnalizuje dźwięk i rozwinięcie wyspy. Timer przetrwa restart aplikacji.
 W trybie Pomodoro widać dzisiejszy wynik: kropki ukończonych sesji skupienia i minuty (liczą się tylko fazy
-dobiegnięte do końca); dzienny cel ustawiasz w ustawieniach modułu.
+dobiegnięte do końca); dzienny cel ustawiasz w ustawieniach modułu. Podczas fazy skupienia karty powiadomień
+(moduł Powiadomienia) czekają, a po jej końcu przychodzi podsumowanie („Po skupieniu: 7 powiadomień”, z listą aplikacji)
+i najnowsze karty po kolei; pauza i przerwa kończą wstrzymanie. Do wyłączenia w ustawieniach Timera.
 
 ### Notatka
 
@@ -188,7 +190,8 @@ kamera działa tylko, gdy zakładka Lusterka jest widoczna.
 Wyłączony domyślnie, wymaga Dostępności. Powiadomienia macOS pojawiają się jako karta pod notchem: ikona i nazwa
 aplikacji, tytuł, treść. Karta znika po kilku sekundach (czas w ustawieniach), najechanie ją zatrzymuje, kliknięcie
 otwiera aplikację, kolejne powiadomienia czekają w kolejce („+2”). Systemowy baner jest domyślnie chowany
-(do wyłączenia w ustawieniach) — powiadomienie i tak zostaje w Centrum powiadomień.
+(do wyłączenia w ustawieniach) — powiadomienie i tak zostaje w Centrum powiadomień. Podczas skupienia Pomodoro karty
+czekają do końca sesji (patrz Timer).
 
 ### Claude Code
 

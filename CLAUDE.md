@@ -170,7 +170,7 @@ APP=$PWD/build/Wyspa.app/Contents
 |---|---|---|---|
 | Kalendarz | `WyspaCalendar` | Kalendarze | `UpcomingEventPolicy`: aktywność od 10 min przed startem do 5 min po; jedno zaplanowane wybudzenie na następną granicę albo północ |
 | Przypomnienia | `WyspaReminders` | Przypomnienia | zaległe + dziś, odhaczanie `EKEventStore.save` |
-| Timer | `WyspaTimer` | — | niemutowalna `TimerSession` liczona z dat (przetrwa restart), jedno zadanie do końca odliczania, Pomodoro 25/5/15 × 4 |
+| Timer | `WyspaTimer` | — | niemutowalna `TimerSession` liczona z dat (przetrwa restart), jedno zadanie do końca odliczania, Pomodoro 25/5/15 × 4; uruchomiona faza skupienia (`isFocusing`) ustawia wspólne `ModuleContext.focus` (`FocusHold` w WyspaCore), a Powiadomienia wstrzymują wtedy karty (`FocusDigest`: limit 50, po sesji podsumowanie + najnowsze karty do kolejki) |
 | Notatka | `WyspaNotes` | — | plik `Application Support/Wyspa/Notes/notatka.md`, autozapis po 0,6 s, zapis przy wyłączeniu |
 | Historia schowka | `WyspaClipboard` | — | `changeCount` co 0,75 s tylko gdy włączony (zaakceptowany wyjątek); pomija Concealed/Transient; limit 10–500 (przypięte poza limitem, najwyżej 50, zostają po „Wyczyść”); tylko w pamięci; wyszukiwanie z „ł”→„l”; kliknięcie = kopiuj + `requestCollapse` + po 180 ms ⌘V przez `CGEvent` (tylko z Dostępnością, inaczej samo kopiowanie) |
 | Skróty | `WyspaShortcuts` | — | `/usr/bin/shortcuts list/run`, nazwy jako argumenty procesu (bez powłoki), ulubione w ustawieniach |
