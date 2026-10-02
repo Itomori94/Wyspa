@@ -180,6 +180,12 @@ i ostatnie narzędzia. Kilka sesji naraz.
 - **Kliknięcie sesji** przenosi do jej terminala: właściwa karta w Terminalu i iTerm2, właściwe okno w VS Code i Cursor;
   w innych terminalach aplikacja przechodzi na wierzch.
 
+### Pobierania
+
+Pobierany plik (Safari, Chrome i inne przeglądarki pokazujące postęp na ikonie w Finderze) widać w zwiniętej wyspie
+jako pierścień postępu z procentem; kilka pobierań naraz — łączny postęp. Po zakończeniu plik trafia na Półkę
+(do wyłączenia). Bez odpytywania: wyspa odbiera postęp publikowany przez przeglądarkę, odświeża się co pełny procent.
+
 ### Tryb prywatny
 
 Przy udostępnianiu albo nagrywaniu ekranu (Zoom, Teams, Meet, nagranie ekranu) wyspa chowa treść: karta powiadomienia

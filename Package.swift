@@ -18,6 +18,7 @@ let package = Package(
         .target(name: "WyspaPower", dependencies: ["WyspaCore", "WyspaUI"], path: "Sources/Features/Power"),
         .target(name: "WyspaBluetooth", dependencies: ["WyspaCore", "WyspaUI"], path: "Sources/Features/Bluetooth"),
         .target(name: "WyspaNotifications", dependencies: ["WyspaCore", "WyspaUI"], path: "Sources/Features/Notifications"),
+        .target(name: "WyspaDownloads", dependencies: ["WyspaCore", "WyspaUI"], path: "Sources/Features/Downloads"),
         .target(name: "WyspaWeather", dependencies: ["WyspaCore", "WyspaUI"], path: "Sources/Features/Weather"),
         .target(name: "WyspaQuickActions", dependencies: ["WyspaCore", "WyspaUI"], path: "Sources/Features/QuickActions"),
         // Protokół hooka: tylko Foundation, żeby `wyspa-hook` startował szybko.
@@ -35,7 +36,7 @@ let package = Package(
             name: "WyspaFeatures",
             dependencies: [
                 "WyspaCore", "WyspaUI", "WyspaMedia", "WyspaShelf", "WyspaHUD", "WyspaPower", "WyspaBluetooth",
-                "WyspaTimer", "WyspaNotes", "WyspaNotifications", "WyspaQuickActions", "WyspaWeather", "WyspaClaudeMonitor", "WyspaClipboard", "WyspaShortcuts", "WyspaMirror", "WyspaCalendar", "WyspaReminders",
+                "WyspaTimer", "WyspaNotes", "WyspaNotifications", "WyspaQuickActions", "WyspaWeather", "WyspaDownloads", "WyspaClaudeMonitor", "WyspaClipboard", "WyspaShortcuts", "WyspaMirror", "WyspaCalendar", "WyspaReminders",
             ],
             path: "Sources/Features/Catalog"
         ),
@@ -58,6 +59,7 @@ let package = Package(
         .testTarget(name: "WyspaRemindersTests", dependencies: ["WyspaReminders"], path: "Tests/WyspaRemindersTests"),
         .testTarget(name: "WyspaClaudeMonitorTests", dependencies: ["WyspaClaudeMonitor", "WyspaHookKit"], path: "Tests/WyspaClaudeMonitorTests"),
         .testTarget(name: "WyspaNotificationsTests", dependencies: ["WyspaNotifications"], path: "Tests/WyspaNotificationsTests"),
+        .testTarget(name: "WyspaDownloadsTests", dependencies: ["WyspaDownloads"], path: "Tests/WyspaDownloadsTests"),
         .testTarget(name: "WyspaWeatherTests", dependencies: ["WyspaWeather"], path: "Tests/WyspaWeatherTests"),
         .testTarget(name: "WyspaQuickActionsTests", dependencies: ["WyspaQuickActions", "WyspaCore"], path: "Tests/WyspaQuickActionsTests"),
         .testTarget(name: "WyspaBluetoothTests", dependencies: ["WyspaBluetooth"], path: "Tests/WyspaBluetoothTests"),

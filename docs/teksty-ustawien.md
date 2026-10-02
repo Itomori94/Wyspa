@@ -30,6 +30,7 @@ zaktualizuj też ten plik. Karty okna: **Ogólne · Wyspa · Moduły · Układ**
 |---|---|
 | Teraz odtwarzane | Okładka, tytuł, pasek przewijania i sterowanie odtwarzaniem — z całego systemu albo tylko z Apple Music. |
 | Półka | Przeciągnij plik nad notch, odłóż go na później i wyciągnij, kiedy będzie potrzebny. Z podglądem i AirDrop. |
+| Pobierania | Pasek postępu pobieranego pliku w zwiniętej wyspie; po zakończeniu plik ląduje na Półce. |
 | Kalendarz | Plan dnia i najbliższe spotkanie w zwiniętej wyspie na 10 minut przed startem, z przyciskiem „Dołącz”. |
 | Pogoda | Temperatura i prognoza na kilka dni dla Twojej okolicy (Open-Meteo). Kliknięcie otwiera aplikację Pogoda. |
 | Przypomnienia | Przypomnienia na dziś i zaległe; odhaczasz je jednym kliknięciem. |
@@ -81,6 +82,8 @@ zaktualizuj też ten plik. Karty okna: **Ogólne · Wyspa · Moduły · Układ**
   - „Czas na decyzję w wyspie: … min” — „Po tym czasie (albo gdy Wyspa nie odpowie) decyzja wraca do zwykłego promptu
     w terminalu.”
   - „Dźwięk, gdy sesja czeka albo kończy” · „Bez dźwięku, gdy terminal sesji jest na wierzchu”
+- **Pobierania** — „Po zakończeniu odkładaj plik na Półkę” · „Działa z Safari, Chrome i innymi przeglądarkami, które
+  pokazują postęp na ikonie pliku w Finderze. Na Półkę trafia odnośnik do pliku w Pobranych (wymaga włączonej Półki).”
 - **Historia schowka** — „Zapamiętuj … wpisów” · „Wyczyść historię”
 - **Timer** — „Dzienny cel Pomodoro: brak / … sesji”
 - **Pogoda** — „Temperatura w zwiniętej wyspie” · „Dane z Open-Meteo (bez konta). Wysyłane są tylko współrzędne

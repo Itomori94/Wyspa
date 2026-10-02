@@ -2,6 +2,7 @@ import WyspaBluetooth
 import WyspaCalendar
 import WyspaClaudeMonitor
 import WyspaClipboard
+import WyspaDownloads
 import WyspaCore
 import WyspaHUD
 import WyspaMedia
@@ -23,6 +24,7 @@ public enum ModuleCatalog {
     public static let all: [any IslandModule.Type] = [
         MediaModule.self,
         ShelfModule.self,
+        DownloadsModule.self,
         CalendarModule.self,
         WeatherModule.self,
         RemindersModule.self,
