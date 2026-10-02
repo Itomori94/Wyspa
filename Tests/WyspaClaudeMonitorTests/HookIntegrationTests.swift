@@ -86,7 +86,7 @@ struct HookIntegrationTests {
         #expect(result.seconds < 4)
     }
 
-    @Test("Istniejący katalog gniazda z 0755 dostaje 0700 przy starcie serwera")
+    @Test("Gniazdo 0600, istniejący katalog gniazda z 0755 dostaje 0700 przy starcie serwera")
     func tightensDirectory() throws {
         let directory = "/tmp/wyspa-dir-\(UUID().uuidString.prefix(8))"
         try FileManager.default.createDirectory(atPath: directory, withIntermediateDirectories: false,
@@ -97,6 +97,8 @@ struct HookIntegrationTests {
         defer { server.stop() }
         let permissions = try FileManager.default.attributesOfItem(atPath: directory)[.posixPermissions] as? Int
         #expect(permissions == 0o700)
+        let socketMode = try FileManager.default.attributesOfItem(atPath: directory + "/s.sock")[.posixPermissions] as? Int
+        #expect(socketMode == 0o600)
     }
 
     @Test("Odmowa z wyspy przekazuje powód do Claude Code")

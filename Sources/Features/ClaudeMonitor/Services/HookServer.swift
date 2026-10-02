@@ -4,7 +4,9 @@ import WyspaHookKit
 
 /// Serwer gniazda Unix dla `wyspa-hook`: jedna linia JSON od hooka, opcjonalnie potwierdzenie i jedna linia decyzji.
 ///
-/// Bezpieczeństwo: katalog 0700, gniazdo tworzone pod `umask 0177` (od razu 0600, bez okna między bind a chmod).
+/// Bezpieczeństwo: katalog 0700, gniazdo dostaje 0600 między `bind` a `listen` — przed `listen` nikt nie może się
+/// połączyć, więc nie ma okna z szerszymi prawami. (Bez `umask`: to ustawienie całego procesu i psułoby
+/// równoległe zakładanie plików w innych wątkach.)
 /// Połączenia mają własne, rosnące identyfikatory — decyzja nigdy nie trafi do innego hooka, nawet gdy system
 /// ponownie użyje tego samego numeru deskryptora.
 public final class HookServer: @unchecked Sendable {
@@ -98,12 +100,10 @@ public final class HookServer: @unchecked Sendable {
             buffer.copyBytes(from: bytes)
             buffer[bytes.count] = 0
         }
-        let previousMask = umask(0o177)
         let bound = withUnsafePointer(to: &address) {
             $0.withMemoryRebound(to: sockaddr.self, capacity: 1) { bind(fd, $0, socklen_t(MemoryLayout<sockaddr_un>.size)) }
         }
-        umask(previousMask)
-        guard bound == 0, listen(fd, 16) == 0 else {
+        guard bound == 0, chmod(path, 0o600) == 0, listen(fd, 16) == 0 else {
             let reason = String(cString: strerror(errno))
             close(fd)
             throw .socket(reason)

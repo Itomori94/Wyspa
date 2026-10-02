@@ -109,6 +109,17 @@ struct SessionStoreTests {
         #expect(alert == .needsInput)
     }
 
+    @Test("Przerwanie w terminalu kończy „pracuje”; bez pracy nic nie zmienia")
+    func interrupt() {
+        var (store, _) = SessionStore().applying(envelope("UserPromptSubmit", extra: ["transcript_path": "/a/s1.jsonl"]), at: t0)
+        #expect(store.sessions["s1"]?.transcriptPath == "/a/s1.jsonl" && store.sessions["s1"]?.isBusy == true)
+        store = store.interrupting("s1", at: t0)
+        #expect(store.sessions["s1"]?.state == .idle)
+        (store, _) = store.applying(envelope("Stop"), at: t0)
+        #expect(store.interrupting("s1", at: t0).sessions["s1"]?.state == .finished)
+        #expect(store.interrupting("brak", at: t0) == store)
+    }
+
     @Test("Przypomnienie o bezczynności po zakończeniu nie zapala „czeka”")
     func idleReminder() {
         var (store, _) = SessionStore().applying(envelope("Stop"), at: t0)

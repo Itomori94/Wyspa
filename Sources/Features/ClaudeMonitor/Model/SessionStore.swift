@@ -33,6 +33,10 @@ public struct ClaudeSession: Equatable, Identifiable, Sendable {
     public let claudePID: Int32?
     public let bundleID: String?
     public let lastMessage: String?
+    public let transcriptPath: String?
+
+    /// Claude coś robi (myśli albo używa narzędzia) — wtedy obserwujemy zapis sesji pod kątem przerwania.
+    public var isBusy: Bool { state == .working || state.isRunningTool }
 
     public var projectName: String {
         guard let cwd, !cwd.isEmpty else { return "Claude Code" }
@@ -49,7 +53,8 @@ public struct ClaudeSession: Equatable, Identifiable, Sendable {
             lastEventAt: date,
             claudePID: envelope?.claudePID ?? claudePID,
             bundleID: envelope?.bundleID ?? bundleID,
-            lastMessage: lastMessage ?? self.lastMessage
+            lastMessage: lastMessage ?? self.lastMessage,
+            transcriptPath: envelope?.event.transcriptPath ?? transcriptPath
         )
     }
 }
@@ -80,7 +85,8 @@ public struct SessionStore: Equatable, Sendable {
         let event = envelope.event
         let current = sessions[event.sessionID] ?? ClaudeSession(
             id: event.sessionID, cwd: event.cwd, state: .idle, recentTools: [], lastEventAt: date,
-            claudePID: envelope.claudePID, bundleID: envelope.bundleID, lastMessage: nil
+            claudePID: envelope.claudePID, bundleID: envelope.bundleID, lastMessage: nil,
+            transcriptPath: event.transcriptPath
         )
 
         let next: ClaudeSession?
@@ -123,6 +129,15 @@ public struct SessionStore: Equatable, Sendable {
     static func isIdleReminder(_ event: HookEvent, current: ClaudeSession.State) -> Bool {
         if let type = event.notificationType { return type == "idle_prompt" }
         return current == .finished
+    }
+
+    /// Przerwanie w terminalu (Esc, odrzucenie narzędzia): Claude Code nie wysyła wtedy Stop, więc bez tego
+    /// sesja wisiałaby jako „pracuje”.
+    public func interrupting(_ sessionID: String, at date: Date) -> SessionStore {
+        guard let session = sessions[sessionID], session.isBusy else { return self }
+        var sessions = self.sessions
+        sessions[sessionID] = session.with(state: .idle, at: date, envelope: nil)
+        return SessionStore(sessions: sessions)
     }
 
     /// Po decyzji w wyspie sesja wraca do pracy.

@@ -30,7 +30,9 @@ public final class ClaudeMonitorModule: IslandModule {
     private static let soundsKey = "sounds"
     private static let muteKey = "muteWhenTerminalFrontmost"
 
-    public private(set) var store = SessionStore()
+    public private(set) var store = SessionStore() {
+        didSet { syncTranscriptWatchers() }
+    }
     public private(set) var pending: [PendingPermission] = []
     public private(set) var hookStatus: HookStatus = .unknown
     public private(set) var problem: String?
@@ -54,6 +56,8 @@ public final class ClaudeMonitorModule: IslandModule {
     @ObservationIgnored private var hookUpdateTask: Task<Void, Never>?
     /// Obserwatory zakończenia procesów Claude Code (zdarzenia jądra, bez odpytywania).
     @ObservationIgnored private var processWatchers: [Int32: DispatchSourceProcess] = [:]
+    /// Obserwatory zapisu sesji, tylko dla sesji, które pracują (wykrywanie przerwania; zdarzenia plików, bez odpytywania).
+    @ObservationIgnored private var transcriptWatchers: [String: TranscriptWatcher] = [:]
     @ObservationIgnored private let log = Log.logger("claude")
 
     public required init(context: ModuleContext) {
@@ -86,6 +90,8 @@ public final class ClaudeMonitorModule: IslandModule {
         server = nil
         pending = []
         store = SessionStore()
+        transcriptWatchers.values.forEach { $0.cancel() }
+        transcriptWatchers = [:]
         finishedTask?.cancel()
     }
 
@@ -241,6 +247,25 @@ public final class ClaudeMonitorModule: IslandModule {
         source.resume()
         // Proces mógł zniknąć przed rejestracją źródła.
         if kill(pid, 0) != 0 && errno == ESRCH { removeDeadSessions() }
+    }
+
+    /// Obserwuje zapisy tylko pracujących sesji; pozostałe obserwatory zamyka.
+    private func syncTranscriptWatchers() {
+        guard server != nil else { return }
+        let wanted = Dictionary(store.sessions.values.compactMap { session -> (String, String)? in
+            guard session.isBusy, let path = session.transcriptPath, TranscriptTail.isAcceptablePath(path) else { return nil }
+            return (session.id, path)
+        }, uniquingKeysWith: { first, _ in first })
+        for (id, watcher) in transcriptWatchers where wanted[id] != watcher.path {
+            watcher.cancel()
+            transcriptWatchers[id] = nil
+        }
+        for (id, path) in wanted where transcriptWatchers[id] == nil {
+            transcriptWatchers[id] = TranscriptWatcher(path: path) { [weak self] interrupted in
+                guard interrupted, let self else { return }
+                self.store = self.store.interrupting(id, at: Date())
+            }
+        }
     }
 
     /// Hook zamknął połączenie bez decyzji (minął jego czas): Claude Code pokazuje prompt w terminalu.

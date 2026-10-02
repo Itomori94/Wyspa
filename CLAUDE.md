@@ -189,7 +189,8 @@ APP=$PWD/build/Wyspa.app/Contents
 - Testy integracyjne uruchamiają prawdziwy helper na gnieździe tymczasowym (`WYSPA_SOCKET_PATH`, działa tylko w debug);
   `scripts/test.sh` buduje `wyspa-hook` przed testami. W testach procesów używaj `terminationHandler`, nie
   `waitUntilExit` (to drugie potrafi przegapić koniec procesu poza głównym wątkiem i zawiesić test).
-- **Bezpieczeństwo gniazda**: katalog 0700, gniazdo tworzone pod `umask 0177`, serwer sprawdza `getpeereid` (ten sam
+- **Bezpieczeństwo gniazda**: katalog 0700 (wymuszane przy starcie), gniazdo 0600 nadawane między `bind` a `listen` (bez `umask` — to ustawienie
+  całego procesu), serwer sprawdza `getpeereid` (ten sam
   użytkownik), limit 64 połączeń; połączenia mają rosnące identyfikatory (decyzja nie trafi do innego hooka przy
   ponownym użyciu numeru fd). Hook sprawdza, że gniazdo jest gniazdem tego użytkownika, i czeka ≤ 2 s na potwierdzenie
   (`{"ack":true}`) wysyłane z głównego wątku Wyspy — zawieszona aplikacja oddaje decyzję terminalowi po 2 s.
@@ -211,6 +212,10 @@ APP=$PWD/build/Wyspa.app/Contents
   kolejka `NotificationQueue` (niemutowalna, limit 10 czekających), najechanie wstrzymuje odliczanie.
 - Diagnostyka: `open -n build/Wyspa.app --args --dump-notification-ax` (60 s, `~/Library/Logs/Wyspa/notification-ax.txt`,
   0600 — plik zawiera treść powiadomień, usuwać po analizie) oraz `--probe-notification-banner`.
+
+- **Przerwanie sesji**: po Esc/odrzuceniu narzędzia Claude Code nie wysyła Stop. Dla pracujących sesji obserwujemy
+  zapis (`transcript_path`, `DispatchSource` na pliku) i czytamy ostatnie 32 KB: jeśli ostatnia wiadomość rozmowy to
+  „[Request interrupted by user…”, sesja wraca do bezczynności (`TranscriptTail`, testy).
 
 ## Prywatne API — rejestr
 
