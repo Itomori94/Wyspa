@@ -414,3 +414,36 @@ struct HeaderActivityTests {
         #expect(!ModuleRegistry.showsInHeader(media, from: "media", pageModuleIDs: ["timer"]))
     }
 }
+
+@MainActor
+@Observable
+final class ActivityPageModule: IslandModule {
+    static let descriptor = ModuleDescriptor(id: "activity-page", name: "Timer", summary: "", symbol: "timer")
+    static var active = false
+    init(context: ModuleContext) {}
+    func activate() async throws {}
+    func deactivate() {}
+    var liveActivity: LiveActivity? {
+        Self.active ? LiveActivity(id: "timer", priority: .timer, leading: { EmptyView() }, trailing: { EmptyView() }) : nil
+    }
+    func makeExpandedView() -> AnyView? { AnyView(Text("timer")) }
+}
+
+@Suite("Kliknięcie aktywności otwiera stronę modułu", .serialized)
+@MainActor
+struct ActivityTabTests {
+    @Test("Strona modułu z widoczną aktywnością; bez aktywności — brak")
+    func activityTab() async {
+        let settings = SettingsStore(defaults: UserDefaults(suiteName: "wyspa.tests.\(UUID().uuidString)")!)
+        let registry = ModuleRegistry(catalog: [PlainModule.self, ActivityPageModule.self], settings: settings,
+                                      permissions: FakePermissions(), requestExpand: {})
+        await registry.setEnabled("plain", true)
+        await registry.setEnabled("activity-page", true)
+        ActivityPageModule.active = false
+        #expect(registry.activityTabIndex == nil)
+        ActivityPageModule.active = true
+        defer { ActivityPageModule.active = false }
+        #expect(registry.activityTabIndex == registry.pageIndex(for: "activity-page"))
+        #expect(registry.activityTabIndex != nil && registry.activityTabIndex != registry.pageIndex(for: "plain"))
+    }
+}

@@ -179,13 +179,22 @@ public final class ModuleRegistry {
     /// Strona z modułem przyjmującym upuszczenia (najpierw pełny widok, potem widżet), pokazywana przy przeciąganiu.
     public var dropTabIndex: Int? {
         guard let first = dropModules.first else { return nil }
-        let id = type(of: first).descriptor.id
+        return pageIndex(for: type(of: first).descriptor.id)
+    }
+
+    /// Strona modułu, którego aktywność widać w zwiniętej wyspie — tam otwiera kliknięcie w aktywność.
+    public var activityTabIndex: Int? {
+        currentActivityWithSource.flatMap { pageIndex(for: $0.moduleID) }
+    }
+
+    /// Strona modułu: najpierw jego pełny widok, potem strona z jego widżetem.
+    public func pageIndex(for moduleID: String) -> Int? {
         let pages = pages
         let fullPage = pages.firstIndex { page in
-            if case .module = page.content { return page.moduleIDs == [id] }
+            if case .module = page.content { return page.moduleIDs == [moduleID] }
             return false
         }
-        return fullPage ?? pages.firstIndex { $0.moduleIDs.contains(id) }
+        return fullPage ?? pages.firstIndex { $0.moduleIDs.contains(moduleID) }
     }
 
     /// Kieruje upuszczenie do modułu właściciela strefy, a bez strefy do pierwszego modułu przyjmującego.

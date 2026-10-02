@@ -39,7 +39,7 @@ final class IslandWindowController {
         container = IslandContainerView(content: IslandView(model: model))
         model.onOpenSettings = openSettings
         model.onSelectTab = { [weak self] index in self?.selectTab(index) }
-        model.onClick = { [weak self] in self?.send(.clicked) }
+        model.onClick = { [weak self] in self?.clicked() }
         model.onDragEntered = { [weak self] in
             self?.send(.dragEntered(preferredTab: self?.registry.dropTabIndex))
         }
@@ -127,6 +127,14 @@ final class IslandWindowController {
 
     private func selectTab(_ index: Int) {
         send(.tabSelected(index))
+    }
+
+    /// Kliknięcie zwiniętej wyspy z aktywnością (okładka, timer, Claude) otwiera stronę tego modułu.
+    private func clicked() {
+        if state.phase != .expanded, !state.hasCard, let index = registry.activityTabIndex {
+            send(.tabSelected(index))
+        }
+        send(.clicked)
     }
 
     private static func config(for screen: ScreenInfo, settings: SettingsStore) -> IslandConfig {
