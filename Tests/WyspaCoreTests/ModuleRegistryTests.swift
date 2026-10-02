@@ -446,4 +446,17 @@ struct ActivityTabTests {
         #expect(registry.activityTabIndex == registry.pageIndex(for: "activity-page"))
         #expect(registry.activityTabIndex != nil && registry.activityTabIndex != registry.pageIndex(for: "plain"))
     }
+
+    @Test("Przekazanie do strefy innego modułu tylko, gdy ten moduł działa (bez zastępczego odbiorcy)")
+    func strictDelivery() async {
+        DropModule.drops = []
+        let settings = SettingsStore(defaults: UserDefaults(suiteName: "wyspa.tests.\(UUID().uuidString)")!)
+        let registry = ModuleRegistry(catalog: [PlainModule.self, DropModule.self], settings: settings,
+                                      permissions: FakePermissions(), requestExpand: {})
+        await registry.setEnabled("plain", true)
+        #expect(!registry.deliver([], toZone: "drop.store"))
+        await registry.setEnabled("drop", true)
+        #expect(registry.deliver([], toZone: "drop.store"))
+        #expect(!registry.deliver([], toZone: "shelf.store"))
+    }
 }

@@ -18,6 +18,7 @@ let package = Package(
         .target(name: "WyspaPower", dependencies: ["WyspaCore", "WyspaUI"], path: "Sources/Features/Power"),
         .target(name: "WyspaBluetooth", dependencies: ["WyspaCore", "WyspaUI"], path: "Sources/Features/Bluetooth"),
         .target(name: "WyspaNotifications", dependencies: ["WyspaCore", "WyspaUI"], path: "Sources/Features/Notifications"),
+        .target(name: "WyspaQuickActions", dependencies: ["WyspaCore", "WyspaUI"], path: "Sources/Features/QuickActions"),
         // Protokół hooka: tylko Foundation, żeby `wyspa-hook` startował szybko.
         .target(name: "WyspaHookKit", path: "Sources/WyspaHookKit"),
         .executableTarget(name: "WyspaHook", dependencies: ["WyspaHookKit"], path: "Sources/WyspaHook"),
@@ -33,7 +34,7 @@ let package = Package(
             name: "WyspaFeatures",
             dependencies: [
                 "WyspaCore", "WyspaUI", "WyspaMedia", "WyspaShelf", "WyspaHUD", "WyspaPower", "WyspaBluetooth",
-                "WyspaTimer", "WyspaNotes", "WyspaNotifications", "WyspaClaudeMonitor", "WyspaClipboard", "WyspaShortcuts", "WyspaMirror", "WyspaCalendar", "WyspaReminders",
+                "WyspaTimer", "WyspaNotes", "WyspaNotifications", "WyspaQuickActions", "WyspaClaudeMonitor", "WyspaClipboard", "WyspaShortcuts", "WyspaMirror", "WyspaCalendar", "WyspaReminders",
             ],
             path: "Sources/Features/Catalog"
         ),
@@ -56,6 +57,7 @@ let package = Package(
         .testTarget(name: "WyspaRemindersTests", dependencies: ["WyspaReminders"], path: "Tests/WyspaRemindersTests"),
         .testTarget(name: "WyspaClaudeMonitorTests", dependencies: ["WyspaClaudeMonitor", "WyspaHookKit"], path: "Tests/WyspaClaudeMonitorTests"),
         .testTarget(name: "WyspaNotificationsTests", dependencies: ["WyspaNotifications"], path: "Tests/WyspaNotificationsTests"),
+        .testTarget(name: "WyspaQuickActionsTests", dependencies: ["WyspaQuickActions"], path: "Tests/WyspaQuickActionsTests"),
         .testTarget(name: "WyspaBluetoothTests", dependencies: ["WyspaBluetooth"], path: "Tests/WyspaBluetoothTests"),
     ]
 )

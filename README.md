@@ -25,7 +25,8 @@ Przy pierwszym podpisie macOS może zapytać, czy `codesign` może użyć klucza
 ## Obsługa
 
 - **Najechanie** na notch: wyspa lekko się powiększa, po chwili rozwija (opóźnienie w ustawieniach).
-- **Kliknięcie** albo **przesunięcie dwoma palcami w dół**: rozwija od razu.
+- **Kliknięcie** albo **przesunięcie dwoma palcami w dół**: rozwija od razu. Kliknięcie aktywności (okładki, timera,
+  Claude) otwiera stronę jej modułu. Gdy pod notchem wisi karta (powiadomienie, odpowiedź Claude), kliknięcie trafia do karty.
 - **Przesunięcie w górę** albo zjechanie kursorem: zwija.
 - **Przesunięcie w poziomie** w rozwiniętej wyspie: zmienia zakładkę modułu.
 - **⌃⌥W** (domyślnie, do zmiany w ustawieniach): rozwija lub zwija wyspę na ekranie z kursorem.
@@ -67,6 +68,9 @@ W Ustawieniach → Moduły → Teraz odtwarzane wybierasz:
   W trybie *Tylko Apple Music* wyspa pokazuje Muzykę wtedy, gdy to ona jest bieżącym odtwarzaczem w systemie;
   gdy gra inna aplikacja, wyspa zachowuje się, jakby nic nie grało.
 - **Źródło danych**: adapter MediaRemote albo AppleScript. Tam też widać, które źródło jest aktywne i dlaczego.
+
+Przy utworze z Apple Music w odtwarzaczu jest przycisk **AirPlay**: wybór głośników (MacBook, Apple TV, HomePod),
+jednego lub kilku naraz.
 
 Muzyka grająca przez AirPlay (np. na Apple TV) nie jest widoczna dla MediaRemote — wtedy wyspa bierze dane wprost
 z aplikacji Muzyka (AppleScript, bez odpytywania). Przy pierwszym razie macOS zapyta o zgodę na sterowanie Muzyką.
@@ -126,6 +130,8 @@ zwinięta wyspa pokazuje odliczanie. Przypomnienia: zaległe i na dziś, odhacza
 
 Minutnik (gotowe 1–60 min albo dowolny czas), stoper i Pomodoro (25 min skupienia, 5 min przerwy, 15 min co 4 sesje).
 Odliczanie widać w zwiniętej wyspie; koniec sygnalizuje dźwięk i rozwinięcie wyspy. Timer przetrwa restart aplikacji.
+W trybie Pomodoro widać dzisiejszy wynik: kropki ukończonych sesji skupienia i minuty (liczą się tylko fazy
+dobiegnięte do końca); dzienny cel ustawiasz w ustawieniach modułu.
 
 ### Notatka
 
@@ -162,8 +168,19 @@ i ostatnie narzędzia. Kilka sesji naraz.
   początek nowego pliku). *Zezwól*, *Odrzuć* albo *W terminalu*. Brak decyzji w ustalonym czasie (domyślnie 5 min)
   albo wyłączona Wyspa = zwykły prompt w terminalu, jak bez Wyspy.
 - **Dźwięk i pulsowanie**, gdy sesja czeka albo kończy; cisza, gdy terminal tej sesji jest na wierzchu.
+- **Podgląd odpowiedzi**: po zakończeniu pracy pod notchem pojawia się karta z początkiem odpowiedzi Claude;
+  kliknięcie przenosi do terminala, najechanie zatrzymuje kartę. Na liście sesji widać, od kiedy sesja pracuje.
 - **Kliknięcie sesji** przenosi do jej terminala: właściwa karta w Terminalu i iTerm2, właściwe okno w VS Code i Cursor;
   w innych terminalach aplikacja przechodzi na wierzch.
+
+### Szybkie akcje
+
+Strona albo widżet z czterema przyciskami:
+- **Zrzut na Półkę**: zaznaczasz obszar ekranu, zrzut ląduje na Półce (gdy Półka jest wyłączona — w schowku).
+  Przy pierwszym użyciu macOS zapyta o zgodę na nagrywanie ekranu dla Wyspy.
+- **Pipeta koloru**: systemowa pipeta, kod HEX koloru trafia do schowka.
+- **Zablokuj ekran**: od razu blokuje Maca.
+- **Nie usypiaj**: Mac i ekran nie zasypiają (jak `caffeinate -d`), dopóki nie klikniesz ponownie albo nie wyłączysz modułu.
 
 ## Znane ograniczenia
 

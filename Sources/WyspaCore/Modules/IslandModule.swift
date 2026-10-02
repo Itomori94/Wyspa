@@ -108,10 +108,14 @@ public struct ModuleContext {
     public let settings: ModuleSettings
     /// Prośba o rozwinięcie wyspy na ekranie pod kursorem (np. przy nowym zdarzeniu).
     public let requestExpand: @MainActor () -> Void
+    /// Przekazuje elementy do strefy innego modułu (np. zrzut ekranu na Półkę). `false`, gdy ten moduł nie działa.
+    public let deliver: @MainActor (_ providers: [NSItemProvider], _ zoneID: String) -> Bool
 
-    public init(settings: ModuleSettings, requestExpand: @escaping @MainActor () -> Void) {
+    public init(settings: ModuleSettings, requestExpand: @escaping @MainActor () -> Void,
+                deliver: @escaping @MainActor ([NSItemProvider], String) -> Bool = { _, _ in false }) {
         self.settings = settings
         self.requestExpand = requestExpand
+        self.deliver = deliver
     }
 }
 

@@ -209,6 +209,13 @@ public final class ModuleRegistry {
         return target.performDrop(providers, zoneID: ownZone)
     }
 
+    /// Ścisłe przekazanie do strefy: tylko gdy moduł-właściciel działa (bez zastępczego odbiorcy).
+    public func deliver(_ providers: [NSItemProvider], toZone zoneID: String) -> Bool {
+        let owner = DropZoneID.moduleID(of: zoneID)
+        guard let target = dropModules.first(where: { type(of: $0).descriptor.id == owner }) else { return false }
+        return target.performDrop(providers, zoneID: zoneID)
+    }
+
     private var dropModules: [any IslandDropHandling] {
         activeModules.compactMap { $0 as? any IslandDropHandling }
     }
@@ -281,7 +288,8 @@ public final class ModuleRegistry {
             return
         }
 
-        let context = ModuleContext(settings: settings.moduleSettings(for: descriptor.id), requestExpand: requestExpand)
+        let context = ModuleContext(settings: settings.moduleSettings(for: descriptor.id), requestExpand: requestExpand,
+                                    deliver: { [weak self] providers, zoneID in self?.deliver(providers, toZone: zoneID) ?? false })
         let module = type.init(context: context)
         do {
             try await module.activate()
