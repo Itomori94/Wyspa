@@ -20,7 +20,8 @@ public struct IslandView: View {
         ZStack(alignment: .top) {
             IslandBackground(shape: IslandShape(topRadius: topRadius, bottomRadius: bottomRadius),
                              style: backgroundStyle, hiddenAlpha: model.phase == .hidden ? Self.hiddenAlpha : 1)
-                .shadow(color: .black.opacity(model.phase == .expanded ? 0.5 : 0), radius: 20, y: 10)
+                // Cień tylko pod czarną wyspą: pod szkłem przyciemniałby tło i szkło wyglądałoby na szare, zaszronione.
+                .shadow(color: .black.opacity(model.phase == .expanded && backgroundStyle == .black ? 0.5 : 0), radius: 20, y: 10)
                 .contentShape(IslandShape(topRadius: topRadius, bottomRadius: bottomRadius))
                 .onTapGesture {
                     // W rozwiniętej wyspie kliknięcia obsługują kontrolki modułów.
@@ -146,6 +147,10 @@ struct IslandBackground: View {
                 // Przezroczystość wynika z ustawień macOS (Wygląd → Liquid Glass: Przezroczyste/Zabarwione);
                 // „Zmniejsz przezroczystość” system stosuje do szkła sam.
                 Color.clear.glassEffect(preference.variant == .clear ? .clear : .regular, in: shape)
+                    .transition(.opacity)
+                // Błyszcząca krawędź jak w Centrum sterowania: jaśniejsza u dołu i po bokach, gaśnie ku notchowi.
+                shape.stroke(LinearGradient(colors: [.white.opacity(0.05), .white.opacity(0.35)],
+                                            startPoint: .top, endPoint: .bottom), lineWidth: 1)
                     .transition(.opacity)
             }
             shape.fill(Color.black.opacity(blackOpacity))
