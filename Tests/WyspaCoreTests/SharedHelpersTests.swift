@@ -29,7 +29,10 @@ struct SharedHelpersTests {
         message.show("a", for: .seconds(60))
         message.show("b", for: .milliseconds(20))
         #expect(message.text == "b")
-        try await Task.sleep(for: .milliseconds(300))
+        // Czekamy na zniknięcie z zapasem (testy równoległe obciążają główny aktor), bez stałego „uśpienia na wyczucie”.
+        for _ in 0..<100 where message.text != nil {
+            try await Task.sleep(for: .milliseconds(50))
+        }
         #expect(message.text == nil)
         message.show("c", for: .seconds(60))
         message.clear()
