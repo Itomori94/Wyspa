@@ -59,6 +59,17 @@ struct IslandStateMachineTests {
         #expect(reduce(expanded, .pointerEntered).effects == [.cancel(.collapse)])
     }
 
+    @Test("Prośba modułu o zwinięcie: rozwinięta (także w trakcie pisania) się zwija, zwinięta zostaje")
+    func collapseRequested() {
+        let editing = IslandState(phase: .expanded, isEditing: true)
+        let result = reduce(editing, .collapseRequested)
+        #expect(result.state.phase == .collapsed && !result.state.isEditing)
+        #expect(result.effects == [.cancel(.expand), .cancel(.collapse)])
+        let peek = IslandState(phase: .peek)
+        #expect(reduce(peek, .collapseRequested).state == peek)
+        #expect(reduce(peek, .collapseRequested).effects.isEmpty)
+    }
+
     @Test("Timer zwinięcia zwija rozwiniętą wyspę")
     func collapseTimer() {
         #expect(reduce(IslandState(phase: .expanded), .timerFired(.collapse)).state.phase == .collapsed)

@@ -44,6 +44,7 @@ public final class ModuleRegistry {
     @ObservationIgnored private let permissions: PermissionProviding
     /// Prośba o rozwinięcie wyspy na stronie danego modułu (nil = bez wskazania modułu).
     @ObservationIgnored private let requestExpand: @MainActor (_ moduleID: String?) -> Void
+    @ObservationIgnored private let requestCollapse: @MainActor () -> Void
     @ObservationIgnored private let log = Log.logger("modules")
 
     private var instances: [String: any IslandModule] = [:]
@@ -57,12 +58,14 @@ public final class ModuleRegistry {
         catalog: [any IslandModule.Type],
         settings: SettingsStore,
         permissions: PermissionProviding,
-        requestExpand: @escaping @MainActor (_ moduleID: String?) -> Void
+        requestExpand: @escaping @MainActor (_ moduleID: String?) -> Void,
+        requestCollapse: @escaping @MainActor () -> Void = {}
     ) {
         self.catalog = catalog
         self.settings = settings
         self.permissions = permissions
         self.requestExpand = requestExpand
+        self.requestCollapse = requestCollapse
         privacy = PrivacyState(mode: { [settings] in settings.privacyMode })
     }
 
@@ -327,6 +330,7 @@ public final class ModuleRegistry {
         let moduleID = descriptor.id
         let context = ModuleContext(settings: settings.moduleSettings(for: descriptor.id),
                                     requestExpand: { [weak self] in self?.requestExpand(moduleID) },
+                                    requestCollapse: { [weak self] in self?.requestCollapse() },
                                     deliver: { [weak self] providers, zoneID in self?.deliver(providers, toZone: zoneID) ?? false },
                                     privacy: privacy)
         let module = type.init(context: context)

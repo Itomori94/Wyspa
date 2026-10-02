@@ -96,7 +96,10 @@ zaktualizuj też ten plik. Karty okna: **Ogólne · Wyspa · Moduły · Układ**
 - **Mikrofon** — „Wycisz / włącz mikrofon” (skrót) · „„…” nie pozwala się wyciszyć ani zmienić głośności wejścia.” ·
   „Wyciszenie działa dla domyślnego wejścia z Ustawień systemowych → Dźwięk. Gdy mikrofon nie ma przełącznika wyciszenia,
   Wyspa ustawia głośność wejścia na zero i przywraca ją po włączeniu. Wyspa nie słucha dźwięku z mikrofonu.”
-- **Historia schowka** — „Zapamiętuj … wpisów” · „Wyczyść historię”
+- **Historia schowka** — „Zapamiętuj … wpisów” · „Wyczyść historię” · „Kliknięcie wkleja do aktywnej aplikacji” ·
+  „Wklejanie wymaga uprawnienia Dostępność — bez niego kliknięcie tylko kopiuje.” + „Otwórz: Dostępność” ·
+  „Przypięte wpisy (pinezka przy wpisie) nie wypadają z historii i zostają po „Wyczyść”. Cała historia, także przypięta,
+  jest tylko w pamięci i znika po zamknięciu Wyspy.”
 - **Timer** — „Dzienny cel Pomodoro: brak / … sesji”
 - **Pogoda** — „Temperatura w zwiniętej wyspie” · „Dane z Open-Meteo (bez konta). Wysyłane są tylko współrzędne
   zaokrąglone do ok. 1 km; odświeżanie przy otwarciu wyspy, gdy dane mają ponad 15 minut. Kliknięcie pogody otwiera

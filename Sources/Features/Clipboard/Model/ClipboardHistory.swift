@@ -11,16 +11,19 @@ public struct ClipboardEntry: Equatable, Identifiable, Sendable {
     public let content: Content
     public let copiedAt: Date
     public let sourceBundleID: String?
+    /// Przypięty wpis nie wypada z historii (limit, pamięć, „Wyczyść”); usuwa się go tylko ręcznie.
+    public let isPinned: Bool
     /// Klucz identyczności treści, liczony raz przy tworzeniu (porównanie wpisów nie hashuje ponownie dużych danych).
     let contentKey: Int
     /// Przybliżony rozmiar treści w bajtach (do limitu pamięci historii).
     let byteCount: Int
 
-    public init(id: UUID = UUID(), content: Content, copiedAt: Date, sourceBundleID: String? = nil) {
+    public init(id: UUID = UUID(), content: Content, copiedAt: Date, sourceBundleID: String? = nil, isPinned: Bool = false) {
         self.id = id
         self.content = content
         self.copiedAt = copiedAt
         self.sourceBundleID = sourceBundleID
+        self.isPinned = isPinned
         var hasher = Hasher()
         switch content {
         case .text(let text):
@@ -38,6 +41,11 @@ public struct ClipboardEntry: Equatable, Identifiable, Sendable {
 
     public static func == (lhs: ClipboardEntry, rhs: ClipboardEntry) -> Bool {
         lhs.id == rhs.id && lhs.content == rhs.content && lhs.copiedAt == rhs.copiedAt && lhs.sourceBundleID == rhs.sourceBundleID
+            && lhs.isPinned == rhs.isPinned
+    }
+
+    func pinned(_ pinned: Bool) -> ClipboardEntry {
+        ClipboardEntry(id: id, content: content, copiedAt: copiedAt, sourceBundleID: sourceBundleID, isPinned: pinned)
     }
 
     /// Tekst do wyszukiwania i podglądu.
@@ -50,7 +58,7 @@ public struct ClipboardEntry: Equatable, Identifiable, Sendable {
     }
 }
 
-/// Historia schowka: najnowsze na górze, bez duplikatów, z limitem. Niemutowalna.
+/// Historia schowka: przypięte na górze, potem najnowsze, bez duplikatów, z limitem. Niemutowalna.
 public struct ClipboardHistory: Equatable, Sendable {
     public static let limitRange = 10...500
     public static let defaultLimit = 50
@@ -58,6 +66,8 @@ public struct ClipboardHistory: Equatable, Sendable {
     public static let maxTotalBytes = 64 * 1024 * 1024
     /// Pojedynczy tekst większy niż to nie trafia do historii.
     public static let maxTextBytes = 1024 * 1024
+    /// Przypiętych nie obejmuje limit historii, ale ich liczba też ma granicę.
+    public static let maxPinned = 50
 
     public let entries: [ClipboardEntry]
     public let limit: Int
@@ -65,24 +75,50 @@ public struct ClipboardHistory: Equatable, Sendable {
     public init(entries: [ClipboardEntry] = [], limit: Int = ClipboardHistory.defaultLimit) {
         let clamped = min(max(limit, Self.limitRange.lowerBound), Self.limitRange.upperBound)
         self.limit = clamped
-        var total = 0
-        // Najnowsze mają pierwszeństwo: po przekroczeniu limitu pamięci odcinamy najstarsze.
-        self.entries = Array(entries.prefix(clamped).prefix { entry in
+        let pinned = Array(entries.filter(\.isPinned).prefix(Self.maxPinned))
+        var total = pinned.map(\.byteCount).reduce(0, +)
+        // Najnowsze mają pierwszeństwo: po przekroczeniu limitu pamięci odcinamy najstarsze (poza przypiętymi).
+        let recent = entries.filter { !$0.isPinned }.prefix(clamped).prefix { entry in
             total += entry.byteCount
             return total <= Self.maxTotalBytes
-        })
+        }
+        self.entries = pinned + recent
     }
 
+    public var pinnedEntries: [ClipboardEntry] { entries.filter(\.isPinned) }
+
+    /// Nowy wpis na górę; ponowne skopiowanie przypiętego zostawia go przypiętym (na górze przypiętych).
     public func adding(_ entry: ClipboardEntry) -> ClipboardHistory {
+        let wasPinned = entries.contains { $0.contentKey == entry.contentKey && $0.isPinned }
         let rest = entries.filter { $0.contentKey != entry.contentKey }
-        return ClipboardHistory(entries: [entry] + rest, limit: limit)
+        return ClipboardHistory(entries: [entry.pinned(wasPinned || entry.isPinned)] + rest, limit: limit)
+    }
+
+    /// Przypina albo odpina; odpięty wraca między zwykłe wpisy na miejsce wg daty skopiowania.
+    public func togglingPin(_ id: UUID) -> ClipboardHistory {
+        guard let entry = entries.first(where: { $0.id == id }) else { return self }
+        let others = entries.filter { $0.id != id }
+        if entry.isPinned {
+            let unpinned = entry.pinned(false)
+            let index = others.firstIndex { !$0.isPinned && $0.copiedAt < unpinned.copiedAt } ?? others.count
+            var reordered = others
+            reordered.insert(unpinned, at: max(index, others.filter(\.isPinned).count))
+            return ClipboardHistory(entries: reordered, limit: limit)
+        }
+        return ClipboardHistory(entries: [entry.pinned(true)] + others, limit: limit)
     }
 
     public func removing(_ id: UUID) -> ClipboardHistory {
         ClipboardHistory(entries: entries.filter { $0.id != id }, limit: limit)
     }
 
+    /// „Wyczyść”: znikają zwykłe wpisy, przypięte zostają.
     public func cleared() -> ClipboardHistory {
+        ClipboardHistory(entries: pinnedEntries, limit: limit)
+    }
+
+    /// Wyłączenie modułu: pamięć zwolniona w całości (także przypięte — historia jest tylko w pamięci).
+    public func clearedAll() -> ClipboardHistory {
         ClipboardHistory(limit: limit)
     }
 

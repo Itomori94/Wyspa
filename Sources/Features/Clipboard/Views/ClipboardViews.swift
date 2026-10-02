@@ -12,10 +12,13 @@ struct ClipboardView: View {
                 Image(systemName: "magnifyingglass").foregroundStyle(.white.opacity(0.4))
                 TextField("Szukaj w historii", text: $module.query)
                     .textFieldStyle(.plain)
-                if !module.history.entries.isEmpty {
+                if let feedback = module.feedback {
+                    Text(feedback).foregroundStyle(.green).lineLimit(1).transition(.opacity)
+                } else if module.history.entries.contains(where: { !$0.isPinned }) {
                     Button("Wyczyść", action: module.clear)
                         .buttonStyle(.plain)
                         .foregroundStyle(.white.opacity(0.55))
+                        .help("Usuwa wpisy poza przypiętymi")
                 }
             }
             .font(.system(size: 12))
@@ -32,7 +35,10 @@ struct ClipboardView: View {
                 ScrollView {
                     LazyVStack(spacing: 2) {
                         ForEach(entries) { entry in
-                            ClipboardRow(entry: entry, copy: { module.copy(entry) }, remove: { module.remove(entry) })
+                            ClipboardRow(entry: entry, pastes: module.pastesOnClick,
+                                         choose: { module.choose(entry) },
+                                         togglePin: { module.togglePin(entry) },
+                                         remove: { module.remove(entry) })
                         }
                     }
                 }
@@ -43,10 +49,11 @@ struct ClipboardView: View {
 
 private struct ClipboardRow: View {
     let entry: ClipboardEntry
-    let copy: () -> Void
+    let pastes: Bool
+    let choose: () -> Void
+    let togglePin: () -> Void
     let remove: () -> Void
     @State private var isHovered = false
-    @State private var copied = false
 
     var body: some View {
         HStack(spacing: 8) {
@@ -60,9 +67,13 @@ private struct ClipboardRow: View {
                     .foregroundStyle(.white.opacity(0.4))
             }
             Spacer(minLength: 4)
-            if copied {
-                Label("Skopiowano", systemImage: "checkmark").font(.system(size: 10, weight: .semibold)).foregroundStyle(.green)
-            } else if isHovered {
+            if isHovered || entry.isPinned {
+                Button(action: togglePin) { Image(systemName: entry.isPinned ? "pin.fill" : "pin") }
+                    .buttonStyle(.plain)
+                    .foregroundStyle(entry.isPinned ? Color.orange : .white.opacity(0.5))
+                    .help(entry.isPinned ? "Odepnij" : "Przypnij — wpis nie wypadnie z historii")
+            }
+            if isHovered {
                 Button(action: remove) { Image(systemName: "xmark.circle.fill") }
                     .buttonStyle(.plain)
                     .foregroundStyle(.white.opacity(0.5))
@@ -74,15 +85,8 @@ private struct ClipboardRow: View {
         .background(RoundedRectangle(cornerRadius: 8).fill(.white.opacity(isHovered ? 0.09 : 0)))
         .contentShape(Rectangle())
         .onHover { isHovered = $0 }
-        .onTapGesture {
-            copy()
-            withAnimation { copied = true }
-            Task {
-                try? await Task.sleep(for: .seconds(1.2))
-                withAnimation { copied = false }
-            }
-        }
-        .help("Kliknij, żeby skopiować ponownie")
+        .onTapGesture(perform: choose)
+        .help(pastes ? "Kliknij, żeby wkleić do aktywnej aplikacji" : "Kliknij, żeby skopiować ponownie")
     }
 
     @ViewBuilder
@@ -104,11 +108,29 @@ struct ClipboardSettingsView: View {
     @Bindable var module: ClipboardModule
 
     var body: some View {
-        HStack {
-            Stepper("Zapamiętuj \(module.limit) wpisów", value: $module.limit,
-                    in: ClipboardHistory.limitRange, step: 10)
-            Spacer()
-            Button("Wyczyść historię", action: module.clear)
+        VStack(alignment: .leading, spacing: 6) {
+            HStack {
+                Stepper("Zapamiętuj \(module.limit) wpisów", value: $module.limit,
+                        in: ClipboardHistory.limitRange, step: 10)
+                Spacer()
+                Button("Wyczyść historię", action: module.clear)
+            }
+            Toggle("Kliknięcie wkleja do aktywnej aplikacji", isOn: $module.pastesOnClick)
+            if module.pastesOnClick, !AXIsProcessTrusted() {
+                HStack {
+                    Text("Wklejanie wymaga uprawnienia Dostępność — bez niego kliknięcie tylko kopiuje.")
+                        .font(.caption).foregroundStyle(.orange)
+                    Button("Otwórz: Dostępność") {
+                        if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility") {
+                            NSWorkspace.shared.open(url)
+                        }
+                    }
+                    .controlSize(.small)
+                }
+            }
+            Text("Przypięte wpisy (pinezka przy wpisie) nie wypadają z historii i zostają po „Wyczyść”. "
+                 + "Cała historia, także przypięta, jest tylko w pamięci i znika po zamknięciu Wyspy.")
+                .font(.caption).foregroundStyle(.secondary)
         }
     }
 }

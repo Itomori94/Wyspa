@@ -22,7 +22,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             catalog: ModuleCatalog.all,
             settings: settings,
             permissions: permissions,
-            requestExpand: { [weak self] moduleID in self?.screens?.expandUnderPointer(opening: moduleID) }
+            requestExpand: { [weak self] moduleID in self?.screens?.expandUnderPointer(opening: moduleID) },
+            requestCollapse: { [weak self] in self?.screens?.collapseAll() }
         )
         self.registry = registry
         let privacy = registry.privacy

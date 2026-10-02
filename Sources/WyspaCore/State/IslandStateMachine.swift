@@ -25,6 +25,8 @@ public enum IslandEvent: Equatable, Sendable {
     case clicked
     case swipe(SwipeDirection)
     case toggleRequested
+    /// Zwinięcie na prośbę modułu (np. po wybraniu wpisu schowka do wklejenia); zwinięta wyspa bez zmian.
+    case collapseRequested
     /// Rozwinięcie na żądanie (moduł prosi o uwagę, kliknięcie aktywności) — działa też, gdy wisi karta.
     case expandRequested
     /// Przeciąganie weszło nad wyspę; `preferredTab` = zakładka modułu przyjmującego upuszczenia.
@@ -121,6 +123,8 @@ public enum IslandStateMachine {
             return swipe(state, direction, config: config)
         case .expandRequested:
             return state.phase == .expanded ? (state, [.cancel(.collapse)]) : expand(state)
+        case .collapseRequested:
+            return state.phase == .expanded ? collapse(state, config: config) : (state, [])
         case .toggleRequested:
             return state.phase == .expanded ? collapse(state, config: config) : expand(state)
         case .dragEntered(let preferredTab):

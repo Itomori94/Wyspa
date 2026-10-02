@@ -55,6 +55,8 @@ binarka ma `minos 14.0` dla obu architektur (sprawdź: `vtool -arch x86_64 -show
   Podświetlenie strefy: `@Environment(\.islandDropTarget)`. Po upuszczeniu `resyncPointer()` przywraca śledzenie
   kursora (AppKit wstrzymuje je podczas przeciągania). `IslandDragSession.isDraggingOut` blokuje upuszczenie
   elementów wyciąganych z wyspy z powrotem na nią.
+- **Zwinięcie na prośbę modułu**: `ModuleContext.requestCollapse` → `ScreenCoordinator.collapseAll()` → `.collapseRequested`
+  (zwija też w trakcie pisania). Po zwinięciu klawiatura wraca do aplikacji pod spodem — na tym opiera się wklejanie.
 - **Gesty**: lokalny monitor `scrollWheel` filtrowany do panelu → `SwipeRecognizer` (jeden kierunek na gest).
 - **Skrót globalny**: Carbon `RegisterEventHotKey` (bez Accessibility).
 - **Panel**: poziom `mainMenu + 3`, `canJoinAllSpaces`, `fullScreenAuxiliary`, `nonactivatingPanel`.
@@ -166,7 +168,7 @@ APP=$PWD/build/Wyspa.app/Contents
 | Przypomnienia | `WyspaReminders` | Przypomnienia | zaległe + dziś, odhaczanie `EKEventStore.save` |
 | Timer | `WyspaTimer` | — | niemutowalna `TimerSession` liczona z dat (przetrwa restart), jedno zadanie do końca odliczania, Pomodoro 25/5/15 × 4 |
 | Notatka | `WyspaNotes` | — | plik `Application Support/Wyspa/Notes/notatka.md`, autozapis po 0,6 s, zapis przy wyłączeniu |
-| Historia schowka | `WyspaClipboard` | — | `changeCount` co 0,75 s tylko gdy włączony (zaakceptowany wyjątek); pomija Concealed/Transient; limit 10–500; tylko w pamięci; wyszukiwanie z „ł”→„l” |
+| Historia schowka | `WyspaClipboard` | — | `changeCount` co 0,75 s tylko gdy włączony (zaakceptowany wyjątek); pomija Concealed/Transient; limit 10–500 (przypięte poza limitem, najwyżej 50, zostają po „Wyczyść”); tylko w pamięci; wyszukiwanie z „ł”→„l”; kliknięcie = kopiuj + `requestCollapse` + po 180 ms ⌘V przez `CGEvent` (tylko z Dostępnością, inaczej samo kopiowanie) |
 | Skróty | `WyspaShortcuts` | — | `/usr/bin/shortcuts list/run`, nazwy jako argumenty procesu (bez powłoki), ulubione w ustawieniach |
 | Lusterko | `WyspaMirror` | Kamera | sesja AVCapture tylko gdy widok zakładki jest w oknie |
 | Szybkie akcje | `WyspaQuickActions` | Nagrywanie ekranu (przy pierwszym zrzucie) | zrzut `screencapture -i`; „Tekst ze zrzutu” = Vision `VNRecognizeTextRequest` (accurate, pl-PL + en-US, poza głównym wątkiem) → schowek, plik kasowany; nowe akcje dopisywać na końcu enuma przed istniejącymi tylko wtedy, gdy rawValue się nie zmienia (zapis skrótów) |

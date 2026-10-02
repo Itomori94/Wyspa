@@ -40,6 +40,10 @@ final class ScreenCoordinator {
         islandUnderPointer()?.open(moduleID)
     }
 
+    func collapseAll() {
+        islands.values.forEach { $0.send(.collapseRequested) }
+    }
+
     private func islandUnderPointer() -> IslandWindowController? {
         let pointer = NSEvent.mouseLocation
         return islands.values.first { $0.screen.frame.contains(pointer) } ?? islands.values.first
