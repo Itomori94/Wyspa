@@ -32,6 +32,8 @@ Przy pierwszym podpisie macOS może zapytać, czy `codesign` może użyć klucza
 - Ikona w pasku menu: ustawienia i zamknięcie aplikacji.
 - **Wygląd** (Ustawienia → Ogólne): rozmiar rozwiniętej wyspy i tło — czarne albo Liquid Glass (macOS 26+).
   Szkło pojawia się po rozwinięciu i w kartach; zwinięta wyspa zostaje czarna, żeby zlewać się z notchem.
+  Przezroczystość szkła wynika z ustawień systemu (Ustawienia systemowe → Wygląd → Liquid Glass, a także
+  Dostępność → Zmniejsz przezroczystość), tak jak w innych aplikacjach.
 
 ## Uprawnienia
 

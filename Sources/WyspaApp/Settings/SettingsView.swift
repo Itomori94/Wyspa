@@ -103,7 +103,8 @@ private struct IslandSettingsView: View {
                 .pickerStyle(.segmented)
                 .disabled(!IslandMaterial.isGlassAvailable && settings.islandMaterial == .black)
                 Text(IslandMaterial.isGlassAvailable
-                     ? "Szkło pojawia się po rozwinięciu i w kartach (powiadomienia); zwinięta wyspa zostaje czarna, żeby zlewać się z notchem."
+                     ? "Szkło pojawia się po rozwinięciu i w kartach (powiadomienia); zwinięta wyspa zostaje czarna, żeby zlewać się z notchem. "
+                       + "Przezroczystość ustawiasz dla całego systemu: Ustawienia systemowe → Wygląd → Liquid Glass."
                      : "Liquid Glass wymaga macOS 26 lub nowszego.")
                     .font(.caption).foregroundStyle(.secondary)
                 Toggle("Haptyka gładzika przy rozwinięciu", isOn: $settings.hapticsEnabled)

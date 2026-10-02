@@ -142,8 +142,9 @@ struct IslandBackground: View {
     var body: some View {
         ZStack {
             if #available(macOS 26, *), glass {
-                // Przyciemnione szkło: biała treść modułów musi być czytelna także nad jasną tapetą.
-                Color.clear.glassEffect(.regular.tint(.black.opacity(0.45)), in: shape)
+                // Zwykłe szkło systemowe, bez własnego zabarwienia: przezroczystość wynika z ustawień macOS
+                // (Wygląd → Liquid Glass: Przezroczyste/Zabarwione, Dostępność → Zmniejsz przezroczystość).
+                Color.clear.glassEffect(.regular, in: shape)
                     .transition(.opacity)
             }
             shape.fill(Color.black.opacity(glass ? 0 : hiddenAlpha))
