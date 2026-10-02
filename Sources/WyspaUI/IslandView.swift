@@ -19,7 +19,7 @@ public struct IslandView: View {
         let size = model.islandSize
         ZStack(alignment: .top) {
             IslandBackground(shape: IslandShape(topRadius: topRadius, bottomRadius: bottomRadius),
-                             glass: usesGlass, hiddenAlpha: model.phase == .hidden ? Self.hiddenAlpha : 1)
+                             style: backgroundStyle, hiddenAlpha: model.phase == .hidden ? Self.hiddenAlpha : 1)
                 .shadow(color: .black.opacity(model.phase == .expanded ? 0.5 : 0), radius: 20, y: 10)
                 .contentShape(IslandShape(topRadius: topRadius, bottomRadius: bottomRadius))
                 .onTapGesture {
@@ -50,9 +50,9 @@ public struct IslandView: View {
         .environment(\.colorScheme, .dark)
     }
 
-    private var usesGlass: Bool {
-        model.material.usesGlass(phase: model.phase, showsCard: model.activity?.detail != nil,
-                                 systemSupportsGlass: IslandMaterial.isGlassAvailable)
+    private var backgroundStyle: IslandBackgroundStyle {
+        model.material.background(phase: model.phase, showsCard: model.activity?.detail != nil,
+                                  systemSupportsGlass: IslandMaterial.isGlassAvailable, transparency: model.transparency)
     }
 
     /// Ukryta wyspa musi mieć niezerową przezroczystość, inaczej okno nie dostanie zdarzeń myszy.
@@ -133,24 +133,38 @@ enum ActivityGeometryID {
     static func trailing(_ activity: LiveActivity) -> String { "activity.\(activity.id).trailing" }
 }
 
-/// Tło wyspy: czarne albo Liquid Glass. Czarna warstwa przenika się ze szkłem, więc zmiana nie przeskakuje.
+/// Tło wyspy: czarne, Liquid Glass albo przezroczyste bez rozmycia. Warstwy przenikają się, więc zmiana nie przeskakuje.
 struct IslandBackground: View {
     let shape: IslandShape
-    let glass: Bool
+    let style: IslandBackgroundStyle
     let hiddenAlpha: Double
     @State private var preference = SystemGlassPreference.shared
 
     var body: some View {
         ZStack {
-            if #available(macOS 26, *), glass {
+            if #available(macOS 26, *), style == .glass {
                 // Przezroczystość wynika z ustawień macOS (Wygląd → Liquid Glass: Przezroczyste/Zabarwione);
                 // „Zmniejsz przezroczystość” system stosuje do szkła sam.
                 Color.clear.glassEffect(preference.variant == .clear ? .clear : .regular, in: shape)
                     .transition(.opacity)
             }
-            shape.fill(Color.black.opacity(glass ? 0 : hiddenAlpha))
+            shape.fill(Color.black.opacity(blackOpacity))
+            if case .tinted = style {
+                // Jasna krawędź, żeby zupełnie przejrzysta wyspa nadal miała widoczny kształt.
+                shape.stroke(.white.opacity(0.18), lineWidth: 1)
+                    .transition(.opacity)
+            }
         }
-        .animation(.easeInOut(duration: 0.25), value: glass)
+        .animation(.easeInOut(duration: 0.25), value: style)
+    }
+
+    private var blackOpacity: Double {
+        switch style {
+        case .black: hiddenAlpha
+        case .glass: 0
+        // Ukryta wyspa musi mieć niezerowe krycie, inaczej okno nie dostaje zdarzeń myszy.
+        case .tinted(let opacity): max(opacity, 0.01)
+        }
     }
 }
 

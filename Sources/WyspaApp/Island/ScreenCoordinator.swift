@@ -30,6 +30,7 @@ final class ScreenCoordinator {
             _ = settings.virtualNotchMode
             _ = settings.islandSize
             _ = settings.islandMaterial
+            _ = settings.islandTransparency
         }) { [weak self] in self?.rebuild() }
     }
 

@@ -9,6 +9,7 @@ public final class IslandViewModel {
     public var notch: NotchMetrics
     public var expandedSize: CGSize
     public var material: IslandMaterial = .black
+    public var transparency: Double = IslandMaterial.defaultTransparency
     public var selectedTab: Int
     /// Strefa upuszczania pod kursorem podczas przeciągania.
     public var dropTarget: String?
