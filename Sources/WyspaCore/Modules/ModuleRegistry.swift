@@ -212,7 +212,9 @@ public final class ModuleRegistry {
     }
 
     public func setEnabled(_ id: String, _ enabled: Bool) async {
-        guard let type = catalog.first(where: { $0.descriptor.id == id }), !pending.contains(id) else { return }
+        guard let type = catalog.first(where: { $0.descriptor.id == id }) else { return }
+        // Wyłączenie zawsze działa; trwająca aktywacja sprawdzi ustawienie po zakończeniu i posprząta moduł.
+        if enabled && pending.contains(id) { return }
         if enabled {
             settings.setModule(id, enabled: true)
             await activate(type, promptForPermissions: true)
@@ -246,7 +248,8 @@ public final class ModuleRegistry {
 
     private func activate(_ type: any IslandModule.Type, promptForPermissions: Bool) async {
         let descriptor = type.descriptor
-        guard instances[descriptor.id] == nil else { return }
+        // Jedna aktywacja naraz: np. ponowienie po nadaniu Dostępności nie uruchomi drugiej instancji modułu.
+        guard instances[descriptor.id] == nil, !pending.contains(descriptor.id) else { return }
         pending = pending.union([descriptor.id])
         defer { pending = pending.subtracting([descriptor.id]) }
 

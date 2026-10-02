@@ -44,6 +44,31 @@ public final class ShelfStore {
             throw .cannotCreateDirectory(error.localizedDescription)
         }
         items = Self.loadIndex(from: directory.appendingPathComponent(Self.indexFileName))
+        removeOrphanedCopies()
+    }
+
+    /// Katalog kopii elementu — wyliczany wyłącznie z jego identyfikatora, nigdy ze ścieżki z indeksu.
+    func copyFolder(for id: UUID) -> URL {
+        directory.appendingPathComponent(Self.itemsDirectoryName, isDirectory: true).appendingPathComponent(id.uuidString, isDirectory: true)
+    }
+
+    /// Ścieżka kopii z indeksu jest ważna tylko jako `Items/<id elementu>/<nazwa pliku>` (bez `..` i podkatalogów).
+    func storedURL(for item: ShelfItem, relativePath: String) -> URL? {
+        let parts = relativePath.split(separator: "/", omittingEmptySubsequences: false).map(String.init)
+        guard parts.count == 3, parts[0] == Self.itemsDirectoryName, parts[1] == item.id.uuidString,
+              !parts[2].isEmpty, parts[2] != ".", parts[2] != ".."
+        else { return nil }
+        return copyFolder(for: item.id).appendingPathComponent(parts[2])
+    }
+
+    /// Kopie bez wpisu w indeksie (np. po awarii zapisu) — tylko katalogi o nazwie UUID w `Items/`.
+    private func removeOrphanedCopies() {
+        let itemsDirectory = directory.appendingPathComponent(Self.itemsDirectoryName, isDirectory: true)
+        let known = Set(items.map(\.id.uuidString))
+        let folders = (try? fileManager.contentsOfDirectory(atPath: itemsDirectory.path)) ?? []
+        for name in folders where UUID(uuidString: name) != nil && !known.contains(name) {
+            try? fileManager.removeItem(at: itemsDirectory.appendingPathComponent(name, isDirectory: true))
+        }
     }
 
     // MARK: - Odczyt
@@ -52,11 +77,12 @@ public final class ShelfStore {
     public func url(for item: ShelfItem) -> URL? {
         switch item.source {
         case .stored(let relativePath):
-            let url = directory.appendingPathComponent(relativePath)
+            guard let url = storedURL(for: item, relativePath: relativePath) else { return nil }
             return fileManager.fileExists(atPath: url.path) ? url : nil
         case .reference(let bookmark, _):
             var isStale = false
-            guard let url = try? URL(resolvingBookmarkData: bookmark, options: [.withoutUI], bookmarkDataIsStale: &isStale),
+            // Bez montowania woluminów: odłączony dysk sieciowy nie zawiesza półki.
+            guard let url = try? URL(resolvingBookmarkData: bookmark, options: [.withoutUI, .withoutMounting], bookmarkDataIsStale: &isStale),
                   fileManager.fileExists(atPath: url.path)
             else { return nil }
             if isStale { refreshBookmark(of: item, at: url) }
@@ -73,7 +99,10 @@ public final class ShelfStore {
     /// Dodaje pliki z dysku jako odnośniki; pliki już obecne na półce są pomijane.
     @discardableResult
     public func addFiles(_ urls: [URL]) throws(ShelfStoreError) -> [ShelfItem] {
-        let existing = Set(items.compactMap(url(for:)).map(\.standardizedFileURL.path))
+        let existing = Set(items.compactMap { item -> String? in
+            if case .reference(_, let path) = item.source { return path }
+            return nil
+        })
         var seen = existing
         let added = urls.compactMap { url -> ShelfItem? in
             let path = url.standardizedFileURL.path
@@ -157,8 +186,8 @@ public final class ShelfStore {
     }
 
     private func deleteStoredCopy(_ item: ShelfItem) {
-        guard case .stored(let relativePath) = item.source else { return }
-        let folder = directory.appendingPathComponent(relativePath).deletingLastPathComponent()
+        guard case .stored = item.source else { return }
+        let folder = copyFolder(for: item.id)
         do {
             try fileManager.removeItem(at: folder)
         } catch {

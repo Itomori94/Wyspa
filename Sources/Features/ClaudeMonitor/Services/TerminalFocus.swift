@@ -78,13 +78,19 @@ enum TerminalFocus {
         """
     }
 
+    /// Skrypt na kolejce w tle: dialog zgody na automatyzację albo wolny terminal nie blokują wyspy ani HUD.
+    private static let scriptQueue = DispatchQueue(label: "pl.net.kurant.wyspa.terminal-focus")
+
     private static func runScript(_ source: String?, fallback bundleID: String) {
         guard let source else { return activate(bundleID) }
-        var error: NSDictionary?
-        NSAppleScript(source: source)?.executeAndReturnError(&error)
-        if let error {
-            log.error("Nie udało się wybrać karty terminala: \(error[NSAppleScript.errorNumber] as? Int ?? 0)")
-            activate(bundleID)
+        scriptQueue.async {
+            var error: NSDictionary?
+            NSAppleScript(source: source)?.executeAndReturnError(&error)
+            guard let code = error?[NSAppleScript.errorNumber] as? Int else { return }
+            Task { @MainActor in
+                log.error("Nie udało się wybrać karty terminala: \(code)")
+                activate(bundleID)
+            }
         }
     }
 

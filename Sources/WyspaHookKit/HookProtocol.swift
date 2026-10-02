@@ -9,14 +9,23 @@ public enum HookProtocol {
     /// Największa przyjmowana wiadomość (narzędzie Write potrafi nieść duży plik).
     public static let maxMessageBytes = 8 * 1024 * 1024
 
-    /// Gniazdo w katalogu użytkownika (dostęp tylko dla właściciela). `WYSPA_SOCKET_PATH` nadpisuje ścieżkę w testach.
+    /// Gniazdo w katalogu użytkownika (dostęp tylko dla właściciela).
+    ///
+    /// `WYSPA_SOCKET_PATH` nadpisuje ścieżkę wyłącznie w buildzie debug (testy). W wersji wydanej zmienna środowiskowa
+    /// z ustawień projektu nie może przekierować próśb o uprawnienia do cudzego gniazda.
     public static var socketURL: URL {
+        #if DEBUG
         if let override = ProcessInfo.processInfo.environment["WYSPA_SOCKET_PATH"], !override.isEmpty {
             return URL(fileURLWithPath: override)
         }
+        #endif
         return FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
             .appendingPathComponent("Wyspa/claude.sock")
     }
+
+    /// Potwierdzenie, że główny wątek Wyspy przyjął prośbę (hook bez niego w ~2 s wraca do terminala).
+    public static let acknowledgement = Data("{\"ack\":true}\n".utf8)
+    public static let acknowledgementTimeout: TimeInterval = 2
 
     public struct Envelope: Equatable, Sendable {
         public let event: HookEvent

@@ -151,9 +151,16 @@ public final class TimerModule: IslandModule {
         }
     }
 
+    /// Spóźnienie, powyżej którego koniec uznajemy za „przegapiony” (uśpienie Maca, aplikacja wyłączona).
+    static let lateFinishTolerance: TimeInterval = 2
+
     private func finish(_ finished: TimerSession, at end: Date, announce: Bool) {
         let message: String
-        if let next = finished.nextPomodoroPhase(at: end) {
+        // Po przegapionym końcu kolejna faza Pomodoro startuje teraz, a nie od dawnego końca —
+        // inaczej każda przespana faza kończyłaby się natychmiast z osobnym dźwiękiem.
+        let now = Date()
+        let start = now.timeIntervalSince(end) > Self.lateFinishTolerance ? now : end
+        if let next = finished.nextPomodoroPhase(at: start) {
             message = Self.pomodoroMessage(for: next)
             update(next)
         } else {

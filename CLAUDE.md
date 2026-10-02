@@ -9,6 +9,8 @@ Prywatny użytek, dystrybucja poza App Store, bez sandboxa.
 scripts/test.sh                 # wszystkie testy jednostkowe (Swift Testing) — przed każdym commitem
 scripts/build-app.sh            # build/Wyspa.app, universal (arm64 + x86_64), release
 scripts/build-app.sh --native --debug   # szybki build tylko na bieżącą architekturę
+scripts/install.sh              # build + instalacja do /Applications (zamyka działającą kopię)
+swift scripts/make-icon.swift   # odtworzenie Resources/AppIcon.icns (ikona rysowana kodem)
 scripts/dev-cert.sh             # jednorazowo: lokalny certyfikat „Wyspa Development”
 scripts/update-mediaremote-adapter.sh v0.7.8   # aktualizacja adaptera MediaRemote (jedna komenda)
 open build/Wyspa.app            # uruchomienie
@@ -184,8 +186,16 @@ APP=$PWD/build/Wyspa.app/Contents
   Notification/Stop/SessionEnd). Martwe sesje (proces Claude Code zniknął bez SessionEnd) usuwane przez `kill(pid, 0)`.
 - **Terminal**: `__CFBundleIdentifier` z środowiska hooka → aplikacja; TTY procesu Claude z `sysctl` → karta w Terminal/iTerm2
   (AppleScript), VS Code/Cursor przez `vscode://file/<cwd>` / `cursor://file/<cwd>`.
-- Testy integracyjne uruchamiają prawdziwy helper na gnieździe tymczasowym (`WYSPA_SOCKET_PATH`); `scripts/test.sh`
-  buduje `wyspa-hook` przed testami.
+- Testy integracyjne uruchamiają prawdziwy helper na gnieździe tymczasowym (`WYSPA_SOCKET_PATH`, działa tylko w debug);
+  `scripts/test.sh` buduje `wyspa-hook` przed testami. W testach procesów używaj `terminationHandler`, nie
+  `waitUntilExit` (to drugie potrafi przegapić koniec procesu poza głównym wątkiem i zawiesić test).
+- **Bezpieczeństwo gniazda**: katalog 0700, gniazdo tworzone pod `umask 0177`, serwer sprawdza `getpeereid` (ten sam
+  użytkownik), limit 64 połączeń; połączenia mają rosnące identyfikatory (decyzja nie trafi do innego hooka przy
+  ponownym użyciu numeru fd). Hook sprawdza, że gniazdo jest gniazdem tego użytkownika, i czeka ≤ 2 s na potwierdzenie
+  (`{"ack":true}`) wysyłane z głównego wątku Wyspy — zawieszona aplikacja oddaje decyzję terminalowi po 2 s.
+- Instalator rozpoznaje wpisy po nazwie pliku `wyspa-hook` (dokładnie), odrzuca nieoczekiwaną strukturę `hooks`,
+  zapisuje przez dowiązania, zachowuje prawa pliku, trzyma 5 ostatnich kopii; zmiana czasu decyzji zapisuje hooki po 0,8 s.
+- Sesje znikają po zakończeniu procesu Claude Code (`DispatchSource.makeProcessSource(.exit)`), bez odpytywania.
 
 ## Powiadomienia (w toku)
 

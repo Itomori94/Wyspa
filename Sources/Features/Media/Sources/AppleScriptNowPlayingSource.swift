@@ -18,6 +18,8 @@ final class AppleScriptNowPlayingSource: NowPlayingSource {
     private var activePlayer: ScriptablePlayer?
     private var artworkCache: (key: String, data: Data?)?
     private var refreshGeneration = 0
+    /// Po `stop()` zaległe zadania (polecenia, odświeżenia) niczego już nie publikują.
+    private var isStopped = false
 
     init(players: [ScriptablePlayer] = ScriptablePlayer.allCases) {
         self.players = players
@@ -41,6 +43,7 @@ final class AppleScriptNowPlayingSource: NowPlayingSource {
     }
 
     func stop() {
+        isStopped = true
         distributedObservers.forEach(DistributedNotificationCenter.default().removeObserver)
         workspaceObservers.forEach(NSWorkspace.shared.notificationCenter.removeObserver)
         distributedObservers = []
@@ -67,6 +70,7 @@ final class AppleScriptNowPlayingSource: NowPlayingSource {
     }
 
     private func refresh() {
+        guard !isStopped else { return }
         refreshGeneration += 1
         let generation = refreshGeneration
         let running = players.filter { player in
@@ -83,17 +87,19 @@ final class AppleScriptNowPlayingSource: NowPlayingSource {
             guard generation == refreshGeneration else { return }
             let chosen = statuses.first { $0.1.nowPlaying.isPlaying } ?? statuses.first
             activePlayer = chosen?.0
-            await publish(chosen)
+            await publish(chosen, generation: generation)
         }
     }
 
-    private func publish(_ chosen: (ScriptablePlayer, AppleScriptParser.Status)?) async {
+    private func publish(_ chosen: (ScriptablePlayer, AppleScriptParser.Status)?, generation: Int) async {
         guard let (player, status) = chosen else {
             current = nil
             onUpdate?(nil)
             return
         }
         let artwork = await artwork(for: status, player: player)
+        // Pobieranie okładki trwa: w tym czasie mogło przyjść nowsze odświeżenie (np. przeskok utworu).
+        guard generation == refreshGeneration, !isStopped else { return }
         let nowPlaying = status.nowPlaying.with(artwork: artwork)
         current = nowPlaying
         onUpdate?(nowPlaying)

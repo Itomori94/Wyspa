@@ -114,7 +114,8 @@ public final class ClipboardModule: IslandModule {
            let png = image.representation(using: .png, properties: [:]) {
             return .image(png: png, width: image.pixelsWide, height: image.pixelsHigh)
         }
-        if let text = pasteboard.string(forType: .string), !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+        if let text = pasteboard.string(forType: .string), text.utf8.count <= ClipboardHistory.maxTextBytes,
+           !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             return .text(text)
         }
         return nil

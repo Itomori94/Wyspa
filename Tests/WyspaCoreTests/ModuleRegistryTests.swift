@@ -339,4 +339,47 @@ struct ModuleRegistryTests {
         #expect(settings.board?.pages.map(\.content) == [.module("plain"), .module("drop")])
     }
 
+
+    @Test("Wyłączenie w trakcie czekania na zgodę: moduł nie zostaje uruchomiony")
+    func disableWhilePending() async {
+        let settings = makeSettings()
+        let permissions = SlowPermissions()
+        let registry = ModuleRegistry(catalog: [CameraModule.self], settings: settings, permissions: permissions, requestExpand: {})
+        Probe.reset()
+        let enabling = Task { await registry.setEnabled("camera", true) }
+        await permissions.waitUntilAsked()
+        await registry.setEnabled("camera", false)
+        permissions.answer(.granted)
+        await enabling.value
+        #expect(registry.entries.first { $0.id == "camera" }?.isActive == false)
+        #expect(!settings.isModuleEnabled("camera"))
+        #expect(Probe.activations == Probe.deactivations)
+    }
+}
+
+/// Uprawnienia, które odpowiadają dopiero na żądanie testu (symulacja otwartego dialogu systemowego).
+@MainActor
+final class SlowPermissions: PermissionProviding {
+    private var continuation: CheckedContinuation<PermissionStatus, Never>?
+    private var askedContinuation: CheckedContinuation<Void, Never>?
+    private var asked = false
+
+    func status(of permission: Permission) -> PermissionStatus { .notDetermined }
+
+    func request(_ permission: Permission) async -> PermissionStatus {
+        asked = true
+        askedContinuation?.resume()
+        askedContinuation = nil
+        return await withCheckedContinuation { continuation = $0 }
+    }
+
+    func waitUntilAsked() async {
+        guard !asked else { return }
+        await withCheckedContinuation { askedContinuation = $0 }
+    }
+
+    func answer(_ status: PermissionStatus) {
+        continuation?.resume(returning: status)
+        continuation = nil
+    }
 }

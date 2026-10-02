@@ -56,6 +56,7 @@ final class AdapterNowPlayingSource: NowPlayingSource {
         let process = Process()
         let output = Pipe()
         process.executableURL = AdapterBundle.perl
+        process.environment = AdapterBundle.environment
         process.arguments = bundle.arguments([
             "stream", "--no-diff", "--micros", "--debounce=\(Self.debounceMilliseconds)",
         ])

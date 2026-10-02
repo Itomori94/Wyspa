@@ -1,15 +1,19 @@
 import SwiftUI
 import WyspaUI
 
-/// Czas sesji odświeżany co sekundę tylko podczas biegu (w pauzie bez zegara).
+/// Czas sesji odświeżany co sekundę tylko podczas biegu; w pauzie statyczny tekst (bez zegara w tle).
 struct TimerClock: View {
     let session: TimerSession
 
     var body: some View {
-        TimelineView(.periodic(from: .now, by: 1)) { context in
-            Text(text(at: session.isRunning ? context.date : Date()))
-                .monospacedDigit()
-                .contentTransition(.numericText(countsDown: session.duration != nil))
+        if session.isRunning {
+            TimelineView(.periodic(from: .now, by: 1)) { context in
+                Text(text(at: context.date))
+                    .monospacedDigit()
+                    .contentTransition(.numericText(countsDown: session.duration != nil))
+            }
+        } else {
+            Text(text(at: Date())).monospacedDigit()
         }
     }
 

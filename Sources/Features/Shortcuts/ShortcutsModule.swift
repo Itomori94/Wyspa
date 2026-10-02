@@ -24,17 +24,21 @@ public final class ShortcutsModule: IslandModule {
     public private(set) var problem: String?
 
     @ObservationIgnored private let context: ModuleContext
+    @ObservationIgnored private var refreshTask: Task<Void, Never>?
 
     public required init(context: ModuleContext) {
         self.context = context
         favorites = context.settings.value(Self.favoritesKey, default: [String]())
     }
 
+    /// Lista skrótów wczytuje się w tle: zawieszone narzędzie Skróty nie blokuje startu pozostałych modułów.
     public func activate() async throws {
-        await refresh()
+        refreshTask = Task { [weak self] in await self?.refresh() }
     }
 
     public func deactivate() {
+        refreshTask?.cancel()
+        refreshTask = nil
         states = [:]
     }
 

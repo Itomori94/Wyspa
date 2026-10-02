@@ -18,37 +18,77 @@ public enum ShortcutsCLI {
             .filter { !$0.isEmpty && seen.insert($0).inserted }
     }
 
+    /// Lista skrótów nie powinna trwać dłużej (np. zaraz po zalogowaniu).
+    static let listTimeout: TimeInterval = 15
+    /// Skrót może pracować długo (pobieranie, przetwarzanie), ale nie bez końca.
+    static let runTimeout: TimeInterval = 600
+
     public static func list() async throws(Failure) -> [String] {
-        parseList(try await run(["list"]))
+        parseList(try await run(["list"], timeout: listTimeout))
     }
 
     public static func run(shortcut name: String) async throws(Failure) {
-        _ = try await run(["run", name])
+        // Nazwa zaczynająca się od „-” zostałaby potraktowana jak opcja narzędzia.
+        guard !name.hasPrefix("-") else { throw Failure(message: "Nazwy skrótu zaczynającej się od „-” nie da się bezpiecznie uruchomić.") }
+        _ = try await run(["run", name], timeout: runTimeout)
     }
 
-    private static func run(_ arguments: [String]) async throws(Failure) -> String {
-        let result: Result<String, Failure> = await Task.detached {
-            let process = Process()
-            let output = Pipe()
-            let errors = Pipe()
-            process.executableURL = executable
-            process.arguments = arguments
-            process.standardOutput = output
-            process.standardError = errors
+    /// Uruchamia narzędzie bez powłoki. Oba potoki są czytane równolegle (duży stderr nie zakleszczy procesu),
+    /// koniec procesu przez `terminationHandler`, a po limicie czasu proces jest kończony.
+    private static func run(_ arguments: [String], timeout: TimeInterval) async throws(Failure) -> String {
+        let process = Process()
+        let output = Pipe(), errors = Pipe()
+        process.executableURL = executable
+        process.arguments = arguments
+        process.standardOutput = output
+        process.standardError = errors
+        let collected = Collected()
+        output.fileHandleForReading.readabilityHandler = { collected.appendOutput($0.availableData) }
+        errors.fileHandleForReading.readabilityHandler = { collected.appendError($0.availableData) }
+
+        let box = ProcessBox(process: process)
+        let status: Int32 = await withCheckedContinuation { continuation in
+            process.terminationHandler = { continuation.resume(returning: $0.terminationStatus) }
             do {
                 try process.run()
             } catch {
-                return .failure(Failure(message: "Nie można uruchomić narzędzia Skróty: \(error.localizedDescription)"))
+                process.terminationHandler = nil
+                continuation.resume(returning: -1)
+                return
             }
-            let data = output.fileHandleForReading.readDataToEndOfFile()
-            let errorData = errors.fileHandleForReading.readDataToEndOfFile()
-            process.waitUntilExit()
-            guard process.terminationStatus == 0 else {
-                let detail = String(data: errorData, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-                return .failure(Failure(message: detail.isEmpty ? "Skrót zakończył się błędem (\(process.terminationStatus))." : detail))
+            // Strażnik: po limicie czasu kończy proces (terminationHandler zgłosi wtedy kod zakończenia).
+            Task.detached {
+                try? await Task.sleep(for: .seconds(timeout))
+                if box.process.isRunning { box.process.terminate() }
             }
-            return .success(String(data: data, encoding: .utf8) ?? "")
-        }.value
-        return try result.get()
+        }
+        output.fileHandleForReading.readabilityHandler = nil
+        errors.fileHandleForReading.readabilityHandler = nil
+        collected.appendOutput(output.fileHandleForReading.readDataToEndOfFile())
+        collected.appendError(errors.fileHandleForReading.readDataToEndOfFile())
+
+        guard status == 0 else {
+            if status == -1 { throw Failure(message: "Nie można uruchomić narzędzia Skróty.") }
+            let detail = collected.errorText.trimmingCharacters(in: .whitespacesAndNewlines)
+            throw Failure(message: detail.isEmpty ? "Skrót zakończył się błędem (\(status))." : detail)
+        }
+        return collected.outputText
     }
+}
+
+/// Process nie jest Sendable; `isRunning` i `terminate()` są bezpieczne z innego wątku.
+private struct ProcessBox: @unchecked Sendable {
+    let process: Process
+}
+
+/// Bufory wyjścia procesu zapisywane z wątków potoków.
+private final class Collected: @unchecked Sendable {
+    private let lock = NSLock()
+    private var output = Data()
+    private var error = Data()
+
+    func appendOutput(_ data: Data) { lock.withLock { output.append(data) } }
+    func appendError(_ data: Data) { lock.withLock { error.append(data) } }
+    var outputText: String { lock.withLock { String(data: output, encoding: .utf8) ?? "" } }
+    var errorText: String { lock.withLock { String(data: error, encoding: .utf8) ?? "" } }
 }

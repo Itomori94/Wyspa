@@ -34,12 +34,19 @@ struct HookIntegrationTests {
         process.standardInput = stdin
         process.standardOutput = stdout
         let started = Date()
-        try process.run()
-        stdin.fileHandleForWriting.write(try JSONSerialization.data(withJSONObject: input))
-        try stdin.fileHandleForWriting.close()
-        let output = await Task.detached { stdout.fileHandleForReading.readDataToEndOfFile() }.value
-        process.waitUntilExit()
-        #expect(process.terminationStatus == 0)
+        // terminationHandler zamiast waitUntilExit: to drugie potrafi przegapić koniec procesu poza głównym wątkiem.
+        let status = await withCheckedContinuation { (continuation: CheckedContinuation<Int32, Never>) in
+            process.terminationHandler = { continuation.resume(returning: $0.terminationStatus) }
+            do {
+                try process.run()
+                stdin.fileHandleForWriting.write(try JSONSerialization.data(withJSONObject: input))
+                try stdin.fileHandleForWriting.close()
+            } catch {
+                continuation.resume(returning: -1)
+            }
+        }
+        let output = stdout.fileHandleForReading.readDataToEndOfFile()
+        #expect(status == 0)
         return (String(data: output, encoding: .utf8) ?? "", Date().timeIntervalSince(started))
     }
 
@@ -54,6 +61,7 @@ struct HookIntegrationTests {
         let received = Received()
         let server = HookServer(path: path, onMessage: { envelope, channel in
             received.record(envelope)
+            channel?.acknowledge()
             channel?.send(.allow)
         }, onClosed: { _ in })
         try server.start()
@@ -65,6 +73,30 @@ struct HookIntegrationTests {
         #expect(decision?["behavior"] as? String == "allow")
         #expect(received.events.first?.event.toolInput?.command == "echo test")
         #expect(received.events.first?.bundleID == "com.apple.Terminal")
+    }
+
+    @Test("Zawieszona Wyspa (brak potwierdzenia): hook wraca do terminala po ~2 s, nie po pełnym limicie")
+    func hungApp() async throws {
+        let path = socketPath()
+        let server = HookServer(path: path, onMessage: { _, _ in }, onClosed: { _ in })
+        try server.start()
+        defer { server.stop() }
+        let result = try await runHook(socket: path, input: permission, decisionTimeout: 60)
+        #expect(result.output.isEmpty)
+        #expect(result.seconds < 4)
+    }
+
+    @Test("Odmowa z wyspy przekazuje powód do Claude Code")
+    func denyFromIsland() async throws {
+        let path = socketPath()
+        let server = HookServer(path: path, onMessage: { _, channel in
+            channel?.acknowledge()
+            channel?.send(.deny, message: "Nie teraz")
+        }, onClosed: { _ in })
+        try server.start()
+        defer { server.stop() }
+        let result = try await runHook(socket: path, input: permission)
+        #expect(result.output.contains(#""behavior":"deny""#) && result.output.contains("Nie teraz"))
     }
 
     @Test("Zdarzenie bez decyzji: hook nie czeka i nic nie wypisuje")
@@ -91,7 +123,8 @@ struct HookIntegrationTests {
     func decisionTimeout() async throws {
         let path = socketPath()
         let closed = Received()
-        let server = HookServer(path: path, onMessage: { _, _ in }, onClosed: { _ in closed.markClosed() })
+        let server = HookServer(path: path, onMessage: { _, channel in channel?.acknowledge() },
+                                onClosed: { _ in closed.markClosed() })
         try server.start()
         defer { server.stop() }
         let result = try await runHook(socket: path, input: permission, decisionTimeout: 1)
@@ -103,7 +136,7 @@ struct HookIntegrationTests {
     @Test("Zatrzymanie Wyspy w trakcie oczekiwania: od razu prompt w terminalu")
     func stopWhileWaiting() async throws {
         let path = socketPath()
-        let server = HookServer(path: path, onMessage: { _, _ in }, onClosed: { _ in })
+        let server = HookServer(path: path, onMessage: { _, channel in channel?.acknowledge() }, onClosed: { _ in })
         try server.start()
         Task.detached {
             try? await Task.sleep(for: .milliseconds(400))

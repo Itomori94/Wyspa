@@ -178,8 +178,8 @@ struct HookInstallerTests {
     }
 
     @Test("Instalacja dopisuje wszystkie zdarzenia i nie rusza cudzych hooków ani innych kluczy")
-    func install() {
-        let installed = HookInstaller.installing(into: existing, helperPath: helper, decisionTimeout: 300)
+    func install() throws {
+        let installed = try HookInstaller.installing(into: existing, helperPath: helper, decisionTimeout: 300)
         #expect(HookInstaller.isInstalled(in: installed))
         #expect(installed["model"] as? String == "opus")
         let hooks = installed["hooks"] as? [String: Any]
@@ -192,25 +192,25 @@ struct HookInstallerTests {
     }
 
     @Test("Ponowna instalacja nie dubluje wpisów")
-    func idempotent() {
-        let once = HookInstaller.installing(into: existing, helperPath: helper, decisionTimeout: 300)
-        let twice = HookInstaller.installing(into: once, helperPath: helper, decisionTimeout: 600)
+    func idempotent() throws {
+        let once = try HookInstaller.installing(into: existing, helperPath: helper, decisionTimeout: 300)
+        let twice = try HookInstaller.installing(into: once, helperPath: helper, decisionTimeout: 600)
         let pre = (twice["hooks"] as? [String: Any])?["PreToolUse"] as? [[String: Any]]
         #expect(pre?.count == 2)
     }
 
     @Test("Deinstalacja przywraca stan sprzed instalacji")
-    func uninstallRestores() {
-        let installed = HookInstaller.installing(into: existing, helperPath: helper, decisionTimeout: 300)
-        let removed = HookInstaller.uninstalling(from: installed)
+    func uninstallRestores() throws {
+        let installed = try HookInstaller.installing(into: existing, helperPath: helper, decisionTimeout: 300)
+        let removed = try HookInstaller.uninstalling(from: installed)
         #expect(!HookInstaller.isInstalled(in: removed))
         #expect(NSDictionary(dictionary: removed).isEqual(to: existing))
     }
 
     @Test("Deinstalacja z pustych ustawień usuwa klucz hooks")
-    func uninstallEmpty() {
-        let installed = HookInstaller.installing(into: [:], helperPath: helper, decisionTimeout: 300)
-        #expect(HookInstaller.uninstalling(from: installed).isEmpty)
+    func uninstallEmpty() throws {
+        let installed = try HookInstaller.installing(into: [:], helperPath: helper, decisionTimeout: 300)
+        #expect(try HookInstaller.uninstalling(from: installed).isEmpty)
     }
 
     @Test("Zapis robi kopię zapasową, nieczytelny plik nie jest nadpisywany")
@@ -219,12 +219,43 @@ struct HookInstallerTests {
         let url = dir.appendingPathComponent("settings.json")
         try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         try Data("{\"model\":\"opus\"}".utf8).write(to: url)
-        let backup = try HookInstaller.write(HookInstaller.installing(into: try HookInstaller.read(url), helperPath: helper, decisionTimeout: 300), to: url)
+        let backup = try HookInstaller.write(try HookInstaller.installing(into: try HookInstaller.read(url), helperPath: helper, decisionTimeout: 300), to: url)
         #expect(backup.map { FileManager.default.fileExists(atPath: $0.path) } == true)
         #expect(HookInstaller.isInstalled(in: try HookInstaller.read(url)))
 
         try Data("{nie json".utf8).write(to: url)
         #expect(throws: HookInstaller.InstallError.self) { try HookInstaller.read(url) }
         #expect(try Data(contentsOf: url) == Data("{nie json".utf8))
+    }
+
+    @Test("Cudzy hook z „wyspa-hook” w nazwie nie jest traktowany jak nasz")
+    func exactNameOnly() throws {
+        var settings = existing
+        var hooks = settings["hooks"] as! [String: Any]
+        hooks["Stop"] = [["matcher": "", "hooks": [["type": "command", "command": "/home/x/my-wyspa-hook-logger.sh"]]]]
+        settings["hooks"] = hooks
+        let cleaned = try HookInstaller.uninstalling(from: settings)
+        #expect(NSDictionary(dictionary: cleaned).isEqual(to: settings))
+    }
+
+    @Test("Nieoczekiwana struktura hooków: błąd zamiast cichego nadpisania")
+    func unexpectedShapes() {
+        #expect(throws: HookInstaller.InstallError.self) { try HookInstaller.installing(into: ["hooks": "tekst"], helperPath: helper, decisionTimeout: 300) }
+        #expect(throws: HookInstaller.InstallError.self) { try HookInstaller.uninstalling(from: ["hooks": ["Stop": ["x": 1]]]) }
+    }
+
+    @Test("Kopie zapasowe: unikalne nazwy, najwyżej pięć, prawa pliku zachowane")
+    func backups() throws {
+        let dir = FileManager.default.temporaryDirectory.appendingPathComponent("wyspa-backups-\(UUID().uuidString)")
+        let url = dir.appendingPathComponent("settings.json")
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        try Data("{}".utf8).write(to: url)
+        try FileManager.default.setAttributes([.posixPermissions: 0o600], ofItemAtPath: url.path)
+        let now = Date()
+        for _ in 0..<8 { try HookInstaller.write([:], to: url, now: now) }
+        let backups = try FileManager.default.contentsOfDirectory(atPath: dir.path).filter { $0.hasPrefix("settings.json.wyspa-backup-") }
+        #expect(backups.count == HookInstaller.keptBackups)
+        let mode = try FileManager.default.attributesOfItem(atPath: url.path)[.posixPermissions] as? NSNumber
+        #expect(mode?.intValue == 0o600)
     }
 }

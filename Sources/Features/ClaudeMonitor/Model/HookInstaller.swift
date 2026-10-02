@@ -15,14 +15,35 @@ public enum HookInstaller {
     /// Limit Claude Code dla zdarzeń bez decyzji (hook kończy się zwykle w milisekundach).
     static let quickTimeout = 10
 
+    /// Ile kopii zapasowych `settings.json.wyspa-backup-*` zostaje (najstarsze są usuwane).
+    static let keptBackups = 5
+
     public enum InstallError: Error, Equatable, LocalizedError {
         case unreadableSettings(String)
+        case unexpectedStructure(String)
         case writeFailed(String)
 
         public var errorDescription: String? {
             switch self {
             case .unreadableSettings(let detail): "Nie można odczytać ~/.claude/settings.json: \(detail). Plik nie został zmieniony."
+            case .unexpectedStructure(let detail):
+                "Nieoczekiwana struktura ~/.claude/settings.json (\(detail)). Plik nie został zmieniony — popraw go ręcznie."
             case .writeFailed(let detail): "Nie można zapisać ~/.claude/settings.json: \(detail)"
+            }
+        }
+    }
+
+    /// Odrzuca ustawienia, których hooków nie da się bezpiecznie przekształcić (zamiast cicho je nadpisać).
+    static func validate(_ settings: [String: Any]) throws(InstallError) {
+        guard let raw = settings["hooks"] else { return }
+        guard let hooks = raw as? [String: Any] else { throw .unexpectedStructure("„hooks” nie jest obiektem") }
+        for (event, value) in hooks {
+            guard let groups = value as? [Any] else { throw .unexpectedStructure("„hooks.\(event)” nie jest listą") }
+            for group in groups {
+                guard let group = group as? [String: Any] else { throw .unexpectedStructure("wpis w „hooks.\(event)” nie jest obiektem") }
+                if let handlers = group["hooks"], !(handlers is [[String: Any]]) {
+                    throw .unexpectedStructure("„hooks” w „hooks.\(event)” nie jest listą obiektów")
+                }
             }
         }
     }
@@ -30,8 +51,8 @@ public enum HookInstaller {
     // MARK: - Czyste przekształcenia (testowane)
 
     /// Ustawienia z hookami Wyspy (poprzednie wpisy Wyspy są zastępowane, cudze zostają).
-    public static func installing(into settings: [String: Any], helperPath: String, decisionTimeout: Int) -> [String: Any] {
-        var cleaned = uninstalling(from: settings)
+    public static func installing(into settings: [String: Any], helperPath: String, decisionTimeout: Int) throws(InstallError) -> [String: Any] {
+        var cleaned = try uninstalling(from: settings)
         var hooks = cleaned["hooks"] as? [String: Any] ?? [:]
         for event in events {
             let waits = event == "PermissionRequest"
@@ -51,7 +72,8 @@ public enum HookInstaller {
     }
 
     /// Ustawienia bez hooków Wyspy; puste grupy i zdarzenia znikają, reszta bez zmian.
-    public static func uninstalling(from settings: [String: Any]) -> [String: Any] {
+    public static func uninstalling(from settings: [String: Any]) throws(InstallError) -> [String: Any] {
+        try validate(settings)
         guard var hooks = settings["hooks"] as? [String: Any] else { return settings }
         for (event, value) in hooks {
             guard let groups = value as? [[String: Any]] else { continue }
@@ -79,8 +101,10 @@ public enum HookInstaller {
         }
     }
 
+    /// Wpis Wyspy = polecenie, którego plik nazywa się dokładnie `wyspa-hook` (np. `my-wyspa-hook-logger.sh` nie jest nasz).
     static func isOurs(_ handler: [String: Any]) -> Bool {
-        (handler["command"] as? String)?.contains(marker) ?? false
+        guard let command = handler["command"] as? String else { return false }
+        return (command as NSString).lastPathComponent == marker
     }
 
     // MARK: - Plik
@@ -106,23 +130,48 @@ public enum HookInstaller {
     }
 
     /// Zapisuje ustawienia atomowo, po zrobieniu kopii zapasowej obecnego pliku. Zwraca ścieżkę kopii.
+    ///
+    /// Dowiązanie (np. do repozytorium dotfiles) jest zachowane — zapis trafia do pliku docelowego. Prawa pliku
+    /// (np. 0600) zostają takie jak były. Kopie mają unikalne nazwy, zostaje ich najwyżej `keptBackups`.
     @discardableResult
     public static func write(_ settings: [String: Any], to url: URL = settingsURL, now: Date = Date()) throws(InstallError) -> URL? {
         let fileManager = FileManager.default
+        let target = url.resolvingSymlinksInPath()
         var backup: URL?
         do {
-            try fileManager.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
-            if fileManager.fileExists(atPath: url.path) {
+            try fileManager.createDirectory(at: target.deletingLastPathComponent(), withIntermediateDirectories: true)
+            let permissions = (try? fileManager.attributesOfItem(atPath: target.path)[.posixPermissions]) as? NSNumber
+            if fileManager.fileExists(atPath: target.path) {
                 let stamp = ISO8601DateFormatter().string(from: now).replacingOccurrences(of: ":", with: "-")
-                let target = url.deletingLastPathComponent().appendingPathComponent("settings.json.wyspa-backup-\(stamp)")
-                try fileManager.copyItem(at: url, to: target)
-                backup = target
+                let name = "settings.json.wyspa-backup-\(stamp)-\(UUID().uuidString.prefix(6))"
+                let copy = url.deletingLastPathComponent().appendingPathComponent(name)
+                try fileManager.copyItem(at: target, to: copy)
+                backup = copy
+                pruneBackups(in: url.deletingLastPathComponent())
             }
             let data = try JSONSerialization.data(withJSONObject: settings, options: [.prettyPrinted, .sortedKeys, .withoutEscapingSlashes])
-            try data.write(to: url, options: .atomic)
+            try data.write(to: target, options: .atomic)
+            if let permissions {
+                try fileManager.setAttributes([.posixPermissions: permissions], ofItemAtPath: target.path)
+            }
         } catch {
             throw .writeFailed(error.localizedDescription)
         }
         return backup
+    }
+
+    /// Usuwa najstarsze kopie zapasowe Wyspy ponad limit (inne pliki w katalogu są nietknięte).
+    static func pruneBackups(in directory: URL) {
+        let fileManager = FileManager.default
+        let backups = ((try? fileManager.contentsOfDirectory(at: directory, includingPropertiesForKeys: [.creationDateKey])) ?? [])
+            .filter { $0.lastPathComponent.hasPrefix("settings.json.wyspa-backup-") }
+            .sorted {
+                let l = (try? $0.resourceValues(forKeys: [.creationDateKey]).creationDate) ?? .distantPast
+                let r = (try? $1.resourceValues(forKeys: [.creationDateKey]).creationDate) ?? .distantPast
+                return l > r
+            }
+        for old in backups.dropFirst(keptBackups) {
+            try? fileManager.removeItem(at: old)
+        }
     }
 }

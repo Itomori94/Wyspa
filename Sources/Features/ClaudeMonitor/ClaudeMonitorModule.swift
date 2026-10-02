@@ -40,7 +40,7 @@ public final class ClaudeMonitorModule: IslandModule {
     public var decisionMinutes: Int {
         didSet {
             context.settings.set(decisionMinutes, for: Self.decisionKey)
-            if hookStatus == .installed { installHooks() }
+            scheduleHookUpdate()
         }
     }
     public var soundsEnabled: Bool { didSet { context.settings.set(soundsEnabled, for: Self.soundsKey) } }
@@ -51,6 +51,9 @@ public final class ClaudeMonitorModule: IslandModule {
     @ObservationIgnored private let context: ModuleContext
     @ObservationIgnored private var server: HookServer?
     @ObservationIgnored private var finishedTask: Task<Void, Never>?
+    @ObservationIgnored private var hookUpdateTask: Task<Void, Never>?
+    /// Obserwatory zakończenia procesów Claude Code (zdarzenia jądra, bez odpytywania).
+    @ObservationIgnored private var processWatchers: [Int32: DispatchSourceProcess] = [:]
     @ObservationIgnored private let log = Log.logger("claude")
 
     public required init(context: ModuleContext) {
@@ -65,7 +68,7 @@ public final class ClaudeMonitorModule: IslandModule {
             onMessage: { [weak self] envelope, channel in
                 Task { @MainActor in self?.receive(envelope, channel: channel) }
             },
-            onClosed: { [weak self] channelID in
+            onClosed: { [weak self] (channelID: UInt64) in
                 Task { @MainActor in self?.hookGaveUp(channelID) }
             }
         )
@@ -76,6 +79,9 @@ public final class ClaudeMonitorModule: IslandModule {
 
     /// Wyłączenie: czekające hooki od razu wracają do promptu w terminalu.
     public func deactivate() {
+        processWatchers.values.forEach { $0.cancel() }
+        processWatchers = [:]
+        hookUpdateTask?.cancel()
         server?.stop()
         server = nil
         pending = []
@@ -159,6 +165,17 @@ public final class ClaudeMonitorModule: IslandModule {
         }
     }
 
+    /// Zmiana czasu decyzji aktualizuje hooki dopiero po chwili bez kolejnych kliknięć.
+    private func scheduleHookUpdate() {
+        hookUpdateTask?.cancel()
+        guard hookStatus == .installed else { return }
+        hookUpdateTask = Task { [weak self] in
+            try? await Task.sleep(for: .milliseconds(800))
+            guard !Task.isCancelled else { return }
+            self?.installHooks()
+        }
+    }
+
     func installHooks() {
         guard FileManager.default.isExecutableFile(atPath: helperPath) else {
             problem = "Brak programu wyspa-hook w pakiecie aplikacji. Zbuduj aplikację skryptem scripts/build-app.sh."
@@ -166,8 +183,8 @@ public final class ClaudeMonitorModule: IslandModule {
         }
         do {
             let settings = try HookInstaller.read()
-            try HookInstaller.write(HookInstaller.installing(into: settings, helperPath: helperPath,
-                                                             decisionTimeout: decisionMinutes * 60))
+            try HookInstaller.write(try HookInstaller.installing(into: settings, helperPath: helperPath,
+                                                                 decisionTimeout: decisionMinutes * 60))
             refreshHookStatus()
         } catch {
             problem = error.localizedDescription
@@ -176,7 +193,7 @@ public final class ClaudeMonitorModule: IslandModule {
 
     func uninstallHooks() {
         do {
-            try HookInstaller.write(HookInstaller.uninstalling(from: try HookInstaller.read()))
+            try HookInstaller.write(try HookInstaller.uninstalling(from: try HookInstaller.read()))
             refreshHookStatus()
         } catch {
             problem = error.localizedDescription
@@ -188,7 +205,7 @@ public final class ClaudeMonitorModule: IslandModule {
         return hooks.values.compactMap { $0 as? [[String: Any]] }.joined()
             .compactMap { $0["hooks"] as? [[String: Any]] }.joined()
             .compactMap { $0["command"] as? String }
-            .filter { $0.contains(HookInstaller.marker) }
+            .filter { ($0 as NSString).lastPathComponent == HookInstaller.marker }
     }
 
     // MARK: - Zdarzenia
@@ -197,18 +214,37 @@ public final class ClaudeMonitorModule: IslandModule {
         let (next, alert) = store.applying(envelope, at: Date())
         store = next
         if envelope.event.name == "PermissionRequest", let channel {
+            // Potwierdzenie z głównego wątku: hook wie, że Wyspa żyje i czeka na decyzję użytkownika.
+            channel.acknowledge()
             pending = pending + [PendingPermission(id: UUID(), sessionID: envelope.event.sessionID,
                                                    event: envelope.event, receivedAt: Date(), channel: channel)]
             context.requestExpand()
         }
-        if envelope.event.name == "SessionStart" || envelope.event.name == "SessionEnd" { removeDeadSessions() }
+        if let pid = envelope.claudePID { watchProcess(pid) }
         guard let alert, let session = store.sessions[envelope.event.sessionID] else { return }
         if alert == .finished { showFinished(session) }
         playSound(for: alert, session: session)
     }
 
+    /// Sesja znika, gdy jej proces Claude Code się zakończy (np. zamknięty terminal bez SessionEnd).
+    private func watchProcess(_ pid: Int32) {
+        guard processWatchers[pid] == nil, pid > 1 else { return }
+        let source = DispatchSource.makeProcessSource(identifier: pid, eventMask: .exit, queue: .main)
+        source.setEventHandler { [weak self] in
+            MainActor.assumeIsolated {
+                self?.processWatchers[pid]?.cancel()
+                self?.processWatchers[pid] = nil
+                self?.removeDeadSessions()
+            }
+        }
+        processWatchers[pid] = source
+        source.resume()
+        // Proces mógł zniknąć przed rejestracją źródła.
+        if kill(pid, 0) != 0 && errno == ESRCH { removeDeadSessions() }
+    }
+
     /// Hook zamknął połączenie bez decyzji (minął jego czas): Claude Code pokazuje prompt w terminalu.
-    private func hookGaveUp(_ channelID: Int32) {
+    private func hookGaveUp(_ channelID: UInt64) {
         guard let request = pending.first(where: { $0.channel.id == channelID }) else { return }
         pending = pending.filter { $0.id != request.id }
         if let session = store.sessions[request.sessionID], session.state == .waitingForPermission {

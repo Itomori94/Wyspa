@@ -22,6 +22,11 @@ struct AdapterBundle: Sendable {
         return complete ? candidate : nil
     }
 
+    /// Minimalne środowisko Perla: PERL5OPT/PERL5LIB z sesji nie wstrzykną kodu do procesu z dostępem do MediaRemote.
+    static var environment: [String: String] {
+        ["PATH": "/usr/bin:/bin", "HOME": NSHomeDirectory(), "LANG": "en_US.UTF-8"]
+    }
+
     func arguments(_ command: [String]) -> [String] {
         [script.path, framework.path, testClient.path] + command
     }
@@ -44,6 +49,7 @@ enum AdapterRunner {
         let errorPipe = Pipe()
         process.executableURL = AdapterBundle.perl
         process.arguments = bundle.arguments(command)
+        process.environment = AdapterBundle.environment
         process.standardOutput = FileHandle.nullDevice
         process.standardError = errorPipe
 
@@ -71,7 +77,9 @@ enum AdapterRunner {
     static func terminateOrphans(of bundle: AdapterBundle) async {
         let pkill = Process()
         pkill.executableURL = URL(fileURLWithPath: "/usr/bin/pkill")
-        pkill.arguments = ["-P", "1", "-f", "\(bundle.script.path) .* stream"]
+        // Ścieżka jako dosłowny tekst we wzorcu ERE (znaki jak „.”, „+”, „(” w ścieżce nie dopasują za dużo).
+        let script = NSRegularExpression.escapedPattern(for: bundle.script.path)
+        pkill.arguments = ["-P", "1", "-f", "^/usr/bin/perl \(script) .* stream"]
         pkill.standardOutput = FileHandle.nullDevice
         pkill.standardError = FileHandle.nullDevice
         let finished = ProcessCompletion()

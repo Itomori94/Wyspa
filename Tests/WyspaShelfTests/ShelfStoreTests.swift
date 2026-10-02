@@ -113,4 +113,32 @@ struct ShelfStoreTests {
         let url = try #require(store.url(for: item))
         #expect(url.standardizedFileURL.path.hasPrefix(storeDirectory.standardizedFileURL.path))
     }
+
+    @Test("Zmanipulowany indeks: ścieżka spoza Items/<id> jest ignorowana, a usuwanie nie wychodzi poza kopię")
+    func tamperedIndex() throws {
+        let victim = root.appendingPathComponent("Ważne", isDirectory: true)
+        try FileManager.default.createDirectory(at: victim, withIntermediateDirectories: true)
+        try Data("x".utf8).write(to: victim.appendingPathComponent("plik.txt"))
+        let id = UUID()
+        let evil = ShelfItem(id: id, name: "zły", source: .stored(relativePath: "../Ważne/plik.txt"), addedAt: Date())
+        try FileManager.default.createDirectory(at: storeDirectory, withIntermediateDirectories: true)
+        try JSONEncoder().encode([evil]).write(to: storeDirectory.appendingPathComponent(ShelfStore.indexFileName))
+
+        let store = try ShelfStore(directory: storeDirectory)
+        #expect(store.url(for: store.items[0]) == nil)
+        try store.remove([id])
+        #expect(FileManager.default.fileExists(atPath: victim.appendingPathComponent("plik.txt").path))
+    }
+
+    @Test("Osierocone kopie są usuwane przy otwarciu, cudze pliki w Items zostają")
+    func orphanCleanup() throws {
+        let items = storeDirectory.appendingPathComponent("Items")
+        let orphan = items.appendingPathComponent(UUID().uuidString)
+        try FileManager.default.createDirectory(at: orphan, withIntermediateDirectories: true)
+        let notOurs = items.appendingPathComponent("notatki")
+        try FileManager.default.createDirectory(at: notOurs, withIntermediateDirectories: true)
+        _ = try ShelfStore(directory: storeDirectory)
+        #expect(!FileManager.default.fileExists(atPath: orphan.path))
+        #expect(FileManager.default.fileExists(atPath: notOurs.path))
+    }
 }

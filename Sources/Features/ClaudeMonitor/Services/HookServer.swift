@@ -2,20 +2,29 @@ import Foundation
 import WyspaCore
 import WyspaHookKit
 
-/// Serwer gniazda Unix dla `wyspa-hook`: jedna linia JSON od hooka, opcjonalnie jedna linia odpowiedzi.
+/// Serwer gniazda Unix dla `wyspa-hook`: jedna linia JSON od hooka, opcjonalnie potwierdzenie i jedna linia decyzji.
 ///
-/// Gniazdo ma prawa 0600 (tylko właściciel). Prośba o uprawnienie trzyma połączenie otwarte do decyzji;
-/// zamknięcie połączenia przez hook (minął jego czas) zgłasza `onClosed`.
+/// Bezpieczeństwo: katalog 0700, gniazdo tworzone pod `umask 0177` (od razu 0600, bez okna między bind a chmod).
+/// Połączenia mają własne, rosnące identyfikatory — decyzja nigdy nie trafi do innego hooka, nawet gdy system
+/// ponownie użyje tego samego numeru deskryptora.
 public final class HookServer: @unchecked Sendable {
     public typealias MessageHandler = @Sendable (HookProtocol.Envelope, ReplyChannel?) -> Void
 
+    /// Najwięcej jednocześnie otwartych połączeń (obrona przed zalaniem gniazda).
+    static let maxClients = 64
+
     /// Kanał odpowiedzi do jednego hooka czekającego na decyzję.
     public struct ReplyChannel: Hashable, Sendable {
-        public let id: Int32
+        public let id: UInt64
         fileprivate let server: HookServer
 
+        /// Potwierdzenie z głównego wątku Wyspy: hook wie, że aplikacja żyje i pokaże prośbę.
+        public func acknowledge() {
+            server.write(to: id, data: HookProtocol.acknowledgement, closing: false)
+        }
+
         public func send(_ behavior: HookProtocol.Behavior, message: String? = nil) {
-            server.reply(to: id, data: HookProtocol.reply(behavior, message: message))
+            server.write(to: id, data: HookProtocol.reply(behavior, message: message), closing: true)
         }
 
         public static func == (lhs: ReplyChannel, rhs: ReplyChannel) -> Bool { lhs.id == rhs.id }
@@ -32,6 +41,7 @@ public final class HookServer: @unchecked Sendable {
     }
 
     private struct Client {
+        let fd: Int32
         let source: DispatchSourceRead
         var buffer = Data()
         var awaitingReply = false
@@ -40,27 +50,34 @@ public final class HookServer: @unchecked Sendable {
     private let path: String
     private let queue = DispatchQueue(label: "pl.net.kurant.wyspa.claude-socket")
     private let onMessage: MessageHandler
-    private let onClosed: @Sendable (Int32) -> Void
+    private let onClosed: @Sendable (UInt64) -> Void
     private var listener: Int32 = -1
     private var acceptSource: DispatchSourceRead?
-    private var clients: [Int32: Client] = [:]
+    private var clients: [UInt64: Client] = [:]
+    private var nextID: UInt64 = 1
     private let log = Log.logger("claude.socket")
 
     public init(path: String = HookProtocol.socketURL.path, onMessage: @escaping MessageHandler,
-                onClosed: @escaping @Sendable (Int32) -> Void) {
+                onClosed: @escaping @Sendable (UInt64) -> Void) {
         self.path = path
         self.onMessage = onMessage
         self.onClosed = onClosed
     }
 
     public func start() throws(StartError) {
+        let directory = (path as NSString).deletingLastPathComponent
         do {
-            try FileManager.default.createDirectory(atPath: (path as NSString).deletingLastPathComponent,
-                                                    withIntermediateDirectories: true)
+            try FileManager.default.createDirectory(atPath: directory, withIntermediateDirectories: true,
+                                                    attributes: [.posixPermissions: 0o700])
         } catch {
             throw .socket(error.localizedDescription)
         }
-        unlink(path)
+        // Usuwamy tylko stare gniazdo, nigdy zwykły plik ani dowiązanie podstawione pod tę ścieżkę.
+        var info = stat()
+        if lstat(path, &info) == 0 {
+            guard info.st_mode & S_IFMT == S_IFSOCK else { throw .socket("pod ścieżką gniazda jest coś innego niż gniazdo") }
+            unlink(path)
+        }
         let fd = socket(AF_UNIX, SOCK_STREAM, 0)
         guard fd >= 0 else { throw .socket(String(cString: strerror(errno))) }
         var address = sockaddr_un()
@@ -74,10 +91,12 @@ public final class HookServer: @unchecked Sendable {
             buffer.copyBytes(from: bytes)
             buffer[bytes.count] = 0
         }
+        let previousMask = umask(0o177)
         let bound = withUnsafePointer(to: &address) {
             $0.withMemoryRebound(to: sockaddr.self, capacity: 1) { bind(fd, $0, socklen_t(MemoryLayout<sockaddr_un>.size)) }
         }
-        guard bound == 0, chmod(path, 0o600) == 0, listen(fd, 16) == 0 else {
+        umask(previousMask)
+        guard bound == 0, listen(fd, 16) == 0 else {
             let reason = String(cString: strerror(errno))
             close(fd)
             throw .socket(reason)
@@ -86,6 +105,8 @@ public final class HookServer: @unchecked Sendable {
         listener = fd
         let source = DispatchSource.makeReadSource(fileDescriptor: fd, queue: queue)
         source.setEventHandler { [weak self] in self?.acceptClients() }
+        // Deskryptor zamykany dopiero po anulowaniu źródła (zamknięcie pod aktywnym źródłem to błąd użycia GCD).
+        source.setCancelHandler { close(fd) }
         source.resume()
         acceptSource = source
     }
@@ -93,14 +114,13 @@ public final class HookServer: @unchecked Sendable {
     /// Zatrzymuje serwer. Czekające hooki dostają „ask” (prompt w terminalu) zamiast czekać do końca limitu.
     public func stop() {
         queue.sync {
-            for (fd, client) in clients {
-                if client.awaitingReply { writeAll(fd, HookProtocol.reply(.ask)) }
+            for client in clients.values {
+                if client.awaitingReply { writeAll(client.fd, HookProtocol.reply(.ask)) }
                 client.source.cancel()
             }
             clients = [:]
             acceptSource?.cancel()
             acceptSource = nil
-            if listener >= 0 { close(listener) }
             listener = -1
             unlink(path)
         }
@@ -112,27 +132,35 @@ public final class HookServer: @unchecked Sendable {
         while true {
             let fd = accept(listener, nil, nil)
             guard fd >= 0 else { return }
+            // Tylko procesy tego samego użytkownika (gniazdo 0600 i katalog 0700 to i tak wymuszają).
+            var uid: uid_t = 0, gid: gid_t = 0
+            guard getpeereid(fd, &uid, &gid) == 0, uid == getuid(), clients.count < Self.maxClients else {
+                close(fd)
+                continue
+            }
             _ = fcntl(fd, F_SETFL, fcntl(fd, F_GETFL) | O_NONBLOCK)
             var noSigPipe: Int32 = 1
             setsockopt(fd, SOL_SOCKET, SO_NOSIGPIPE, &noSigPipe, socklen_t(MemoryLayout<Int32>.size))
+            let id = nextID
+            nextID += 1
             let source = DispatchSource.makeReadSource(fileDescriptor: fd, queue: queue)
-            source.setEventHandler { [weak self] in self?.read(fd) }
+            source.setEventHandler { [weak self] in self?.read(id) }
             source.setCancelHandler { close(fd) }
-            clients[fd] = Client(source: source)
+            clients[id] = Client(fd: fd, source: source)
             source.resume()
         }
     }
 
-    private func read(_ fd: Int32) {
-        guard var client = clients[fd] else { return }
+    private func read(_ id: UInt64) {
+        guard var client = clients[id] else { return }
         var chunk = [UInt8](repeating: 0, count: 64 * 1024)
-        let count = Darwin.read(fd, &chunk, chunk.count)
+        let count = Darwin.read(client.fd, &chunk, chunk.count)
         if count <= 0 {
             // Hook zamknął połączenie: zwykły koniec albo minął jego czas na decyzję.
             let wasWaiting = client.awaitingReply
             client.source.cancel()
-            clients[fd] = nil
-            if wasWaiting { onClosed(fd) }
+            clients[id] = nil
+            if wasWaiting { onClosed(id) }
             return
         }
         guard !client.awaitingReply else { return }
@@ -140,11 +168,11 @@ public final class HookServer: @unchecked Sendable {
         guard client.buffer.count <= HookProtocol.maxMessageBytes else {
             log.error("Za duża wiadomość od hooka — odrzucona")
             client.source.cancel()
-            clients[fd] = nil
+            clients[id] = nil
             return
         }
         guard let newline = client.buffer.firstIndex(of: UInt8(ascii: "\n")) else {
-            clients[fd] = client
+            clients[id] = client
             return
         }
         let line = client.buffer[client.buffer.startIndex..<newline]
@@ -152,37 +180,45 @@ public final class HookServer: @unchecked Sendable {
             let envelope = try HookProtocol.parse(Data(line))
             if envelope.wantsReply {
                 client.awaitingReply = true
-                clients[fd] = client
-                onMessage(envelope, ReplyChannel(id: fd, server: self))
+                clients[id] = client
+                onMessage(envelope, ReplyChannel(id: id, server: self))
             } else {
                 client.source.cancel()
-                clients[fd] = nil
+                clients[id] = nil
                 onMessage(envelope, nil)
             }
         } catch {
             log.error("Nieczytelna wiadomość od hooka: \(String(describing: error))")
             client.source.cancel()
-            clients[fd] = nil
+            clients[id] = nil
         }
     }
 
-    fileprivate func reply(to fd: Int32, data: Data) {
+    fileprivate func write(to id: UInt64, data: Data, closing: Bool) {
         queue.async { [self] in
-            guard let client = clients[fd], client.awaitingReply else { return }
-            writeAll(fd, data)
-            client.source.cancel()
-            clients[fd] = nil
+            guard let client = clients[id], client.awaitingReply else { return }
+            writeAll(client.fd, data)
+            if closing {
+                client.source.cancel()
+                clients[id] = nil
+            }
         }
     }
 
     private func writeAll(_ fd: Int32, _ data: Data) {
-        _ = fcntl(fd, F_SETFL, fcntl(fd, F_GETFL) & ~O_NONBLOCK)
         data.withUnsafeBytes { buffer in
             var offset = 0
-            while offset < buffer.count {
-                let written = write(fd, buffer.baseAddress! + offset, buffer.count - offset)
-                if written <= 0 { return }
-                offset += written
+            var attempts = 0
+            while offset < buffer.count, attempts < 1000 {
+                let written = Darwin.write(fd, buffer.baseAddress! + offset, buffer.count - offset)
+                if written > 0 {
+                    offset += written
+                } else if written < 0 && errno == EAGAIN {
+                    attempts += 1
+                    usleep(1000)
+                } else {
+                    return
+                }
             }
         }
     }

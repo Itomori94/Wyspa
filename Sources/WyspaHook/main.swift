@@ -44,8 +44,12 @@ guard var message = try? JSONSerialization.data(withJSONObject: envelope) else {
 message.append(UInt8(ascii: "\n"))
 guard message.count <= HookProtocol.maxMessageBytes else { finish() }
 
-// Połączenie z limitem czasu (gniazdo nieblokujące + poll).
+// Gniazdo musi być gniazdem należącym do bieżącego użytkownika — inaczej to nie Wyspa.
 let socketPath = HookProtocol.socketURL.path
+var socketInfo = stat()
+guard lstat(socketPath, &socketInfo) == 0, socketInfo.st_mode & S_IFMT == S_IFSOCK, socketInfo.st_uid == getuid() else { finish() }
+
+// Połączenie z limitem czasu (gniazdo nieblokujące + poll).
 let fd = socket(AF_UNIX, SOCK_STREAM, 0)
 guard fd >= 0 else { finish() }
 var address = sockaddr_un()
@@ -70,6 +74,8 @@ if connected != 0 {
     guard socketError == 0 else { finish() }
 }
 _ = fcntl(fd, F_SETFL, fcntl(fd, F_GETFL) & ~O_NONBLOCK)
+var peerUID: uid_t = 0, peerGID: gid_t = 0
+guard getpeereid(fd, &peerUID, &peerGID) == 0, peerUID == getuid() else { finish() }
 
 // Wysłanie całej wiadomości.
 var sent = 0
@@ -86,24 +92,42 @@ guard !sendFailed, wantsReply else {
     finish()
 }
 
-// Oczekiwanie na decyzję: jedna linia JSON albo zamknięcie połączenia.
-var reply = Data()
-let deadline = Date().addingTimeInterval(TimeInterval(decisionTimeout))
+/// Czyta kolejne linie do `deadline`; nil = czas minął albo połączenie zamknięte.
+var pending = Data()
 var buffer = [UInt8](repeating: 0, count: 4096)
-while !reply.contains(UInt8(ascii: "\n")) {
-    let remaining = Int32(max(0, deadline.timeIntervalSinceNow) * 1000)
-    guard remaining > 0 else { break }
-    var pollDescriptor = pollfd(fd: fd, events: Int16(POLLIN), revents: 0)
-    guard poll(&pollDescriptor, 1, remaining) == 1 else { break }
-    let count = read(fd, &buffer, buffer.count)
-    guard count > 0 else { break }
-    reply.append(contentsOf: buffer[0..<count])
-    if reply.count > 64 * 1024 { break }
+@MainActor
+func readLine(until deadline: Date) -> Data? {
+    while true {
+        if let newline = pending.firstIndex(of: UInt8(ascii: "\n")) {
+            let line = Data(pending[pending.startIndex..<newline])
+            pending = Data(pending[pending.index(after: newline)...])
+            return line
+        }
+        // Ograniczenie do Int32 (poll przyjmuje milisekundy jako Int32).
+        let remaining = Int32(clamping: Int(max(0, deadline.timeIntervalSinceNow) * 1000))
+        guard remaining > 0, pending.count <= 64 * 1024 else { return nil }
+        var pollDescriptor = pollfd(fd: fd, events: Int16(POLLIN), revents: 0)
+        guard poll(&pollDescriptor, 1, remaining) == 1 else { return nil }
+        let count = read(fd, &buffer, buffer.count)
+        guard count > 0 else { return nil }
+        pending.append(contentsOf: buffer[0..<count])
+    }
 }
+
+// Najpierw potwierdzenie z głównego wątku Wyspy: zawieszona aplikacja nie zablokuje terminala na pełny limit.
+guard let acknowledgement = readLine(until: Date().addingTimeInterval(HookProtocol.acknowledgementTimeout)),
+      (try? JSONSerialization.jsonObject(with: acknowledgement) as? [String: Any])?["ack"] as? Bool == true
+else {
+    close(fd)
+    finish()
+}
+
+// Potem decyzja użytkownika: jedna linia JSON albo zamknięcie połączenia.
+let decision = readLine(until: Date().addingTimeInterval(TimeInterval(decisionTimeout)))
 close(fd)
 
-guard let line = reply.split(separator: UInt8(ascii: "\n")).first,
-      let object = try? JSONSerialization.jsonObject(with: Data(line)) as? [String: Any],
+guard let line = decision,
+      let object = try? JSONSerialization.jsonObject(with: line) as? [String: Any],
       let behavior = (object["behavior"] as? String).flatMap(HookProtocol.Behavior.init(rawValue:))
 else { finish() }
 finish(HookProtocol.hookOutput(for: behavior, message: object["message"] as? String))

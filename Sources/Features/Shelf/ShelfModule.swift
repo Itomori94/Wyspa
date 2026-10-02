@@ -22,6 +22,8 @@ public final class ShelfModule: IslandModule, IslandDropHandling {
     }
 
     public private(set) var items: [ShelfItem] = []
+    /// Adresy elementów rozwiązywane raz po każdej zmianie półki (nie przy każdym przerysowaniu kafelka).
+    public private(set) var resolvedURLs: [UUID: URL] = [:]
     public private(set) var selection = ShelfSelection()
     public private(set) var problem: String?
 
@@ -36,13 +38,37 @@ public final class ShelfModule: IslandModule, IslandDropHandling {
     public func activate() async throws {
         let store = try ShelfStore(directory: directory)
         self.store = store
-        items = store.items
+        setItems(store.items)
+        Self.removeStaleTemporaryFiles()
+    }
+
+    private func setItems(_ newItems: [ShelfItem]) {
+        items = newItems
+        guard let store else {
+            resolvedURLs = [:]
+            return
+        }
+        resolvedURLs = Dictionary(uniqueKeysWithValues: newItems.compactMap { item in store.url(for: item).map { (item.id, $0) } })
+    }
+
+    /// Pliki tymczasowe Wyspy (AirDrop, obietnice plików) starsze niż godzina.
+    private static func removeStaleTemporaryFiles() {
+        let fileManager = FileManager.default
+        let temporary = fileManager.temporaryDirectory
+        let cutoff = Date().addingTimeInterval(-3600)
+        let names = (try? fileManager.contentsOfDirectory(atPath: temporary.path)) ?? []
+        for name in names where name.hasPrefix("Wyspa-") {
+            let url = temporary.appendingPathComponent(name)
+            let modified = (try? url.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate) ?? .distantFuture
+            if modified < cutoff { try? fileManager.removeItem(at: url) }
+        }
     }
 
     /// Wyłączenie zwalnia pamięć; zawartość półki zostaje na dysku na następne włączenie.
     public func deactivate() {
         store = nil
         items = []
+        resolvedURLs = [:]
         selection.clear()
     }
 
@@ -70,7 +96,7 @@ public final class ShelfModule: IslandModule, IslandDropHandling {
 
     // MARK: - Akcje
 
-    func url(for item: ShelfItem) -> URL? { store?.url(for: item) }
+    func url(for item: ShelfItem) -> URL? { resolvedURLs[item.id] }
 
     func click(_ id: UUID, modifier: ShelfSelection.Modifier) {
         var next = selection
@@ -90,10 +116,14 @@ public final class ShelfModule: IslandModule, IslandDropHandling {
 
     /// Adresy do przeciągnięcia: całe zaznaczenie, jeśli chwycony element do niego należy.
     func dragURLs(grabbing id: UUID) -> [URL] {
-        store?.urls(for: selection.dragSet(grabbing: id)) ?? []
+        urls(for: selection.dragSet(grabbing: id))
     }
 
-    var selectedURLs: [URL] { store?.urls(for: selection.selected) ?? [] }
+    var selectedURLs: [URL] { urls(for: selection.selected) }
+
+    private func urls(for ids: Set<UUID>) -> [URL] {
+        items.filter { ids.contains($0.id) }.compactMap { resolvedURLs[$0.id] }
+    }
 
     func open(_ id: UUID) {
         guard let item = items.first(where: { $0.id == id }), let url = url(for: item) else {
@@ -105,7 +135,7 @@ public final class ShelfModule: IslandModule, IslandDropHandling {
 
     func quickLook(grabbing id: UUID? = nil) {
         let urls = id.map(dragURLs(grabbing:)) ?? selectedURLs
-        QuickLook.shared.show(urls.isEmpty ? (store?.urls(for: Set(items.map(\.id))) ?? []) : urls)
+        QuickLook.shared.show(urls.isEmpty ? self.urls(for: Set(items.map(\.id))) : urls)
     }
 
     func airDropSelection() {
@@ -133,6 +163,10 @@ public final class ShelfModule: IslandModule, IslandDropHandling {
     // MARK: - Wewnętrzne
 
     private func add(_ ingested: [IngestedItem]) {
+        // Pliki tymczasowe znikają zawsze, także gdy zapis na półkę się nie uda.
+        defer {
+            for case .temporaryFile(let url, _) in ingested { try? FileManager.default.removeItem(at: url) }
+        }
         mutate { store in
             let files = ingested.compactMap { item -> URL? in
                 if case .file(let url) = item { return url }
@@ -144,7 +178,6 @@ public final class ShelfModule: IslandModule, IslandDropHandling {
                 case .file: continue
                 case .data(let data, let name): try store.addData(data, suggestedName: name)
                 case .temporaryFile(let url, let name):
-                    defer { try? FileManager.default.removeItem(at: url) }
                     try store.addCopy(of: url, suggestedName: name)
                 }
             }
@@ -182,7 +215,7 @@ public final class ShelfModule: IslandModule, IslandDropHandling {
             log.error("Zmiana półki nie powiodła się: \(error.localizedDescription)")
             problem = error.localizedDescription
         }
-        items = store.items
+        setItems(store.items)
         var next = selection
         next.retain(items.map(\.id))
         selection = next

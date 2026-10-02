@@ -228,7 +228,7 @@ final class IslandWindowController {
     }
 
     private func handleScroll(_ event: NSEvent) {
-        guard event.window === panel else { return }
+        guard event.window === panel, !isOverScrollableContent(event) else { return }
         // Ruch palców: przy „naturalnym” przewijaniu delty już mają kierunek palców.
         let sign: CGFloat = event.isDirectionInvertedFromDevice ? 1 : -1
         let direction = swipeRecognizer.handle(
@@ -237,6 +237,21 @@ final class IslandWindowController {
             dy: event.scrollingDeltaY * sign
         )
         if let direction { send(.swipe(direction)) }
+    }
+
+    /// Przewijanie listy (schowek, przypomnienia, notatka) należy do listy, nie do gestu wyspy.
+    private func isOverScrollableContent(_ event: NSEvent) -> Bool {
+        var view = panel.contentView?.hitTest(event.locationInWindow)
+        while let current = view {
+            if let scrollView = current as? NSScrollView,
+               let document = scrollView.documentView,
+               document.frame.height > scrollView.contentView.bounds.height + 1
+                || document.frame.width > scrollView.contentView.bounds.width + 1 {
+                return true
+            }
+            view = current.superview
+        }
+        return false
     }
 
     private static func scrollPhase(of event: NSEvent) -> TrackpadPhase {
