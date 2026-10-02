@@ -382,3 +382,40 @@ struct ClaudeLimitsTests {
         #expect(HookInstaller.uninstallingStatusLine(from: foreign)["statusLine"] != nil)
     }
 }
+
+@Suite("Pytania Claude z opcjami")
+struct ClaudeQuestionTests {
+    let input: [String: Any] = ["questions": [
+        ["question": "Którą bazę wybrać?", "header": "Baza", "multiSelect": false,
+         "options": [["label": "SQLite", "description": "Plik lokalny"], ["label": "Postgres"]]],
+        ["question": "Bez opcji?", "options": []],
+    ]]
+
+    @Test("Odczyt pytań; pytania bez opcji są pomijane")
+    func parse() {
+        let questions = ClaudeQuestion.parse(input)
+        #expect(questions.count == 1 && questions[0].options.map(\.label) == ["SQLite", "Postgres"])
+        #expect(questions[0].options[0].description == "Plik lokalny" && !questions[0].multiSelect)
+        #expect(ClaudeQuestion.parse(["questions": "x"]).isEmpty && ClaudeQuestion.parse(nil).isEmpty)
+    }
+
+    @Test("Hook czeka tylko na prośbę o zgodę i pytanie z opcjami")
+    func waits() {
+        #expect(HookEvent.wantsReply(["hook_event_name": "PermissionRequest"]))
+        #expect(HookEvent.wantsReply(["hook_event_name": "PreToolUse", "tool_name": "AskUserQuestion", "tool_input": input]))
+        #expect(!HookEvent.wantsReply(["hook_event_name": "PreToolUse", "tool_name": "Bash", "tool_input": ["command": "ls"]]))
+        #expect(!HookEvent.wantsReply(["hook_event_name": "PreToolUse", "tool_name": "AskUserQuestion", "tool_input": [:]]))
+    }
+
+    @Test("Wyjście hooka: zgoda i odpowiedzi wpisane w wejście narzędzia, reszta wejścia bez zmian")
+    func output() throws {
+        let text = try #require(ClaudeQuestion.hookOutput(toolInput: input, answers: ["Którą bazę wybrać?": "SQLite"]))
+        let object = try JSONSerialization.jsonObject(with: Data(text.utf8)) as? [String: Any]
+        let specific = object?["hookSpecificOutput"] as? [String: Any]
+        #expect(specific?["hookEventName"] as? String == "PreToolUse" && specific?["permissionDecision"] as? String == "allow")
+        let updated = specific?["updatedInput"] as? [String: Any]
+        #expect(updated?["answers"] as? [String: String] == ["Którą bazę wybrać?": "SQLite"])
+        #expect((updated?["questions"] as? [Any])?.count == 2)
+        #expect(ClaudeQuestion.answerText(["A", "B"]) == "A, B")
+    }
+}

@@ -43,7 +43,7 @@ if isStatusLine {
              "session_id": rawEvent["session_id"] as? String ?? "statusline",
              "rate_limits": rateLimits]
 }
-let wantsReply = event["hook_event_name"] as? String == "PermissionRequest"
+let wantsReply = HookEvent.wantsReply(event)
 
 let environment = ProcessInfo.processInfo.environment
 var envelope: [String: Any] = [
@@ -145,4 +145,11 @@ guard let line = decision,
       let object = try? JSONSerialization.jsonObject(with: line) as? [String: Any],
       let behavior = (object["behavior"] as? String).flatMap(HookProtocol.Behavior.init(rawValue:))
 else { finish() }
+if event["hook_event_name"] as? String == "PreToolUse" {
+    // Pytanie z opcjami: odpowiedź z wyspy trafia do wejścia narzędzia; bez niej — zwykłe pytanie w terminalu.
+    guard behavior == .allow, let answers = object["answers"] as? [String: String], !answers.isEmpty,
+          let toolInput = event["tool_input"] as? [String: Any]
+    else { finish() }
+    finish(ClaudeQuestion.hookOutput(toolInput: toolInput, answers: answers))
+}
 finish(HookProtocol.hookOutput(for: behavior, message: object["message"] as? String))

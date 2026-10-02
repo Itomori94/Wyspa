@@ -175,6 +175,35 @@ struct HookIntegrationTests {
         return (process.terminationStatus, String(decoding: output, as: UTF8.self))
     }
 
+    @Test("Pytanie z opcjami: odpowiedź z wyspy trafia do Claude Code, „W terminalu” i zwykłe narzędzia — bez wyjścia")
+    func questionFromIsland() async throws {
+        let path = socketPath()
+        let reply = ReplyBox()
+        let server = HookServer(path: path, onMessage: { envelope, channel in
+            guard let channel else { return }
+            #expect(envelope.event.questions.first?.question == "Którą bazę wybrać?")
+            channel.acknowledge()
+            if let answers = reply.answers { channel.send(.allow, answers: answers) } else { channel.send(.ask) }
+        }, onClosed: { _ in })
+        try server.start()
+        defer { server.stop() }
+        let question: [String: Any] = [
+            "hook_event_name": "PreToolUse", "session_id": "s1", "tool_name": "AskUserQuestion",
+            "tool_input": ["questions": [["question": "Którą bazę wybrać?", "options": [["label": "SQLite"], ["label": "Postgres"]]]]],
+        ]
+        reply.answers = ["Którą bazę wybrać?": "SQLite"]
+        let answered = try await runHook(socket: path, input: question)
+        let object = try JSONSerialization.jsonObject(with: Data(answered.output.utf8)) as? [String: Any]
+        let updated = (object?["hookSpecificOutput"] as? [String: Any])?["updatedInput"] as? [String: Any]
+        #expect(updated?["answers"] as? [String: String] == ["Którą bazę wybrać?": "SQLite"])
+
+        reply.answers = nil
+        #expect(try await runHook(socket: path, input: question).output.isEmpty)
+        let bash: [String: Any] = ["hook_event_name": "PreToolUse", "session_id": "s1", "tool_name": "Bash", "tool_input": ["command": "ls"]]
+        let quick = try await runHook(socket: path, input: bash)
+        #expect(quick.output.isEmpty && quick.seconds < 2)
+    }
+
     @Test("Odmowa z wyspy przekazuje powód do Claude Code")
     func denyFromIsland() async throws {
         let path = socketPath()
@@ -247,4 +276,13 @@ final class Received: @unchecked Sendable {
     func markClosed() { lock.withLock { closed = true } }
     var events: [HookProtocol.Envelope] { lock.withLock { stored } }
     var wasClosed: Bool { lock.withLock { closed } }
+}
+
+final class ReplyBox: @unchecked Sendable {
+    private let lock = NSLock()
+    private var stored: [String: String]?
+    var answers: [String: String]? {
+        get { lock.withLock { stored } }
+        set { lock.withLock { stored = newValue } }
+    }
 }

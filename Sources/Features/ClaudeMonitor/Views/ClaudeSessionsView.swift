@@ -14,10 +14,14 @@ struct ClaudeSessionsView: View {
                 if let limits = module.limits {
                     LimitsBar(limits: limits, compact: compact)
                 }
+                ForEach(module.pendingQuestions.prefix(1)) { question in
+                    QuestionCard(pending: question, session: module.store.sessions[question.sessionID],
+                                 isPrivate: isPrivate, answer: { module.answer(question, with: $0) })
+                }
                 ForEach(module.pending.prefix(compact ? 1 : 3)) { request in
                     PermissionCard(request: request, session: module.store.sessions[request.sessionID],
                                    decisionSeconds: module.decisionMinutes * 60, compact: compact, isPrivate: isPrivate,
-                                   decide: { module.decide(request, $0) })
+                                   decide: { module.decide(request, $0, reason: $1) })
                 }
                 if sessions.isEmpty && module.pending.isEmpty {
                     emptyState
@@ -135,7 +139,9 @@ private struct PermissionCard: View {
     let compact: Bool
     /// Tryb prywatny: sama nazwa narzędzia, bez polecenia, diffu i treści pliku.
     var isPrivate = false
-    let decide: (HookProtocol.Behavior) -> Void
+    let decide: (HookProtocol.Behavior, String?) -> Void
+    @State private var reason = ""
+    @State private var askingReason = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 7) {
@@ -159,17 +165,33 @@ private struct PermissionCard: View {
                 ToolPreview(input: request.event.toolInput)
             }
             HStack(spacing: 6) {
-                Button("Odrzuć") { decide(.deny) }
+                Button("Odrzuć") { decide(.deny, nil) }
                     .buttonStyle(DecisionStyle(tint: .red.opacity(0.75)))
                 if !compact {
-                    Button("W terminalu") { decide(.ask) }
+                    Button("Z powodem…") { askingReason.toggle() }
+                        .buttonStyle(DecisionStyle(tint: .red.opacity(0.35)))
+                        .help("Odrzuć i napisz Claude, dlaczego — bez wracania do terminala")
+                    Button("W terminalu") { decide(.ask, nil) }
                         .buttonStyle(DecisionStyle(tint: .white.opacity(0.15)))
                         .help("Zostaw decyzję w terminalu Claude Code")
                 }
                 Spacer(minLength: 0)
-                Button("Zezwól") { decide(.allow) }
+                Button("Zezwól") { decide(.allow, nil) }
                     .buttonStyle(DecisionStyle(tint: .green.opacity(0.8)))
                     .keyboardShortcut(.defaultAction)
+            }
+            if askingReason {
+                HStack(spacing: 6) {
+                    TextField("Dlaczego? (Claude dostanie ten powód)", text: $reason)
+                        .textFieldStyle(.plain)
+                        .font(.system(size: 11.5))
+                        .padding(.horizontal, 8).padding(.vertical, 5)
+                        .background(RoundedRectangle(cornerRadius: 7).fill(.white.opacity(0.08)))
+                        .onSubmit { decide(.deny, reason) }
+                    Button("Odrzuć") { decide(.deny, reason) }
+                        .buttonStyle(DecisionStyle(tint: .red.opacity(0.75)))
+                        .disabled(reason.trimmingCharacters(in: .whitespaces).isEmpty)
+                }
             }
         }
         .padding(10)
@@ -324,5 +346,81 @@ struct LimitsBar: View {
 
     static func tint(_ used: Double) -> Color {
         used >= 90 ? .red : used >= 70 ? .orange : .green
+    }
+}
+
+/// Pytanie Claude z opcjami: klik w opcję odpowiada (przy kilku pytaniach — po kolei), „W terminalu” zostawia
+/// pytanie w Claude Code. W trybie prywatnym treść pytania i opcji jest ukryta.
+private struct QuestionCard: View {
+    let pending: PendingQuestion
+    let session: ClaudeSession?
+    let isPrivate: Bool
+    let answer: ([String: [String]]?) -> Void
+    @State private var index = 0
+    @State private var chosen: [String: [String]] = [:]
+    @State private var selection: Set<String> = []
+
+    var body: some View {
+        let question = pending.questions[min(index, pending.questions.count - 1)]
+        VStack(alignment: .leading, spacing: 7) {
+            HStack(spacing: 6) {
+                Image(systemName: "questionmark.bubble.fill").foregroundStyle(.blue)
+                Text("\(session?.projectName ?? "Claude") pyta" + (pending.questions.count > 1 ? " (\(index + 1)/\(pending.questions.count))" : ""))
+                    .font(.system(size: 12, weight: .semibold)).lineLimit(1)
+                Spacer(minLength: 4)
+                Button("W terminalu") { answer(nil) }
+                    .buttonStyle(.plain).font(.system(size: 11)).foregroundStyle(.white.opacity(0.6))
+                    .help("Odpowiedz w terminalu Claude Code")
+            }
+            if isPrivate {
+                Label("Treść pytania ukryta — ekran jest udostępniany", systemImage: "eye.slash")
+                    .font(.system(size: 11)).foregroundStyle(.white.opacity(0.55))
+            } else {
+                Text(question.question).font(.system(size: 12)).foregroundStyle(.white.opacity(0.9)).lineLimit(3)
+                ForEach(question.options, id: \.label) { option in
+                    Button { pick(option.label, in: question) } label: {
+                        HStack(alignment: .firstTextBaseline, spacing: 6) {
+                            if question.multiSelect {
+                                Image(systemName: selection.contains(option.label) ? "checkmark.square.fill" : "square")
+                            }
+                            VStack(alignment: .leading, spacing: 1) {
+                                Text(option.label).font(.system(size: 11.5, weight: .semibold))
+                                if let description = option.description, !description.isEmpty {
+                                    Text(description).font(.system(size: 10.5)).foregroundStyle(.white.opacity(0.55)).lineLimit(2)
+                                }
+                            }
+                            Spacer(minLength: 0)
+                        }
+                        .padding(.horizontal, 9).padding(.vertical, 5)
+                        .background(RoundedRectangle(cornerRadius: 8).fill(.white.opacity(selection.contains(option.label) ? 0.18 : 0.08)))
+                    }
+                    .buttonStyle(.plain)
+                }
+                if question.multiSelect {
+                    Button("Dalej") { commit(Array(selection), for: question) }
+                        .buttonStyle(.plain).font(.system(size: 11.5, weight: .semibold))
+                        .disabled(selection.isEmpty)
+                }
+            }
+        }
+        .foregroundStyle(.white)
+        .padding(10)
+        .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(.blue.opacity(0.12)))
+        .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(.blue.opacity(0.45), lineWidth: 1))
+    }
+
+    private func pick(_ label: String, in question: ClaudeQuestion) {
+        guard question.multiSelect else { return commit([label], for: question) }
+        if selection.contains(label) { selection.remove(label) } else { selection.insert(label) }
+    }
+
+    private func commit(_ labels: [String], for question: ClaudeQuestion) {
+        chosen[question.question] = labels
+        selection = []
+        if index + 1 < pending.questions.count {
+            index += 1
+        } else {
+            answer(chosen)
+        }
     }
 }

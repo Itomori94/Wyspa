@@ -193,6 +193,9 @@ i ostatnie narzędzia. Kilka sesji naraz.
 - **Zgody z wyspy**: prośba o uprawnienie rozwija wyspę i pokazuje narzędzie z podglądem (polecenie, diff edycji,
   początek nowego pliku). *Zezwól*, *Odrzuć* albo *W terminalu*. Brak decyzji w ustalonym czasie (domyślnie 5 min)
   albo wyłączona Wyspa = zwykły prompt w terminalu, jak bez Wyspy.
+- **Pytania z opcjami**: gdy Claude zadaje pytanie z wyborem, wyspa pokazuje je z przyciskami — klik odpowiada
+  bez wracania do terminala (*W terminalu* zostawia pytanie w Claude Code). Przy prośbie o zgodę *Z powodem…* odrzuca
+  ją z wpisanym wyjaśnieniem dla Claude.
 - **Dźwięk i pulsowanie**, gdy sesja czeka albo kończy; cisza, gdy terminal tej sesji jest na wierzchu.
 - **Limity planu** (Pro/Max): *Pokazuj limity* w ustawieniach modułu ustawia linię statusu Claude Code na
   `wyspa-hook --statusline`. Wyspa pokazuje zużycie okna 5-godzinnego i tygodniowego z odliczaniem do resetu,

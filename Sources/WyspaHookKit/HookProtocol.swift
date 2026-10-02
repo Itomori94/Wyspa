@@ -69,9 +69,10 @@ public enum HookProtocol {
         case ask
     }
 
-    public static func reply(_ behavior: Behavior, message: String? = nil) -> Data {
+    public static func reply(_ behavior: Behavior, message: String? = nil, answers: [String: String]? = nil) -> Data {
         var object: [String: Any] = ["behavior": behavior.rawValue]
         if let message { object["message"] = message }
+        if let answers { object["answers"] = answers }
         let data = (try? JSONSerialization.data(withJSONObject: object)) ?? Data("{\"behavior\":\"ask\"}".utf8)
         return data + Data("\n".utf8)
     }
@@ -106,6 +107,17 @@ public struct HookEvent: Equatable, Sendable {
     public let transcriptPath: String?
     /// Limity planu — tylko w zdarzeniu „StatusLine” z linii statusu Claude Code.
     public let rateLimits: ClaudeLimits?
+    /// Pytania z opcjami, gdy to PreToolUse narzędzia `AskUserQuestion`.
+    public let questions: [ClaudeQuestion]
+
+    /// Czy hook ma czekać na odpowiedź z wyspy (prośba o zgodę albo pytanie z opcjami).
+    public static func wantsReply(_ event: [String: Any]) -> Bool {
+        switch event["hook_event_name"] as? String {
+        case "PermissionRequest": true
+        case "PreToolUse": event["tool_name"] as? String == ClaudeQuestion.toolName && !ClaudeQuestion.parse(event["tool_input"]).isEmpty
+        default: false
+        }
+    }
 
     /// Nazwa zdarzenia wysyłanego przez `wyspa-hook --statusline` (nie jest hookiem Claude Code).
     public static let statusLineEvent = "StatusLine"
@@ -113,7 +125,7 @@ public struct HookEvent: Equatable, Sendable {
     /// Zdarzenie bez danych narzędzia (do syntetycznych zmian stanu).
     public static func fallback(_ sessionID: String) -> HookEvent {
         HookEvent(name: "Notification", sessionID: sessionID, cwd: nil, toolName: nil, toolUseID: nil, toolInput: nil,
-                  notificationType: nil, message: nil, lastAssistantMessage: nil, transcriptPath: nil, rateLimits: nil)
+                  notificationType: nil, message: nil, lastAssistantMessage: nil, transcriptPath: nil, rateLimits: nil, questions: [])
     }
 
     public static func parse(_ object: [String: Any]) throws(HookProtocol.ParseError) -> HookEvent {
@@ -130,7 +142,8 @@ public struct HookEvent: Equatable, Sendable {
             message: object["message"] as? String,
             lastAssistantMessage: object["last_assistant_message"] as? String,
             transcriptPath: object["transcript_path"] as? String,
-            rateLimits: ClaudeLimits.parse(object["rate_limits"])
+            rateLimits: ClaudeLimits.parse(object["rate_limits"]),
+            questions: object["tool_name"] as? String == ClaudeQuestion.toolName ? ClaudeQuestion.parse(object["tool_input"]) : []
         )
     }
 }

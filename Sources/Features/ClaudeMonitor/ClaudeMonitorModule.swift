@@ -12,6 +12,15 @@ public struct PendingPermission: Identifiable, Sendable {
     let channel: HookServer.ReplyChannel
 }
 
+/// Pytanie Claude z opcjami czekające na odpowiedź w wyspie.
+public struct PendingQuestion: Identifiable, Sendable {
+    public let id: UUID
+    public let sessionID: String
+    public let questions: [ClaudeQuestion]
+    public let receivedAt: Date
+    let channel: HookServer.ReplyChannel
+}
+
 /// Monitor sesji Claude Code: stan sesji, ostatnie narzędzia, zatwierdzanie uprawnień z wyspy.
 @MainActor
 @Observable
@@ -37,6 +46,7 @@ public final class ClaudeMonitorModule: IslandModule {
         didSet { syncTranscriptWatchers() }
     }
     public private(set) var pending: [PendingPermission] = []
+    public private(set) var pendingQuestions: [PendingQuestion] = []
     public private(set) var hookStatus: HookStatus = .unknown
     /// Limity planu z linii statusu Claude Code (ostatnio przesłane).
     public private(set) var limits: ClaudeLimits?
@@ -105,7 +115,7 @@ public final class ClaudeMonitorModule: IslandModule {
     // MARK: - Widoki
 
     public var liveActivity: LiveActivity? {
-        if !pending.isEmpty || store.sessions.values.contains(where: { $0.state.needsAttention }) {
+        if !pending.isEmpty || !pendingQuestions.isEmpty || store.sessions.values.contains(where: { $0.state.needsAttention }) {
             let count = max(pending.count, store.sessions.values.filter { $0.state.needsAttention }.count)
             return LiveActivity(id: "claude.attention", priority: .attention, accent: .orange, wingWidth: 56) {
                 Image(systemName: pending.isEmpty ? "ellipsis.bubble.fill" : "hand.raised.fill")
@@ -158,10 +168,24 @@ public final class ClaudeMonitorModule: IslandModule {
 
     // MARK: - Akcje
 
-    public func decide(_ request: PendingPermission, _ behavior: HookProtocol.Behavior) {
-        request.channel.send(behavior, message: behavior == .deny ? "Odrzucono w Wyspie." : nil)
+    /// Decyzja o zgodzie; przy odmowie można podać powód, który dostanie Claude.
+    public func decide(_ request: PendingPermission, _ behavior: HookProtocol.Behavior, reason: String? = nil) {
+        let trimmed = reason?.trimmingCharacters(in: .whitespacesAndNewlines)
+        let message = behavior == .deny ? ((trimmed?.isEmpty == false ? trimmed : nil) ?? "Odrzucono w Wyspie.") : nil
+        request.channel.send(behavior, message: message)
         pending = pending.filter { $0.id != request.id }
         store = store.resolvingPermission(for: request.sessionID, at: Date())
+    }
+
+    /// Odpowiedź na pytanie z opcjami: pytanie → wybrane etykiety. `nil` = odpowiem w terminalu.
+    public func answer(_ question: PendingQuestion, with labels: [String: [String]]?) {
+        if let labels {
+            let answers = labels.mapValues(ClaudeQuestion.answerText)
+            question.channel.send(.allow, answers: answers)
+        } else {
+            question.channel.send(.ask)
+        }
+        pendingQuestions = pendingQuestions.filter { $0.id != question.id }
     }
 
     public func focus(_ session: ClaudeSession) {
@@ -290,6 +314,13 @@ public final class ClaudeMonitorModule: IslandModule {
         // Diagnostyka bez treści rozmów: nazwa zdarzenia, początek identyfikatora sesji, wynikowy stan.
         let sessionID = envelope.event.sessionID
         log.notice("hook \(envelope.event.name, privacy: .public) sesja \(String(sessionID.prefix(8)), privacy: .public) pid \(envelope.claudePID ?? 0) → \(String(describing: next.sessions[sessionID]?.state), privacy: .public)")
+        if envelope.event.name == "PreToolUse", !envelope.event.questions.isEmpty, let channel {
+            channel.acknowledge()
+            pendingQuestions = pendingQuestions + [PendingQuestion(id: UUID(), sessionID: envelope.event.sessionID,
+                                                                   questions: envelope.event.questions, receivedAt: Date(),
+                                                                   channel: channel)]
+            context.requestExpand()
+        }
         if envelope.event.name == "PermissionRequest", let channel {
             // Potwierdzenie z głównego wątku: hook wie, że Wyspa żyje i czeka na decyzję użytkownika.
             channel.acknowledge()
@@ -342,6 +373,7 @@ public final class ClaudeMonitorModule: IslandModule {
 
     /// Hook zamknął połączenie bez decyzji (minął jego czas): Claude Code pokazuje prompt w terminalu.
     private func hookGaveUp(_ channelID: UInt64) {
+        pendingQuestions = pendingQuestions.filter { $0.channel.id != channelID }
         guard let request = pending.first(where: { $0.channel.id == channelID }) else { return }
         pending = pending.filter { $0.id != request.id }
         if let session = store.sessions[request.sessionID], session.state == .waitingForPermission {

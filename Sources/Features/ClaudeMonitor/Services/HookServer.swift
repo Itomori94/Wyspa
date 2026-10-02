@@ -25,8 +25,8 @@ public final class HookServer: @unchecked Sendable {
             server.write(to: id, data: HookProtocol.acknowledgement, closing: false)
         }
 
-        public func send(_ behavior: HookProtocol.Behavior, message: String? = nil) {
-            server.write(to: id, data: HookProtocol.reply(behavior, message: message), closing: true)
+        public func send(_ behavior: HookProtocol.Behavior, message: String? = nil, answers: [String: String]? = nil) {
+            server.write(to: id, data: HookProtocol.reply(behavior, message: message, answers: answers), closing: true)
         }
 
         public static func == (lhs: ReplyChannel, rhs: ReplyChannel) -> Bool { lhs.id == rhs.id }

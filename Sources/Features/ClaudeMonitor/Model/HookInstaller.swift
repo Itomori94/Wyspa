@@ -58,7 +58,8 @@ public enum HookInstaller {
         var cleaned = try uninstalling(from: settings)
         var hooks = cleaned["hooks"] as? [String: Any] ?? [:]
         for event in events {
-            let waits = event == "PermissionRequest"
+            // PreToolUse czeka tylko na pytania z opcjami (pozostałe narzędzia wracają od razu), ale limit musi to pomieścić.
+            let waits = event == "PermissionRequest" || event == "PreToolUse"
             var handler: [String: Any] = [
                 "type": "command",
                 "command": helperPath,
