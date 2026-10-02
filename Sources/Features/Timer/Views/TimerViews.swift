@@ -49,6 +49,9 @@ struct TimerExpandedView: View {
             } else if case .pomodoro(let phase, let completed, let config) = module.session?.kind {
                 PomodoroProgress(phase: phase, completed: completed, rounds: config.roundsBeforeLongBreak)
             }
+            if module.mode == .pomodoro {
+                TodayFocus(module: module)
+            }
         }
         .frame(maxHeight: .infinity, alignment: .top)
     }
@@ -159,5 +162,50 @@ private struct RoundButton: View {
         .onHover { isHovered = $0 }
         .help(label)
         .accessibilityLabel(label)
+    }
+}
+
+/// Dzisiejszy wynik Pomodoro: kropki ukończonych sesji (do celu) i suma minut. Odświeża się przy zmianie dnia.
+struct TodayFocus: View {
+    let module: TimerModule
+    var compact = false
+
+    var body: some View {
+        TimelineView(.everyMinute) { context in
+            let today = module.stats.today(at: context.date)
+            HStack(spacing: 6) {
+                if module.dailyGoal > 0 {
+                    HStack(spacing: compact ? 2 : 3) {
+                        ForEach(0..<max(module.dailyGoal, today.sessions), id: \.self) { index in
+                            Circle()
+                                .fill(index < today.sessions ? Color.red : .white.opacity(0.18))
+                                .frame(width: compact ? 4 : 6, height: compact ? 4 : 6)
+                        }
+                    }
+                }
+                Text(summary(today))
+                    .font(.system(size: compact ? 9.5 : 11, weight: .medium))
+                    .foregroundStyle(.white.opacity(0.55))
+                    .monospacedDigit()
+                    .lineLimit(1)
+            }
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("Dziś \(today.sessions) sesji skupienia, \(today.minutes) minut")
+        }
+    }
+
+    private func summary(_ today: FocusStats.Day) -> String {
+        let goal = module.dailyGoal > 0 ? "/\(module.dailyGoal)" : ""
+        return compact ? "\(today.sessions)\(goal)" : "Dziś \(today.sessions)\(goal) · \(today.minutes) min"
+    }
+}
+
+struct TimerSettingsView: View {
+    @Bindable var module: TimerModule
+
+    var body: some View {
+        Stepper(value: $module.dailyGoal, in: FocusStats.goalRange) {
+            Text(module.dailyGoal == 0 ? "Dzienny cel Pomodoro: brak" : "Dzienny cel Pomodoro: \(module.dailyGoal) sesji")
+        }
     }
 }

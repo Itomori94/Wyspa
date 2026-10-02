@@ -35,6 +35,9 @@ struct TimerWidget: View {
                     .buttonStyle(IslandPressStyle())
                 }
             }
+            if module.mode == .pomodoro {
+                TodayFocus(module: module, compact: true)
+            }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }

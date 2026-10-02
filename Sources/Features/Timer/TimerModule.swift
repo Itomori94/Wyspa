@@ -30,12 +30,20 @@ public final class TimerModule: IslandModule {
     private static let sessionKey = "session"
     private static let durationKey = "countdownDuration"
     private static let finishedDisplay: Duration = .seconds(6)
+    private static let statsKey = "focusStats"
+    private static let goalKey = "dailyGoal"
 
     public private(set) var session: TimerSession?
     /// Krótki komunikat po zakończeniu odliczania („Koniec”, „Czas na przerwę”).
     public private(set) var finishedMessage: String?
     public var countdownDuration: TimeInterval {
         didSet { context.settings.set(countdownDuration, for: Self.durationKey) }
+    }
+    /// Ukończone sesje skupienia (dzisiejszy wynik w widżecie i rozwiniętym widoku).
+    public private(set) var stats: FocusStats
+    /// Dzienny cel sesji skupienia; 0 = bez celu.
+    public var dailyGoal: Int {
+        didSet { context.settings.set(dailyGoal, for: Self.goalKey) }
     }
 
     @ObservationIgnored private let context: ModuleContext
@@ -45,6 +53,8 @@ public final class TimerModule: IslandModule {
     public required init(context: ModuleContext) {
         self.context = context
         countdownDuration = context.settings.value(Self.durationKey, default: 5 * 60)
+        stats = context.settings.value(Self.statsKey, default: FocusStats())
+        dailyGoal = context.settings.value(Self.goalKey, default: FocusStats.defaultGoal)
     }
 
     public func activate() async throws {
@@ -91,6 +101,8 @@ public final class TimerModule: IslandModule {
                 .foregroundStyle(session.isRunning ? Self.tint(for: session) : .white.opacity(0.5))
         }
     }
+
+    public func makeSettingsView() -> AnyView? { AnyView(TimerSettingsView(module: self)) }
 
     public func makeExpandedView() -> AnyView? {
         AnyView(TimerExpandedView(module: self))
@@ -160,6 +172,11 @@ public final class TimerModule: IslandModule {
         // inaczej każda przespana faza kończyłaby się natychmiast z osobnym dźwiękiem.
         let now = Date()
         let start = now.timeIntervalSince(end) > Self.lateFinishTolerance ? now : end
+        if case .pomodoro(.focus, _, let config) = finished.kind {
+            // Liczy się tylko skupienie dobiegnięte do końca (pominięcie fazy nie trafia do statystyk).
+            stats = stats.recording(minutes: Int((config.focus / 60).rounded()), at: end)
+            context.settings.set(stats, for: Self.statsKey)
+        }
         if let next = finished.nextPomodoroPhase(at: start) {
             message = Self.pomodoroMessage(for: next)
             update(next)
