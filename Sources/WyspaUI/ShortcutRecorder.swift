@@ -3,13 +3,17 @@ import SwiftUI
 import WyspaCore
 
 /// Pole nagrywania skrótu: kliknij, naciśnij kombinację; Esc anuluje, ⌫ usuwa skrót.
-struct ShortcutRecorder: View {
+public struct ShortcutRecorder: View {
     @Binding var shortcut: HotkeyShortcut?
+
+    public init(shortcut: Binding<HotkeyShortcut?>) {
+        _shortcut = shortcut
+    }
     @State private var isRecording = false
     @State private var hint: String?
     @State private var monitor: Any?
 
-    var body: some View {
+    public var body: some View {
         VStack(alignment: .trailing, spacing: 4) {
             HStack(spacing: 6) {
                 Button(action: toggleRecording) {

@@ -1,6 +1,7 @@
 import Foundation
 import Testing
 @testable import WyspaQuickActions
+import WyspaCore
 
 @Suite("Szybkie akcje")
 struct QuickActionsTests {
@@ -17,5 +18,21 @@ struct QuickActionsTests {
         let date = calendar.date(from: DateComponents(year: 2026, month: 10, day: 2, hour: 9, minute: 5, second: 7))!
         let url = QuickActionsLogic.screenshotURL(in: URL(fileURLWithPath: "/tmp"), at: date)
         #expect(url.path == "/tmp/Zrzut 2026-10-02 o 09.05.07.png")
+    }
+}
+
+@Suite("Skróty Szybkich akcji", .serialized)
+@MainActor
+struct QuickActionShortcutTests {
+    @Test("Skrót akcji zapisuje się i wraca po ponownym utworzeniu modułu; usunięcie kasuje")
+    func persisted() throws {
+        let defaults = try #require(UserDefaults(suiteName: "wyspa.quick.\(UUID().uuidString)"))
+        let context = ModuleContext(settings: SettingsStore(defaults: defaults).moduleSettings(for: "quickactions"),
+                                    requestExpand: {})
+        let module = QuickActionsModule(context: context)
+        module.setShortcut(.defaultToggle, for: .capture)
+        #expect(QuickActionsModule(context: context).shortcuts[.capture] == .defaultToggle)
+        module.setShortcut(nil, for: .capture)
+        #expect(QuickActionsModule(context: context).shortcuts.isEmpty)
     }
 }

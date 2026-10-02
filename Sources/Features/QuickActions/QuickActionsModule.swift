@@ -16,25 +16,48 @@ public final class QuickActionsModule: IslandModule {
     )
 
     static let shelfZone = "shelf.store"
+    private static let shortcutsKey = "shortcuts"
+
+    public enum Action: String, CaseIterable, Codable, Sendable {
+        case capture, pickColor, lock, keepAwake
+
+        public var displayName: String {
+            switch self {
+            case .capture: "Zrzut na Półkę"
+            case .pickColor: "Pipeta koloru"
+            case .lock: "Zablokuj ekran"
+            case .keepAwake: "Nie usypiaj (przełącz)"
+            }
+        }
+    }
     static let feedbackDisplay: Duration = .seconds(3)
 
     public private(set) var isKeepingAwake = false
     /// Krótki komunikat po akcji („Skopiowano #1E90FF”).
     public private(set) var feedback: String?
+    /// Globalne skróty akcji (bez domyślnych — ustawiasz je sam); działają tylko, gdy moduł jest włączony.
+    public private(set) var shortcuts: [Action: HotkeyShortcut]
+    public private(set) var shortcutProblem: String?
 
     @ObservationIgnored private let context: ModuleContext
     @ObservationIgnored private var assertionID: IOPMAssertionID = 0
     @ObservationIgnored private var feedbackTask: Task<Void, Never>?
     @ObservationIgnored private var sampler: NSColorSampler?
     @ObservationIgnored private let log = Log.logger("quickactions")
+    @ObservationIgnored private var hotkeys: [GlobalHotkey] = []
 
     public required init(context: ModuleContext) {
         self.context = context
+        let stored: [String: HotkeyShortcut] = context.settings.value(Self.shortcutsKey, default: [:])
+        shortcuts = Dictionary(uniqueKeysWithValues: stored.compactMap { key, value in Action(rawValue: key).map { ($0, value) } })
     }
 
-    public func activate() async throws {}
+    public func activate() async throws {
+        registerHotkeys()
+    }
 
     public func deactivate() {
+        hotkeys = []
         if isKeepingAwake { toggleKeepAwake() }
         feedbackTask?.cancel()
         sampler = nil
@@ -43,6 +66,45 @@ public final class QuickActionsModule: IslandModule {
     public var liveActivity: LiveActivity? { nil }
     public func makeExpandedView() -> AnyView? { AnyView(QuickActionsView(module: self, compact: false)) }
     public func makeWidgetView() -> AnyView? { AnyView(QuickActionsView(module: self, compact: true)) }
+    public func makeSettingsView() -> AnyView? { AnyView(QuickActionsSettingsView(module: self)) }
+
+    // MARK: - Skróty
+
+    func setShortcut(_ shortcut: HotkeyShortcut?, for action: Action) {
+        var next = shortcuts
+        next[action] = shortcut
+        shortcuts = next
+        context.settings.set(Dictionary(uniqueKeysWithValues: next.map { ($0.key.rawValue, $0.value) }), for: Self.shortcutsKey)
+        registerHotkeys()
+    }
+
+    func perform(_ action: Action) {
+        switch action {
+        case .capture: captureToShelf()
+        case .pickColor: pickColor()
+        case .lock: lockScreen()
+        case .keepAwake:
+            toggleKeepAwake()
+            show(isKeepingAwake ? "Mac nie zaśnie" : "Usypianie jak zwykle")
+        }
+    }
+
+    /// Rejestruje skróty od nowa; zajęty skrót nie blokuje pozostałych, tylko trafia do komunikatu w ustawieniach.
+    private func registerHotkeys() {
+        hotkeys = []
+        var problems: [String] = []
+        for action in Action.allCases {
+            guard let shortcut = shortcuts[action] else { continue }
+            let hotkey = GlobalHotkey { [weak self] in self?.perform(action) }
+            do {
+                try hotkey.register(shortcut)
+                hotkeys.append(hotkey)
+            } catch {
+                problems.append("\(action.displayName): \(error.message)")
+            }
+        }
+        shortcutProblem = problems.isEmpty ? nil : problems.joined(separator: "\n")
+    }
 
     // MARK: - Akcje
 

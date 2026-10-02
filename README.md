@@ -183,6 +183,9 @@ Strona albo widżet z czterema przyciskami:
 - **Zablokuj ekran**: od razu blokuje Maca.
 - **Nie usypiaj**: Mac i ekran nie zasypiają (jak `caffeinate -d`), dopóki nie klikniesz ponownie albo nie wyłączysz modułu.
 
+Każdej akcji możesz przypisać globalny skrót klawiszowy w ustawieniach modułu (domyślnie brak); skróty działają
+tylko przy włączonym module.
+
 ## Znane ograniczenia
 
 - **Powiadomienia**: Wyspa czyta banery z drzewa Dostępności — Apple go nie dokumentuje, więc nowa wersja macOS może

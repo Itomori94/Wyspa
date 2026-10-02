@@ -64,3 +64,25 @@ private struct ActionTile: View {
         .accessibilityLabel(title)
     }
 }
+
+struct QuickActionsSettingsView: View {
+    let module: QuickActionsModule
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            ForEach(QuickActionsModule.Action.allCases, id: \.self) { action in
+                LabeledContent(action.displayName) {
+                    ShortcutRecorder(shortcut: Binding(
+                        get: { module.shortcuts[action] },
+                        set: { module.setShortcut($0, for: action) }
+                    ))
+                }
+            }
+            if let problem = module.shortcutProblem {
+                Text(problem).font(.caption).foregroundStyle(.orange)
+            }
+            Text("Skróty działają w całym systemie, także przy zwiniętej wyspie.")
+                .font(.caption).foregroundStyle(.secondary)
+        }
+    }
+}

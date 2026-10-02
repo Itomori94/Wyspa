@@ -1,5 +1,6 @@
 import SwiftUI
 import WyspaCore
+import WyspaUI
 
 struct SettingsView: View {
     @Bindable var settings: SettingsStore

@@ -20,20 +20,30 @@ public enum GlobalHotkeyError: Error, Equatable {
 @MainActor
 public final class GlobalHotkey {
     private static let signature: OSType = 0x5759_5350 // "WYSP"
+    private static var nextID: UInt32 = 1
 
     private var hotKeyRef: EventHotKeyRef?
     private var handlerRef: EventHandlerRef?
     private let action: @MainActor () -> Void
+    /// Każdy skrót ma własny identyfikator: obsługa reaguje tylko na swój (przy kilku skrótach naraz).
+    private let hotkeyID: UInt32
 
     public init(action: @escaping @MainActor () -> Void) {
         self.action = action
+        hotkeyID = Self.nextID
+        Self.nextID += 1
+    }
+
+    isolated deinit {
+        unregister()
+        if let handlerRef { RemoveEventHandler(handlerRef) }
     }
 
     public func register(_ shortcut: HotkeyShortcut) throws(GlobalHotkeyError) {
         unregister()
         try installHandlerIfNeeded()
         var ref: EventHotKeyRef?
-        let id = EventHotKeyID(signature: Self.signature, id: 1)
+        let id = EventHotKeyID(signature: Self.signature, id: hotkeyID)
         let status = RegisterEventHotKey(
             shortcut.keyCode, shortcut.modifiers.carbonFlags, id,
             GetApplicationEventTarget(), 0, &ref
@@ -53,12 +63,20 @@ public final class GlobalHotkey {
         guard handlerRef == nil else { return }
         var spec = EventTypeSpec(eventClass: OSType(kEventClassKeyboard), eventKind: UInt32(kEventHotKeyPressed))
         let context = Unmanaged.passUnretained(self).toOpaque()
-        let status = InstallEventHandler(GetApplicationEventTarget(), { _, _, userData in
-            guard let userData else { return OSStatus(eventNotHandledErr) }
+        let status = InstallEventHandler(GetApplicationEventTarget(), { _, event, userData in
+            guard let userData, let event else { return OSStatus(eventNotHandledErr) }
+            var pressed = EventHotKeyID()
+            let read = GetEventParameter(event, EventParamName(kEventParamDirectObject), EventParamType(typeEventHotKeyID),
+                                         nil, MemoryLayout<EventHotKeyID>.size, nil, &pressed)
             let hotkey = Unmanaged<GlobalHotkey>.fromOpaque(userData).takeUnretainedValue()
-            // Carbon dostarcza zdarzenia skrótów na głównym wątku.
-            MainActor.assumeIsolated { hotkey.action() }
-            return noErr
+            // Carbon dostarcza zdarzenia skrótów na głównym wątku. Cudzy skrót przekazujemy dalej.
+            return MainActor.assumeIsolated {
+                guard read == noErr, pressed.signature == GlobalHotkey.signature, pressed.id == hotkey.hotkeyID else {
+                    return OSStatus(eventNotHandledErr)
+                }
+                hotkey.action()
+                return noErr
+            }
         }, 1, &spec, context, &handlerRef)
         guard status == noErr else { throw .handlerInstallFailed(status) }
     }
