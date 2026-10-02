@@ -82,6 +82,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         registry?.stopAll()
     }
 
+    /// Adresy `wyspa://` (komenda `wyspa`, Skróty, cron) trafiają do modułu Skrypty.
+    func application(_ application: NSApplication, open urls: [URL]) {
+        for url in urls {
+            guard let command = ScriptCommand(url: url) else {
+                Log.logger("scripts").error("Nieznany adres wyspa://: \(url.host ?? url.path, privacy: .public)")
+                continue
+            }
+            ScriptCommandCenter.shared.post(command)
+        }
+    }
+
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
         settingsWindow?.show()
         return true

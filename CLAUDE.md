@@ -200,6 +200,18 @@ APP=$PWD/build/Wyspa.app/Contents
   zapisuje przez dowiązania, zachowuje prawa pliku, trzyma 5 ostatnich kopii; zmiana czasu decyzji zapisuje hooki po 0,8 s.
 - Sesje znikają po zakończeniu procesu Claude Code (`DispatchSource.makeProcessSource(.exit)`), bez odpytywania.
 
+## Skrypty (moduł `WyspaScripts`)
+
+- Adresy `wyspa://notify|progress|done` (Info.plist `CFBundleURLTypes`) → `AppDelegate.application(_:open:)` →
+  czysty parser `ScriptCommand(url:)` w WyspaCore → `ScriptCommandCenter.shared` (jeden odbiorca, bufor 5 poleceń sprzed
+  startu modułu) → `ScriptsModule`. Stan to niemutowalny `ScriptsState` (kolejka kart, limit postępów, przedawnienie 15 min).
+- Adres może otworzyć każda aplikacja i strona WWW: polecenia wyłącznie pokazują tekst (bez plików, procesów, skutków
+  ubocznych), teksty bez znaków sterujących i przycięte, identyfikatory tylko `[A-Za-z0-9._-]`, karta podpisana „Skrypt”.
+- Komenda `wyspa` = `Resources/wyspa` (POSIX sh, kodowanie procentowe przez `/usr/bin/perl`, `open -g`, ciche wyjście 0
+  bez działającej Wyspy) w `Contents/Resources` (nie w `Helpers` — skrypt nie ma własnego podpisu). `CommandInstaller`
+  kopiuje ją do `~/.local/bin/wyspa` tylko na przycisk; plik bez znacznika `wyspa-cli` nigdy nie jest nadpisywany ani usuwany.
+- Bez zegarów w spoczynku: jedno zadanie na kartę, jedno na najbliższe przedawnienie, jedno na znikające „Gotowe”.
+
 ## Powiadomienia
 
 - `NotificationBannerWatcher`: `AXObserver` na procesie `com.apple.notificationcenterui` (zdarzenia `AXWindowCreated`,

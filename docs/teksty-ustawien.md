@@ -38,6 +38,7 @@ zaktualizuj też ten plik. Karty okna: **Ogólne · Wyspa · Moduły · Układ**
 | Notatka | Szybka notatka z autozapisem. Kliknij w tekst, żeby pisać; Esc zwija wyspę. |
 | Historia schowka | Ostatnio kopiowane teksty, pliki i obrazy z wyszukiwaniem. Hasła z menedżerów haseł są pomijane. Historia jest tylko w pamięci. |
 | Skróty | Uruchamia wybrane Skróty macOS jednym kliknięciem z wyspy. |
+| Skrypty | Komenda wyspa i adresy wyspa:// — karty („Backup gotowy”) i paski postępu ze skryptów, Skrótów i crona. |
 | Szybkie akcje | Zrzut zaznaczenia prosto na Półkę, pipeta koloru (kopiuje HEX), blokada ekranu i „nie usypiaj Maca”. |
 | Lusterko | Podgląd z kamery przed rozmową wideo. Kamera włącza się tylko, gdy zakładka jest widoczna; obraz nie jest zapisywany. |
 | Powiadomienia | Pokazuje powiadomienia macOS w wyspie zamiast w rogu ekranu. Najechanie zatrzymuje kartę, kliknięcie otwiera aplikację. |
@@ -88,6 +89,9 @@ zaktualizuj też ten plik. Karty okna: **Ogólne · Wyspa · Moduły · Układ**
   - „Dźwięk, gdy sesja czeka albo kończy” · „Bez dźwięku, gdy terminal sesji jest na wierzchu”
 - **Pobierania** — „Po zakończeniu odkładaj plik na Półkę” · „Działa z Safari, Chrome i innymi przeglądarkami, które
   pokazują postęp na ikonie pliku w Finderze. Na Półkę trafia odnośnik do pliku w Pobranych (wymaga włączonej Półki).”
+- **Skrypty** — „Komenda wyspa zainstalowana w ~/.local/bin” + „Usuń komendę” / „Komenda wyspa jest starsza niż aplikacja” +
+  „Zaktualizuj” / „Komenda wyspa nie jest zainstalowana.” + „Zainstaluj w ~/.local/bin” / „~/.local/bin/wyspa to inny program —
+  Wyspa go nie nadpisze.” · podpowiedź o PATH, przykłady poleceń · „Gdy Wyspa nie działa, komenda kończy się po cichu z kodem 0. …”
 - **Historia schowka** — „Zapamiętuj … wpisów” · „Wyczyść historię”
 - **Timer** — „Dzienny cel Pomodoro: brak / … sesji”
 - **Pogoda** — „Temperatura w zwiniętej wyspie” · „Dane z Open-Meteo (bez konta). Wysyłane są tylko współrzędne

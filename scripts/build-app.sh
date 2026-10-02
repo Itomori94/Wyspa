@@ -35,6 +35,9 @@ cp "$BIN_DIR/Wyspa" "$APP/Contents/MacOS/Wyspa"
 cp "$BIN_DIR/wyspa-hook" "$APP/Contents/Helpers/wyspa-hook"
 cp Resources/Info.plist "$APP/Contents/Info.plist"
 cp Resources/AppIcon.icns "$APP/Contents/Resources/AppIcon.icns"
+# Komenda `wyspa` (moduł Skrypty) — skrypt w zasobach, instalowany do ~/.local/bin przyciskiem w ustawieniach.
+cp Resources/wyspa "$APP/Contents/Resources/wyspa"
+chmod 755 "$APP/Contents/Resources/wyspa"
 
 # mediaremote-adapter: framework ładowany przez /usr/bin/perl (nie linkowany), skrypt, klient testowy, licencja.
 cp -R "$ADAPTER_OUT/MediaRemoteAdapter.framework" "$APP/Contents/Frameworks/"

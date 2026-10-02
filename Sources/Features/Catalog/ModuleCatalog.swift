@@ -12,6 +12,7 @@ import WyspaNotifications
 import WyspaPower
 import WyspaQuickActions
 import WyspaReminders
+import WyspaScripts
 import WyspaShelf
 import WyspaShortcuts
 import WyspaTimer
@@ -32,6 +33,7 @@ public enum ModuleCatalog {
         NotesModule.self,
         ClipboardModule.self,
         ShortcutsModule.self,
+        ScriptsModule.self,
         QuickActionsModule.self,
         MirrorModule.self,
         ClaudeMonitorModule.self,

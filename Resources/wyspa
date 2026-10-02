@@ -1,0 +1,63 @@
+#!/bin/sh
+# wyspa-cli — polecenia dla Wyspy ze skryptów, Skrótów i crona (adresy wyspa://, moduł „Skrypty”).
+# Gdy Wyspa nie działa, kończy się po cichu z kodem 0, żeby nie psuć skryptu, który ją woła.
+set -eu
+
+usage() {
+    cat <<'USAGE'
+Użycie:
+  wyspa notify TYTUŁ [TREŚĆ]          karta pod notchem
+  wyspa progress WARTOŚĆ [OPIS] [--id ID]
+                                      pasek postępu; WARTOŚĆ 0–1 albo procent (40%), „-” = nieokreślony
+  wyspa done [ID]                     koniec postępu
+Przykłady:
+  wyspa notify "Backup gotowy" "42 GB w 12 min"
+  wyspa progress 0.4 "Build" --id build && wyspa done build
+USAGE
+}
+
+# Kodowanie procentowe bajt po bajcie (UTF-8) systemowym Perlem, bez zależności.
+enc() {
+    /usr/bin/perl -e 'print join "", map { /[A-Za-z0-9._~-]/ ? $_ : sprintf("%%%02X", ord) } split //, $ARGV[0]' -- "$1"
+}
+
+send() {
+    /usr/bin/pgrep -qx Wyspa || exit 0
+    /usr/bin/open -g "wyspa://$1" || exit 0
+}
+
+[ $# -ge 1 ] || { usage >&2; exit 64; }
+command=$1
+shift
+case "$command" in
+    notify)
+        [ $# -ge 1 ] || { usage >&2; exit 64; }
+        query="title=$(enc "$1")"
+        [ $# -ge 2 ] && query="$query&body=$(enc "$2")"
+        send "notify?$query"
+        ;;
+    progress)
+        value=""; label=""; id=""
+        while [ $# -gt 0 ]; do
+            case "$1" in
+                --id) [ $# -ge 2 ] || { usage >&2; exit 64; }; id=$2; shift 2 ;;
+                *) if [ -z "$value" ]; then value=$1; else label=$1; fi; shift ;;
+            esac
+        done
+        [ -n "$value" ] || { usage >&2; exit 64; }
+        query="id=$(enc "${id:-default}")"
+        [ "$value" = "-" ] || query="$query&value=$(enc "$value")"
+        [ -n "$label" ] && query="$query&label=$(enc "$label")"
+        send "progress?$query"
+        ;;
+    done)
+        send "done?id=$(enc "${1:-default}")"
+        ;;
+    -h|--help|help)
+        usage
+        ;;
+    *)
+        usage >&2
+        exit 64
+        ;;
+esac

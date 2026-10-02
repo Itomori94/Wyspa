@@ -212,10 +212,27 @@ Pobierany plik (Safari, Chrome i inne przeglądarki pokazujące postęp na ikoni
 jako pierścień postępu z procentem; kilka pobierań naraz — łączny postęp. Po zakończeniu plik trafia na Półkę
 (do wyłączenia). Bez odpytywania: wyspa odbiera postęp publikowany przez przeglądarkę, odświeża się co pełny procent.
 
+### Skrypty (komenda `wyspa`)
+
+Karty i paski postępu z dowolnego skryptu, Skrótu albo crona. Ustawienia → Moduły → Skrypty → *Zainstaluj w ~/.local/bin*
+kopiuje komendę `wyspa` (skrypt `sh`, cudzego pliku o tej nazwie nie nadpisuje):
+
+```bash
+wyspa notify "Backup gotowy" "42 GB w 12 min"     # karta pod notchem na 5 s
+wyspa progress 0.4 "Build" --id build             # pasek postępu (0–1 albo 40%, „-” = nieokreślony)
+wyspa done build                                   # znacznik „Gotowe” i koniec
+open -g "wyspa://notify?title=Gotowe"              # to samo bez komendy, np. w Skrócie (Otwórz URL)
+```
+
+Gdy Wyspa nie działa, komenda kończy się po cichu z kodem 0. Adres `wyspa://` może otworzyć każda aplikacja i strona WWW
+(przeglądarka najpierw pyta), dlatego polecenia tylko pokazują tekst: karta jest podpisana „Skrypt”, teksty są przycinane
+i oczyszczane, a postęp bez aktualizacji znika po 15 minutach. Cron i Skróty nie czytają `~/.zshrc` — tam podawaj pełną
+ścieżkę `~/.local/bin/wyspa`.
+
 ### Tryb prywatny
 
 Przy udostępnianiu albo nagrywaniu ekranu (Zoom, Teams, Meet, nagranie ekranu) wyspa zasłania wszystkie moduły
-z osobistą treścią: Półkę, Kalendarz, Przypomnienia, Notatkę, Historię schowka, Powiadomienia, Claude Code i Pobierania.
+z osobistą treścią: Półkę, Kalendarz, Przypomnienia, Notatkę, Historię schowka, Powiadomienia, Claude Code, Pobierania i Skrypty.
 Karta powiadomienia pokazuje tylko aplikację, a prośba Claude o zgodę — tylko nazwę narzędzia (bez polecenia i zmian
 w kodzie), więc nadal można zdecydować. Każdy moduł musi zadeklarować, czy jego treść jest osobista.
 Ustawienia → Wyspa → Tryb prywatny: przy udostępnianiu (domyślnie) / zawsze / nigdy. Wyspa dostaje od systemu zdarzenie
@@ -246,7 +263,7 @@ tylko przy włączonym module.
 1. Ustawienia → Moduły → Claude Code → *Odinstaluj…* (usuwa hooki i linię statusu Wyspy z `~/.claude/settings.json`;
    kopie zapasowe zostają obok pliku).
 2. Zamknij Wyspę i usuń `Wyspa.app`.
-3. Opcjonalnie: `rm -rf ~/.local/share/wyspa ~/Library/Application\ Support/Wyspa` oraz certyfikat „Wyspa Development”
+3. Opcjonalnie: `rm -f ~/.local/bin/wyspa` (albo *Usuń komendę* w module Skrypty), `rm -rf ~/.local/share/wyspa ~/Library/Application\ Support/Wyspa` oraz certyfikat „Wyspa Development”
    z Pęku kluczy.
 
 Hooki wskazują na pośrednika `~/.local/share/wyspa/bin/wyspa-hook`, który po usunięciu aplikacji kończy się po cichu —
