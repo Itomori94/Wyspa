@@ -14,6 +14,7 @@ import WyspaReminders
 import WyspaShelf
 import WyspaShortcuts
 import WyspaTimer
+import WyspaWeather
 
 /// Jedyne miejsce rejestracji modułów. Nowy moduł = nowy target w Sources/Features i jedna linia tutaj.
 /// Kolejność = kolejność zakładek w wyspie i na liście w ustawieniach.
@@ -23,6 +24,7 @@ public enum ModuleCatalog {
         MediaModule.self,
         ShelfModule.self,
         CalendarModule.self,
+        WeatherModule.self,
         RemindersModule.self,
         TimerModule.self,
         NotesModule.self,

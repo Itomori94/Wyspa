@@ -43,6 +43,7 @@ Wyłączony moduł nie działa w tle.
 | — | Fundament wyspy nie wymaga żadnych uprawnień |
 | — | **Teraz odtwarzane** przez mediaremote-adapter nie wymaga uprawnień |
 | — | **Półka** nie wymaga uprawnień |
+| Lokalizacja | **Pogoda** (okolica do ok. 1 km). Pytanie pojawia się przy włączeniu modułu |
 | Dostępność | **HUD głośności i jasności** (przechwytywanie klawiszy) oraz **Powiadomienia** (odczyt banerów). Po nadaniu w Ustawieniach systemowych moduł startuje sam |
 | — | **Zasilanie** nie wymaga uprawnień |
 | Bluetooth | **Bluetooth** (podłączenie urządzeń i poziom baterii słuchawek) |
@@ -178,6 +179,13 @@ i ostatnie narzędzia. Kilka sesji naraz.
   kliknięcie przenosi do terminala, najechanie zatrzymuje kartę. Na liście sesji widać, od kiedy sesja pracuje.
 - **Kliknięcie sesji** przenosi do jej terminala: właściwa karta w Terminalu i iTerm2, właściwe okno w VS Code i Cursor;
   w innych terminalach aplikacja przechodzi na wierzch.
+
+### Pogoda
+
+Temperatura, opis i prognoza na 4 dni dla Twojej okolicy z Open-Meteo (darmowy serwis bez konta). Wymaga zgody na
+lokalizację; do serwisu trafiają tylko współrzędne zaokrąglone do ok. 1 km. Dane odświeżają się przy otwarciu wyspy,
+gdy mają ponad 15 minut — bez zegara w tle. Kliknięcie pogody otwiera aplikację Pogoda. Opcjonalnie temperatura
+w zwiniętej wyspie (domyślnie wyłączona).
 
 ### Szybkie akcje
 

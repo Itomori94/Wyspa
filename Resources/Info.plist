@@ -34,6 +34,10 @@
 	<string>Wyspa pokazuje Twoje wydarzenia i najbliższe spotkanie.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>Lusterko w wyspie pokazuje podgląd z kamery. Obraz nie jest nigdzie zapisywany.</string>
+	<key>NSLocationUsageDescription</key>
+	<string>Moduł Pogoda pokazuje pogodę dla Twojej okolicy (współrzędne zaokrąglone do ok. 1 km trafiają do Open-Meteo).</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Moduł Pogoda pokazuje pogodę dla Twojej okolicy (współrzędne zaokrąglone do ok. 1 km trafiają do Open-Meteo).</string>
 	<key>NSHighResolutionCapable</key>
 	<true/>
 	<key>NSRemindersFullAccessUsageDescription</key>
