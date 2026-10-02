@@ -311,3 +311,35 @@ struct HookInstallerTests {
         #expect(mode?.intValue == 0o600)
     }
 }
+
+@Suite("Protokół gniazda hooków: błędy i odpowiedzi")
+struct HookProtocolEdgeTests {
+    @Test("Odrzucane: nie-JSON, inna wersja, brak zdarzenia, brak pól zdarzenia")
+    func parseErrors() {
+        #expect(throws: HookProtocol.ParseError.notJSON) { try HookProtocol.parse(Data("x".utf8)) }
+        #expect(throws: HookProtocol.ParseError.unsupportedVersion(2)) {
+            try HookProtocol.parse(Data(#"{"v":2,"event":{}}"#.utf8))
+        }
+        #expect(throws: HookProtocol.ParseError.missingField("event")) { try HookProtocol.parse(Data(#"{"v":1}"#.utf8)) }
+        #expect(throws: HookProtocol.ParseError.missingField("session_id")) {
+            try HookProtocol.parse(Data(#"{"v":1,"event":{"hook_event_name":"Stop"}}"#.utf8))
+        }
+    }
+
+    @Test("Odpowiedź dla hooka i wyjście dla Claude Code")
+    func replies() throws {
+        let reply = try JSONSerialization.jsonObject(with: HookProtocol.reply(.deny, message: "nie")) as? [String: String]
+        #expect(reply == ["behavior": "deny", "message": "nie"])
+        #expect(HookProtocol.hookOutput(for: .ask, message: nil) == nil)
+        let deny = try #require(HookProtocol.hookOutput(for: .deny, message: nil))
+        let object = try JSONSerialization.jsonObject(with: Data(deny.utf8)) as? [String: Any]
+        let decision = (object?["hookSpecificOutput"] as? [String: Any])?["decision"] as? [String: String]
+        #expect(decision == ["behavior": "deny", "message": "Odrzucono w Wyspie."])
+    }
+
+    @Test("Zastępcze zdarzenie „czeka” dla sesji")
+    func fallbackEvent() {
+        let event = HookEvent.fallback("s9")
+        #expect(event.name == "Notification" && event.sessionID == "s9" && event.transcriptPath == nil)
+    }
+}

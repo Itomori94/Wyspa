@@ -179,3 +179,15 @@ struct ScreenSelectionTests {
         }
     }
 }
+
+@Suite("Nazwy opcji w ustawieniach")
+struct SettingsOptionNamesTests {
+    @Test("Każda opcja ma niepustą, unikalną nazwę")
+    func names() {
+        for names in [ScreenSelection.allCases.map(\.displayName), VirtualNotchMode.allCases.map(\.displayName),
+                      IslandSize.allCases.map(\.displayName)] {
+            #expect(names.allSatisfy { !$0.isEmpty } && Set(names).count == names.count)
+        }
+        #expect(ScreenSelection.main.select(from: []).isEmpty)
+    }
+}
