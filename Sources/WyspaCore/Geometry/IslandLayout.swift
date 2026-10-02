@@ -28,6 +28,14 @@ public enum IslandLayout {
     /// Górna granica szerokości skrzydła; z niej liczona jest rama panelu, więc żadna aktywność nie wyjdzie poza okno.
     public static let maxWingWidth: CGFloat = 96
 
+    /// Karta pod skrzydłami (np. powiadomienie): stała szerokość, wysokość ograniczona z góry.
+    public static let detailWidth: CGFloat = 380
+    public static let maxDetailHeight: CGFloat = 96
+
+    public static func clampedDetailHeight(_ height: CGFloat) -> CGFloat {
+        min(max(height, 0), maxDetailHeight)
+    }
+
     public static func clampedWingWidth(_ width: CGFloat) -> CGFloat {
         min(max(width, 0), maxWingWidth)
     }
@@ -40,15 +48,22 @@ public enum IslandLayout {
     /// Pasek pod wirtualnym notchem, na który można najechać, gdy wyspa jest ukryta.
     public static let hiddenHotZoneHeight: CGFloat = 3
 
-    /// - Parameter activityWingWidth: szerokość skrzydła bieżącej aktywności; nil = brak aktywności.
+    /// - Parameters:
+    ///   - activityWingWidth: szerokość skrzydła bieżącej aktywności; nil = brak aktywności.
+    ///   - activityDetailHeight: wysokość karty pod skrzydłami (np. powiadomienie); nil = bez karty.
     public static func size(
         for phase: IslandPhase,
         notch: CGSize,
         activityWingWidth: CGFloat?,
+        activityDetailHeight: CGFloat? = nil,
         expanded: CGSize
     ) -> CGSize {
         let wings = (activityWingWidth ?? 0) * 2
-        let collapsed = CGSize(width: notch.width + wings + collapsedTopRadius * 2, height: notch.height)
+        var collapsed = CGSize(width: notch.width + wings + collapsedTopRadius * 2, height: notch.height)
+        if let detail = activityDetailHeight.map(clampedDetailHeight), detail > 0 {
+            collapsed = CGSize(width: max(collapsed.width, detailWidth + collapsedTopRadius * 2),
+                               height: notch.height + detail)
+        }
         switch phase {
         case .hidden:
             return CGSize(width: notch.width, height: hiddenHotZoneHeight)
@@ -71,7 +86,7 @@ public enum IslandLayout {
     /// z najszerszymi dopuszczalnymi skrzydłami przy tym notchu.
     public static func panelSize(expanded: CGSize, notch: CGSize, shadowMargin: CGFloat) -> CGSize {
         let widest = [IslandPhase.peek, .expanded].map {
-            size(for: $0, notch: notch, activityWingWidth: maxWingWidth, expanded: expanded)
+            size(for: $0, notch: notch, activityWingWidth: maxWingWidth, activityDetailHeight: maxDetailHeight, expanded: expanded)
         }
         let width = widest.map(\.width).max() ?? expanded.width
         let height = widest.map(\.height).max() ?? expanded.height

@@ -197,12 +197,20 @@ APP=$PWD/build/Wyspa.app/Contents
   zapisuje przez dowiązania, zachowuje prawa pliku, trzyma 5 ostatnich kopii; zmiana czasu decyzji zapisuje hooki po 0,8 s.
 - Sesje znikają po zakończeniu procesu Claude Code (`DispatchSource.makeProcessSource(.exit)`), bez odpytywania.
 
-## Powiadomienia (w toku)
+## Powiadomienia
 
-Plan: moduł czyta banery macOS przez Dostępność i pokazuje je w wyspie (chowanie oryginału do wyboru).
-Diagnostyka struktury banerów: `open -n build/Wyspa.app --args --dump-notification-ax` (60 s, zapis do
-`~/Library/Logs/Wyspa/notification-ax.txt`, tylko okna procesów NotificationCenter/UIKitSystem — plik zawiera treść
-powiadomień, usuwać po analizie). Na macOS 27.2 pierwsze próby nie wykazały okien banerów — do ustalenia.
+- `NotificationBannerWatcher`: `AXObserver` na procesie `com.apple.notificationcenterui` (zdarzenia `AXWindowCreated`,
+  `AXCreated`, `AXLayoutChanged`, bez odpytywania); po restarcie NotificationCenter podpina się ponownie
+  (`didLaunchApplicationNotification`).
+- Budowa banera (macOS 27.2): grupa o subroli `AXNotificationCenterBanner`, `Identifier` = UUID (deduplikacja),
+  `Description` = „aplikacja, tytuł, podtytuł, treść”, dzieci `AXStaticText` z identyfikatorami `title`/`subtitle`/`body`.
+  Parsowanie w czystym `BannerParser` (testy).
+- Chowanie oryginału: przesunięcie okna banera poza ekran (`kAXPositionAttribute`), tylko dla okien ≤ 400 pt wysokości
+  (otwartego Centrum powiadomień nigdy nie ruszamy). Powiadomienie zostaje w Centrum powiadomień.
+- Karta: `LiveActivity` z `detail` (karta pod skrzydełkami, `IslandLayout.detailWidth`/`maxDetailHeight`), priorytet `.alert`,
+  kolejka `NotificationQueue` (niemutowalna, limit 10 czekających), najechanie wstrzymuje odliczanie.
+- Diagnostyka: `open -n build/Wyspa.app --args --dump-notification-ax` (60 s, `~/Library/Logs/Wyspa/notification-ax.txt`,
+  0600 — plik zawiera treść powiadomień, usuwać po analizie) oraz `--probe-notification-banner`.
 
 ## Prywatne API — rejestr
 
@@ -212,6 +220,7 @@ powiadomień, usuwać po analizie). Na macOS 27.2 pierwsze próby nie wykazały 
 | `DisplayServicesGet/SetBrightness` (DisplayServices) | `DisplayBrightnessControl` | symbol może zniknąć | `make()` → nil, klawisze jasności wracają do systemu |
 | `KeyboardBrightnessClient` (CoreBrightness) | `KeyboardBacklightControl` | klasa/selektory mogą się zmienić | `responds(to:)`; brak → klawisze do systemu |
 | `IOBluetoothDevice.batteryPercent*` | `BluetoothMonitor` | selektory mogą zniknąć | `responds(to:)`; brak → urządzenie bez poziomu baterii |
+| Drzewo Dostępności banerów NotificationCenter (nieudokumentowane) | `NotificationBannerWatcher` | nowy macOS zmieni subrolę/identyfikatory | baner nie zostaje rozpoznany ani schowany — powiadomienia działają systemowo |
 
 Ładowanie funkcji C wyłącznie przez `PrivateSymbol.load` (dlopen/dlsym, log przy braku). Selektory Objective-C zawsze
 za `responds(to:)` — `value(forKey:)` bez tej kontroli rzuca wyjątek, którego Swift nie złapie.

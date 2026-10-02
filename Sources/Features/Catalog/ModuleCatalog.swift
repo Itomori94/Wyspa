@@ -7,6 +7,7 @@ import WyspaHUD
 import WyspaMedia
 import WyspaMirror
 import WyspaNotes
+import WyspaNotifications
 import WyspaPower
 import WyspaReminders
 import WyspaShelf
@@ -28,6 +29,7 @@ public enum ModuleCatalog {
         ShortcutsModule.self,
         MirrorModule.self,
         ClaudeMonitorModule.self,
+        NotificationsModule.self,
         HUDModule.self,
         PowerModule.self,
         BluetoothModule.self,

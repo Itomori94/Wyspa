@@ -41,7 +41,7 @@ Wyłączony moduł nie działa w tle.
 | — | Fundament wyspy nie wymaga żadnych uprawnień |
 | — | **Teraz odtwarzane** przez mediaremote-adapter nie wymaga uprawnień |
 | — | **Półka** nie wymaga uprawnień |
-| Dostępność | **HUD głośności i jasności** (przechwytywanie klawiszy). Po nadaniu w Ustawieniach systemowych moduł startuje sam |
+| Dostępność | **HUD głośności i jasności** (przechwytywanie klawiszy) oraz **Powiadomienia** (odczyt banerów). Po nadaniu w Ustawieniach systemowych moduł startuje sam |
 | — | **Zasilanie** nie wymaga uprawnień |
 | Bluetooth | **Bluetooth** (podłączenie urządzeń i poziom baterii słuchawek) |
 | Kalendarze | **Kalendarz** |
@@ -139,6 +139,13 @@ znika po wyłączeniu modułu albo aplikacji.
 Skróty: ulubione Skróty macOS jako przyciski (wybór w ustawieniach modułu). Lusterko: podgląd z kamery;
 kamera działa tylko, gdy zakładka Lusterka jest widoczna.
 
+### Powiadomienia
+
+Wyłączony domyślnie, wymaga Dostępności. Powiadomienia macOS pojawiają się jako karta pod notchem: ikona i nazwa
+aplikacji, tytuł, treść. Karta znika po kilku sekundach (czas w ustawieniach), najechanie ją zatrzymuje, kliknięcie
+otwiera aplikację, kolejne powiadomienia czekają w kolejce („+2”). Systemowy baner jest domyślnie chowany
+(do wyłączenia w ustawieniach) — powiadomienie i tak zostaje w Centrum powiadomień.
+
 ### Claude Code
 
 Podgląd sesji Claude Code w wyspie: projekt, stan (pracuje, używa narzędzia, prosi o zgodę, czeka na Ciebie, skończyła)
@@ -155,6 +162,12 @@ i ostatnie narzędzia. Kilka sesji naraz.
   w innych terminalach aplikacja przechodzi na wierzch.
 
 ## Znane ograniczenia
+
+- **Powiadomienia**: Wyspa czyta banery z drzewa Dostępności — Apple go nie dokumentuje, więc nowa wersja macOS może
+  to zepsuć (wtedy powiadomienia po prostu wracają do zwykłych banerów). Przyciski akcji („Odpowiedz”, „Zaakceptuj”)
+  działają tylko w systemowym banerze. Aplikację do otwarcia rozpoznajemy po nazwie wśród działających aplikacji —
+  jeśli nie działa, kliknięcie tylko zamyka kartę. Tryb Skupienia nie jest odczytywany (wymagałby pełnego dostępu
+  do dysku), ale wyciszone powiadomienia i tak nie pokazują banera, więc nie trafiają do wyspy.
 
 - **MediaRemote (prywatne API)**: od macOS 15.4 Apple blokuje je zwykłym aplikacjom. Wyspa korzysta z
   [mediaremote-adapter](https://github.com/ungive/mediaremote-adapter) (BSD-3-Clause), który uruchamia je przez

@@ -6,6 +6,7 @@ public struct IslandView: View {
     private static let collapsedBottomRadius: CGFloat = 10
     private static let peekBottomRadius: CGFloat = 13
     private static let expandedBottomRadius: CGFloat = 28
+    private static let cardBottomRadius: CGFloat = 22
 
     @Bindable var model: IslandViewModel
     @Namespace private var namespace
@@ -59,8 +60,8 @@ public struct IslandView: View {
     private var bottomRadius: CGFloat {
         switch model.phase {
         case .hidden: 0
-        case .collapsed: Self.collapsedBottomRadius
-        case .peek: Self.peekBottomRadius
+        case .collapsed: model.activity?.detail == nil ? Self.collapsedBottomRadius : Self.cardBottomRadius
+        case .peek: model.activity?.detail == nil ? Self.peekBottomRadius : Self.cardBottomRadius
         case .expanded: Self.expandedBottomRadius
         }
     }
@@ -72,8 +73,17 @@ public struct IslandView: View {
             EmptyView()
         case .collapsed, .peek:
             if let activity = model.activity {
-                CollapsedActivityView(activity: activity, notchWidth: model.notch.size.width, namespace: namespace)
-                    .frame(height: model.notch.size.height)
+                VStack(spacing: 0) {
+                    CollapsedActivityView(activity: activity, notchWidth: model.notch.size.width, namespace: namespace)
+                        .frame(height: model.notch.size.height)
+                    if let detail = activity.detail {
+                        detail
+                            .frame(height: activity.detailHeight)
+                            .padding(.horizontal, 12)
+                            .id(activity.id + ".detail")
+                            .transition(.opacity.combined(with: .scale(scale: 0.95, anchor: .top)))
+                    }
+                }
             }
         case .expanded:
             ExpandedIslandView(model: model, namespace: namespace)

@@ -55,6 +55,9 @@ public struct LiveActivity {
     public let showsInExpandedHeader: Bool
     public let leading: AnyView
     public let trailing: AnyView
+    /// Opcjonalna karta pod skrzydłami w zwiniętej wyspie (np. treść powiadomienia).
+    public let detail: AnyView?
+    public let detailHeight: CGFloat
 
     public init<Leading: View, Trailing: View>(
         id: String,
@@ -72,6 +75,30 @@ public struct LiveActivity {
         self.showsInExpandedHeader = showsInExpandedHeader
         self.leading = AnyView(leading())
         self.trailing = AnyView(trailing())
+        self.detail = nil
+        self.detailHeight = 0
+    }
+
+    /// Aktywność z kartą pod skrzydłami (wysokość ograniczona do `IslandLayout.maxDetailHeight`).
+    public init<Leading: View, Trailing: View, Detail: View>(
+        id: String,
+        priority: ActivityPriority,
+        accent: Color? = nil,
+        wingWidth: CGFloat = IslandLayout.wingWidth,
+        detailHeight: CGFloat,
+        @ViewBuilder leading: () -> Leading,
+        @ViewBuilder trailing: () -> Trailing,
+        @ViewBuilder detail: () -> Detail
+    ) {
+        self.id = id
+        self.priority = priority
+        self.accent = accent
+        self.wingWidth = IslandLayout.clampedWingWidth(wingWidth)
+        self.showsInExpandedHeader = false
+        self.leading = AnyView(leading())
+        self.trailing = AnyView(trailing())
+        self.detail = AnyView(detail())
+        self.detailHeight = IslandLayout.clampedDetailHeight(detailHeight)
     }
 }
 

@@ -35,6 +35,7 @@ public final class IslandViewModel {
     public var activity: LiveActivity? { registry.currentActivity }
 
     public var islandSize: CGSize {
-        IslandLayout.size(for: phase, notch: notch.size, activityWingWidth: activity?.wingWidth, expanded: expandedSize)
+        IslandLayout.size(for: phase, notch: notch.size, activityWingWidth: activity?.wingWidth,
+                          activityDetailHeight: activity?.detail == nil ? nil : activity?.detailHeight, expanded: expandedSize)
     }
 }

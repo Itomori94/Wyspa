@@ -10,6 +10,12 @@ MainActor.assumeIsolated {
         app.run()
         return
     }
+    if CommandLine.arguments.contains(NotificationBannerProbe.flag) {
+        app.setActivationPolicy(.prohibited)
+        NotificationBannerProbe.run()
+        app.run()
+        return
+    }
     let delegate = AppDelegate()
     app.delegate = delegate
     app.setActivationPolicy(.accessory)

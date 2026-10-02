@@ -207,6 +207,7 @@ final class IslandWindowController {
             for: state.phase,
             notch: screen.notch.size,
             activityWingWidth: registry.currentActivity?.wingWidth,
+            activityDetailHeight: registry.currentActivity.flatMap { $0.detail == nil ? nil : $0.detailHeight },
             expanded: settings.islandSize.expandedSize
         )
         let bounds = container.bounds

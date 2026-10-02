@@ -118,6 +118,21 @@ struct IslandLayoutTests {
         }
     }
 
+    @Test("Karta pod skrzydłami: szersza wyspa, wyższa o kartę, wysokość ograniczona, mieści się w ramie")
+    func detailCard() {
+        let card = IslandLayout.size(for: .collapsed, notch: notch, activityWingWidth: 40, activityDetailHeight: 70, expanded: expanded)
+        #expect(card.width == IslandLayout.detailWidth + 2 * IslandLayout.collapsedTopRadius)
+        #expect(card.height == notch.height + 70)
+        let tall = IslandLayout.size(for: .collapsed, notch: notch, activityWingWidth: 40, activityDetailHeight: 500, expanded: expanded)
+        #expect(tall.height == notch.height + IslandLayout.maxDetailHeight)
+        for size in IslandSize.allCases {
+            let panel = IslandLayout.panelSize(expanded: size.expandedSize, notch: notch, shadowMargin: 0)
+            let peek = IslandLayout.size(for: .peek, notch: notch, activityWingWidth: IslandLayout.maxWingWidth,
+                                         activityDetailHeight: IslandLayout.maxDetailHeight, expanded: size.expandedSize)
+            #expect(peek.width <= panel.width && peek.height <= panel.height)
+        }
+    }
+
     @Test("Rama rośnie z szerokim notchem i małą wyspą")
     func panelFollowsNotch() {
         let wide = CGSize(width: 420, height: 38)
