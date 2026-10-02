@@ -1,7 +1,7 @@
 # Wyspa
 
 Natywna aplikacja macOS, która zamienia notch MacBooka w interaktywną wyspę w stylu Dynamic Island.
-Prywatny projekt, dystrybucja poza App Store.
+Projekt open source (licencja MIT), dystrybucja poza App Store — budujesz i instalujesz sam.
 
 ## Wymagania
 
@@ -11,7 +11,7 @@ Prywatny projekt, dystrybucja poza App Store.
 ## Instalacja
 
 ```bash
-git clone <repo> Wyspa && cd Wyspa
+git clone https://github.com/Itomori94/Wyspa.git && cd Wyspa
 scripts/dev-cert.sh        # jednorazowo, lokalny certyfikat do podpisu
 scripts/install.sh         # buduje i instaluje /Applications/Wyspa.app, uruchamia ją
 ```
