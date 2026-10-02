@@ -7,7 +7,7 @@ struct QuickActionsView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            let columns = Array(repeating: GridItem(.flexible(), spacing: 8), count: compact ? 2 : module.visibleActions.count)
+            let columns = Array(repeating: GridItem(.flexible(), spacing: 8), count: min(module.visibleActions.count, 4))
             LazyVGrid(columns: columns, spacing: 8) {
                 ForEach(module.visibleActions, id: \.self) { action in
                     tile(action)
@@ -83,7 +83,7 @@ private struct ActionTile: View {
                     .minimumScaleFactor(0.8)
             }
             .frame(maxWidth: .infinity)
-            .padding(.vertical, compact ? 6 : 12)
+            .padding(.vertical, compact ? 5 : 9)
             .background(
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
                     .fill(isOn ? tint : .white.opacity(isHovered ? 0.14 : 0.07))
@@ -100,14 +100,26 @@ struct QuickActionsSettingsView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text("Widoczne w wyspie (od 2 do 4)").font(.headline)
-            ForEach(QuickActionsModule.Action.allCases, id: \.self) { action in
-                Toggle(action.displayName, isOn: Binding(get: { module.isVisible(action) },
-                                                         set: { module.setVisible(action, $0) }))
-                    .toggleStyle(.switch)
-                    .disabled(!module.canToggle(action))
+            Text("Kafelki w wyspie").font(.headline)
+            ForEach(Array(module.slots.enumerated()), id: \.offset) { index, slot in
+                HStack(spacing: 10) {
+                    Text("\(index + 1).").monospacedDigit().foregroundStyle(.secondary).frame(width: 20, alignment: .trailing)
+                    Picker("", selection: Binding(get: { slot.action }, set: { module.chooseAction($0, at: index) })) {
+                        ForEach(QuickActionsModule.Action.allCases, id: \.self) { action in
+                            Label(action.displayName, systemImage: action.symbol).tag(action)
+                        }
+                    }
+                    .labelsHidden()
+                    .frame(maxWidth: 260)
+                    .disabled(!slot.isEnabled)
+                    Spacer()
+                    Toggle("", isOn: Binding(get: { slot.isEnabled }, set: { module.setSlot($0, at: index) }))
+                        .toggleStyle(.switch)
+                        .labelsHidden()
+                        .disabled(!module.canSetSlot(!slot.isEnabled, at: index))
+                }
             }
-            Text("Gdy widoczne są 4 akcje, wyłącz jedną, żeby włączyć inną. Najmniej 2 muszą zostać.")
+            Text("Wybór akcji, która jest już w innym miejscu, zamienia je miejscami. Najmniej 2 kafelki muszą zostać włączone.")
                 .font(.caption).foregroundStyle(.secondary)
             Divider()
             Text("Skróty klawiszowe").font(.headline)

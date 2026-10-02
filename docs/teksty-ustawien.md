@@ -1,7 +1,7 @@
 # Teksty w Ustawieniach Wyspy
 
 Spis tekstów widocznych w oknie **Ustawienia Wyspy** (stan na 2 października 2026). Przy zmianie tekstów w kodzie
-zaktualizuj też ten plik. Karty okna: **Ogólne · Wyspa · Moduły · Układ**.
+zaktualizuj też ten plik. Karty okna: **Ogólne · Wyspa · Moduły · Układ · Szybkie akcje**.
 
 ## Ogólne i Wyspa
 
@@ -108,10 +108,12 @@ zaktualizuj też ten plik. Karty okna: **Ogólne · Wyspa · Moduły · Układ**
 - **Pogoda** — „Temperatura w zwiniętej wyspie” · „Dane z Open-Meteo (bez konta). Wysyłane są tylko współrzędne
   zaokrąglone do ok. 1 km; odświeżanie przy otwarciu wyspy, gdy dane mają ponad 15 minut. Kliknięcie pogody otwiera
   aplikację Pogoda.”
-- **Szybkie akcje** — „Widoczne w wyspie (od 2 do 4)”: przełącznik przy każdej akcji — Zrzut na Półkę / Zrzut całego
-  ekranu / Tekst ze zrzutu / Nagrywanie ekranu / Pipeta koloru / Generator hasła / Tryb ciemny (przełącz) / Ikony na
-  biurku (przełącz) / Zablokuj ekran / Nie usypiaj (przełącz) · „Gdy widoczne są 4 akcje, wyłącz jedną, żeby włączyć
-  inną. Najmniej 2 muszą zostać.” · „Skróty klawiszowe” (te same akcje) · „Skróty działają w całym systemie, także przy
-  zwiniętej wyspie.”
+- **Szybkie akcje** (osobna karta; w karcie Moduły: „Kafelki i skróty ustawisz w karcie „Szybkie akcje”.”)
+  - „Kafelki w wyspie”: 8 miejsc, w każdym lista akcji (Zrzut na Półkę / Zrzut całego ekranu / Tekst ze zrzutu /
+    Nagrywanie ekranu / Pipeta koloru / Generator hasła / Tryb ciemny (przełącz) / Ikony na biurku (przełącz) /
+    Zablokuj ekran / Nie usypiaj (przełącz)) i przełącznik · „Wybór akcji, która jest już w innym miejscu, zamienia je
+    miejscami. Najmniej 2 kafelki muszą zostać włączone.”
+  - „Skróty klawiszowe” (wszystkie akcje) · „Skróty działają w całym systemie, także przy zwiniętej wyspie.”
+  - Moduł wyłączony: „Szybkie akcje są wyłączone” — „Włącz moduł „Szybkie akcje” w karcie Moduły.”
 - **Skróty** — „Nie masz jeszcze żadnych skrótów. Utwórz je w aplikacji Skróty.” · „Ulubione (pokazywane w wyspie;
   bez ulubionych widać wszystkie)” · „Uruchom skrót „…”” · „Odśwież”

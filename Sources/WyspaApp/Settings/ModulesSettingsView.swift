@@ -75,7 +75,10 @@ private struct ModuleRow: View {
                     }
                 }
             }
-            if entry.isActive, let detail = registry.settingsView(for: entry.id) {
+            if entry.isActive, entry.id == "quickactions" {
+                Text("Kafelki i skróty ustawisz w karcie „Szybkie akcje”.")
+                    .font(.caption).foregroundStyle(.secondary).padding(.leading, 40)
+            } else if entry.isActive, let detail = registry.settingsView(for: entry.id) {
                 detail.padding(.leading, 40)
             }
         }

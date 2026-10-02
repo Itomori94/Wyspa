@@ -19,8 +19,10 @@ public final class QuickActionsModule: IslandModule {
 
     static let shelfZone = "shelf.store"
     private static let shortcutsKey = "shortcuts"
-    private static let visibleKey = "visibleActions"
-    static let defaultVisible: [Action] = [.capture, .captureText, .password, .darkMode]
+    private static let slotsKey = "slots"
+    public typealias Slot = ActionSlot<Action>
+    static let defaultSlots: [Slot] = [Action.capture, .captureText, .password, .darkMode, .pickColor, .captureScreen, .record, .keepAwake]
+        .map { Slot(action: $0, isEnabled: true) }
 
     public enum Action: String, CaseIterable, Codable, Sendable {
         case capture, captureScreen, captureText, record, pickColor, password, darkMode, desktopIcons, lock, keepAwake
@@ -39,12 +41,30 @@ public final class QuickActionsModule: IslandModule {
             case .keepAwake: "Nie usypiaj (przełącz)"
             }
         }
+
+        /// Ikona na liście wyboru w ustawieniach.
+        public var symbol: String {
+            switch self {
+            case .capture: "camera.viewfinder"
+            case .captureScreen: "macwindow"
+            case .captureText: "text.viewfinder"
+            case .record: "record.circle"
+            case .pickColor: "eyedropper"
+            case .password: "key.fill"
+            case .darkMode: "circle.lefthalf.filled"
+            case .desktopIcons: "menubar.dock.rectangle"
+            case .lock: "lock.fill"
+            case .keepAwake: "cup.and.saucer"
+            }
+        }
     }
     static let feedbackDisplay: Duration = .seconds(3)
 
     public private(set) var isKeepingAwake = false
-    /// Kafelki w wyspie (2–4, w kolejności z `Action.allCases`); skróty działają dla wszystkich akcji.
-    public private(set) var visibleActions: [Action]
+    /// 8 miejsc: w każdym akcja z listy i przełącznik (najmniej 2 włączone); skróty działają dla wszystkich akcji.
+    public private(set) var slots: [Slot]
+    /// Kafelki w wyspie: akcje z włączonych miejsc, w kolejności miejsc.
+    public var visibleActions: [Action] { slots.filter(\.isEnabled).map(\.action) }
     public private(set) var isDarkMode = false
     public private(set) var desktopIconsVisible = true
     /// Hasło znika ze schowka po tym czasie, jeśli nic innego nie zostało skopiowane.
@@ -68,9 +88,7 @@ public final class QuickActionsModule: IslandModule {
 
     public required init(context: ModuleContext) {
         self.context = context
-        let storedVisible: [String] = context.settings.value(Self.visibleKey, default: Self.defaultVisible.map(\.rawValue))
-        let restored = Action.allCases.filter { storedVisible.contains($0.rawValue) }
-        visibleActions = QuickActionsLogic.visibleRange.contains(restored.count) ? restored : Self.defaultVisible
+        slots = QuickActionsLogic.validated(context.settings.value(Self.slotsKey, default: [Slot]?.none), default: Self.defaultSlots)
         let stored: [String: HotkeyShortcut] = context.settings.value(Self.shortcutsKey, default: [:])
         shortcuts = Dictionary(uniqueKeysWithValues: stored.compactMap { key, value in Action(rawValue: key).map { ($0, value) } })
     }
@@ -95,18 +113,23 @@ public final class QuickActionsModule: IslandModule {
 
     // MARK: - Skróty
 
-    func isVisible(_ action: Action) -> Bool { visibleActions.contains(action) }
-
-    /// Czy przełącznik akcji jest aktywny (nie da się zejść poniżej 2 ani przekroczyć 4).
-    func canToggle(_ action: Action) -> Bool {
-        QuickActionsLogic.toggling(action, in: visibleActions, order: Action.allCases) != nil
+    func chooseAction(_ action: Action, at index: Int) {
+        save(QuickActionsLogic.choosing(action, at: index, in: slots))
     }
 
-    func setVisible(_ action: Action, _ visible: Bool) {
-        guard visible != isVisible(action),
-              let next = QuickActionsLogic.toggling(action, in: visibleActions, order: Action.allCases) else { return }
-        visibleActions = next
-        context.settings.set(next.map(\.rawValue), for: Self.visibleKey)
+    /// Czy przełącznik miejsca jest aktywny (wyłączyć można tylko, gdy zostaną najmniej 2 włączone).
+    func canSetSlot(_ enabled: Bool, at index: Int) -> Bool {
+        QuickActionsLogic.setting(enabled, at: index, in: slots) != nil
+    }
+
+    func setSlot(_ enabled: Bool, at index: Int) {
+        guard let next = QuickActionsLogic.setting(enabled, at: index, in: slots) else { return }
+        save(next)
+    }
+
+    private func save(_ next: [Slot]) {
+        slots = next
+        context.settings.set(next, for: Self.slotsKey)
     }
 
     func setShortcut(_ shortcut: HotkeyShortcut?, for action: Action) {

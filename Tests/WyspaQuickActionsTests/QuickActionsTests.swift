@@ -86,32 +86,35 @@ struct QuickActionsSelectionTests {
         #expect(QuickActionsLogic.password() != QuickActionsLogic.password())
     }
 
-    @Test("Widoczne akcje: od 2 do 4, kolejność stała")
-    func toggling() {
-        let order = QuickActionsModule.Action.allCases
-        let four: [QuickActionsModule.Action] = [.capture, .captureText, .password, .darkMode]
-        #expect(QuickActionsLogic.toggling(.lock, in: four, order: order) == nil, "piąta akcja niedozwolona")
-        let three = QuickActionsLogic.toggling(.password, in: four, order: order)
-        #expect(three == [.capture, .captureText, .darkMode])
-        let two = QuickActionsLogic.toggling(.capture, in: three!, order: order)
-        #expect(two == [.captureText, .darkMode])
-        #expect(QuickActionsLogic.toggling(.darkMode, in: two!, order: order) == nil, "mniej niż 2 niedozwolone")
-        #expect(QuickActionsLogic.toggling(.record, in: two!, order: order) == [.captureText, .record, .darkMode])
+    @Test("Miejsca: wybór akcji zamienia z innym miejscem, najmniej 2 włączone")
+    func slots() {
+        typealias Slot = ActionSlot<QuickActionsModule.Action>
+        let slots = QuickActionsModule.defaultSlots
+        #expect(slots.count == QuickActionsLogic.slotCount && slots.allSatisfy(\.isEnabled))
+        let swapped = QuickActionsLogic.choosing(.keepAwake, at: 0, in: slots)
+        #expect(swapped[0].action == .keepAwake && swapped[7].action == .capture, "zamiana zamiast duplikatu")
+        let fresh = QuickActionsLogic.choosing(.lock, at: 1, in: slots)
+        #expect(fresh[1].action == .lock && Set(fresh.map(\.action)).count == 8)
+        var current = slots
+        for index in 0..<6 { current = QuickActionsLogic.setting(false, at: index, in: current)! }
+        #expect(current.filter(\.isEnabled).count == 2)
+        #expect(QuickActionsLogic.setting(false, at: 6, in: current) == nil, "mniej niż 2 niedozwolone")
+        #expect(QuickActionsLogic.setting(true, at: 0, in: current) != nil)
     }
 
-    @Test("Wybór zapisuje się; przełącznik zablokowany na granicach")
+    @Test("Zapis miejsc i odrzucenie uszkodzonego zapisu")
     func persisted() throws {
-        let defaults = try #require(UserDefaults(suiteName: "wyspa.quick.visible.\(UUID().uuidString)"))
+        let defaults = try #require(UserDefaults(suiteName: "wyspa.quick.slots.\(UUID().uuidString)"))
         let context = ModuleContext(settings: SettingsStore(defaults: defaults).moduleSettings(for: "quickactions"), requestExpand: {})
         let module = QuickActionsModule(context: context)
-        #expect(module.visibleActions == QuickActionsModule.defaultVisible)
-        #expect(!module.canToggle(.lock), "przy 4 widocznych nie da się włączyć piątej")
-        module.setVisible(.password, false)
-        module.setVisible(.lock, true)
-        #expect(QuickActionsModule(context: context).visibleActions == [.capture, .captureText, .darkMode, .lock])
-        module.setVisible(.capture, false)
-        module.setVisible(.captureText, false)
-        #expect(module.visibleActions.count == 2 && !module.canToggle(.darkMode))
+        #expect(module.visibleActions.count == 8)
+        module.chooseAction(.desktopIcons, at: 2)
+        module.setSlot(false, at: 3)
+        let restored = QuickActionsModule(context: context)
+        #expect(restored.slots[2].action == .desktopIcons && !restored.slots[3].isEnabled)
+        #expect(restored.visibleActions.count == 7 && restored.canSetSlot(true, at: 3))
+        let broken = [ActionSlot(action: QuickActionsModule.Action.capture, isEnabled: true)]
+        #expect(QuickActionsLogic.validated(broken, default: QuickActionsModule.defaultSlots) == QuickActionsModule.defaultSlots)
     }
 
     @Test("Ikony na biurku: brak ustawienia znaczy widoczne")

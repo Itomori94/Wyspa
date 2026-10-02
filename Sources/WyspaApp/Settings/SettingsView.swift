@@ -18,6 +18,8 @@ struct SettingsView: View {
                 .tabItem { Label("Moduły", systemImage: "square.grid.2x2") }
             BoardEditorView(settings: settings, registry: registry)
                 .tabItem { Label("Układ", systemImage: "rectangle.3.group") }
+            QuickActionsTab(registry: registry)
+                .tabItem { Label("Szybkie akcje", systemImage: "bolt.circle") }
         }
         .frame(width: 720, height: 620)
     }
@@ -148,5 +150,20 @@ struct ProblemText: View {
         Label(text, systemImage: "exclamationmark.triangle.fill")
             .font(.callout)
             .foregroundStyle(.orange)
+    }
+}
+
+/// Osobna karta dla Szybkich akcji: kafelki (8 miejsc) i skróty klawiszowe.
+private struct QuickActionsTab: View {
+    static let moduleID = "quickactions"
+    let registry: ModuleRegistry
+
+    var body: some View {
+        if registry.isActive(Self.moduleID), let view = registry.settingsView(for: Self.moduleID) {
+            ScrollView { view.padding(20).frame(maxWidth: .infinity, alignment: .leading) }
+        } else {
+            ContentUnavailableView("Szybkie akcje są wyłączone", systemImage: "bolt.circle",
+                                   description: Text("Włącz moduł „Szybkie akcje” w karcie Moduły."))
+        }
     }
 }

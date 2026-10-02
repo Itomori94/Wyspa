@@ -268,8 +268,9 @@ w zwiniętej wyspie (domyślnie wyłączona).
 
 ### Szybkie akcje
 
-W wyspie widać od 2 do 4 przycisków (domyślnie: Zrzut na Półkę, Tekst ze zrzutu, Hasło, Tryb ciemny); które,
-wybierasz przełącznikami w ustawieniach modułu. Do wyboru:
+W wyspie jest 8 miejsc na przyciski. W osobnej karcie ustawień **Szybkie akcje** w każdym miejscu wybierasz akcję
+z listy i włączasz albo wyłączasz je przełącznikiem (najmniej 2 muszą zostać włączone; wybór akcji zajętej przez inne
+miejsce zamienia je miejscami). Do wyboru:
 - **Zrzut na Półkę**: zaznaczasz obszar ekranu, zrzut ląduje na Półce (gdy Półka jest wyłączona — w schowku).
   Przy pierwszym użyciu macOS zapyta o zgodę na nagrywanie ekranu dla Wyspy.
 - **Cały ekran**: zrzut ekranu głównego na Półkę (wyspa najpierw się zwija, żeby nie było jej na zrzucie).

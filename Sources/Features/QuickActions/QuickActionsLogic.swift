@@ -29,16 +29,38 @@ public enum QuickActionsLogic {
         return "Skopiowano tekst: \(count) \(noun)"
     }
 
-    // MARK: - Widoczne akcje
+    // MARK: - Miejsca na akcje
 
-    /// Ile kafelków naraz: najmniej 2, najwięcej 4.
-    public static let visibleRange = 2...4
+    /// Stałe miejsca na kafelki w wyspie; w każdym wybrana akcja i przełącznik.
+    public static let slotCount = 8
+    public static let minimumEnabled = 2
 
-    /// Nowy zestaw widocznych akcji po przełączeniu jednej; `nil`, gdy wyszłoby poza zakres (zostaje jak było).
-    public static func toggling<Action: Hashable>(_ action: Action, in visible: [Action], order: [Action]) -> [Action]? {
-        let next = visible.contains(action) ? visible.filter { $0 != action } : visible + [action]
-        guard visibleRange.contains(next.count) else { return nil }
-        return order.filter(next.contains)
+    /// Wybór akcji w miejscu. Gdy ta akcja jest już w innym miejscu, miejsca zamieniają się akcjami (bez duplikatów).
+    public static func choosing<Action: Hashable>(_ action: Action, at index: Int, in slots: [ActionSlot<Action>]) -> [ActionSlot<Action>] {
+        guard slots.indices.contains(index) else { return slots }
+        let previous = slots[index].action
+        return slots.enumerated().map { offset, slot in
+            if offset == index { return ActionSlot(action: action, isEnabled: slot.isEnabled) }
+            if slot.action == action { return ActionSlot(action: previous, isEnabled: slot.isEnabled) }
+            return slot
+        }
+    }
+
+    /// Włączenie albo wyłączenie miejsca; `nil`, gdy zostałoby mniej niż 2 włączone.
+    public static func setting<Action: Hashable>(_ enabled: Bool, at index: Int, in slots: [ActionSlot<Action>]) -> [ActionSlot<Action>]? {
+        guard slots.indices.contains(index) else { return nil }
+        let next = slots.enumerated().map { offset, slot in
+            offset == index ? ActionSlot(action: slot.action, isEnabled: enabled) : slot
+        }
+        return next.filter(\.isEnabled).count >= minimumEnabled ? next : nil
+    }
+
+    /// Zapisane miejsca albo domyślne, gdy zapis jest niepełny, ma powtórki albo za mało włączonych.
+    public static func validated<Action: Hashable>(_ slots: [ActionSlot<Action>]?, default fallback: [ActionSlot<Action>]) -> [ActionSlot<Action>] {
+        guard let slots, slots.count == slotCount, Set(slots.map(\.action)).count == slotCount,
+              slots.filter(\.isEnabled).count >= minimumEnabled
+        else { return fallback }
+        return slots
     }
 
     // MARK: - Hasło
@@ -101,3 +123,17 @@ public enum QuickActionsLogic {
         return directory.appendingPathComponent("Zrzut \(formatter.string(from: date)).png")
     }
 }
+
+/// Miejsce na kafelek szybkiej akcji.
+public struct ActionSlot<Action: Hashable>: Hashable {
+    public let action: Action
+    public let isEnabled: Bool
+
+    public init(action: Action, isEnabled: Bool) {
+        self.action = action
+        self.isEnabled = isEnabled
+    }
+}
+
+extension ActionSlot: Codable where Action: Codable {}
+extension ActionSlot: Sendable where Action: Sendable {}
