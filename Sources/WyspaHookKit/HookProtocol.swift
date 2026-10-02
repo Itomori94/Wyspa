@@ -104,11 +104,16 @@ public struct HookEvent: Equatable, Sendable {
     public let lastAssistantMessage: String?
     /// Zapis sesji (JSONL); z niego wykrywamy przerwanie, po którym Claude Code nie wysyła żadnego hooka.
     public let transcriptPath: String?
+    /// Limity planu — tylko w zdarzeniu „StatusLine” z linii statusu Claude Code.
+    public let rateLimits: ClaudeLimits?
+
+    /// Nazwa zdarzenia wysyłanego przez `wyspa-hook --statusline` (nie jest hookiem Claude Code).
+    public static let statusLineEvent = "StatusLine"
 
     /// Zdarzenie bez danych narzędzia (do syntetycznych zmian stanu).
     public static func fallback(_ sessionID: String) -> HookEvent {
         HookEvent(name: "Notification", sessionID: sessionID, cwd: nil, toolName: nil, toolUseID: nil, toolInput: nil,
-                  notificationType: nil, message: nil, lastAssistantMessage: nil, transcriptPath: nil)
+                  notificationType: nil, message: nil, lastAssistantMessage: nil, transcriptPath: nil, rateLimits: nil)
     }
 
     public static func parse(_ object: [String: Any]) throws(HookProtocol.ParseError) -> HookEvent {
@@ -124,7 +129,8 @@ public struct HookEvent: Equatable, Sendable {
             notificationType: object["notification_type"] as? String,
             message: object["message"] as? String,
             lastAssistantMessage: object["last_assistant_message"] as? String,
-            transcriptPath: object["transcript_path"] as? String
+            transcriptPath: object["transcript_path"] as? String,
+            rateLimits: ClaudeLimits.parse(object["rate_limits"])
         )
     }
 }

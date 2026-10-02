@@ -10,6 +10,9 @@ struct ClaudeSessionsView: View {
         let sessions = module.store.ordered
         ScrollView {
             VStack(alignment: .leading, spacing: 8) {
+                if let limits = module.limits {
+                    LimitsBar(limits: limits, compact: compact)
+                }
                 ForEach(module.pending.prefix(compact ? 1 : 3)) { request in
                     PermissionCard(request: request, session: module.store.sessions[request.sessionID],
                                    decisionSeconds: module.decisionMinutes * 60, compact: compact,
@@ -275,5 +278,43 @@ struct FinishedCard: View {
         }
         .onTapGesture(perform: open)
         .help("Kliknij, żeby przejść do terminala")
+    }
+}
+
+/// Zużycie limitów planu Claude z odliczaniem do resetu (odświeżane przez system, bez własnego zegara).
+struct LimitsBar: View {
+    let limits: ClaudeLimits
+    let compact: Bool
+
+    var body: some View {
+        HStack(spacing: 12) {
+            if let window = limits.fiveHour { gauge("5 h", window) }
+            if let window = limits.sevenDay { gauge("Tydzień", window) }
+        }
+        .padding(.horizontal, 2)
+    }
+
+    private func gauge(_ title: String, _ window: ClaudeLimits.Window) -> some View {
+        VStack(alignment: .leading, spacing: 3) {
+            HStack(spacing: 4) {
+                Text(title).font(.system(size: 10.5, weight: .semibold)).foregroundStyle(.white.opacity(0.6))
+                Text(ClaudeLimits.percent(window.usedPercentage))
+                    .font(.system(size: 10.5, weight: .bold)).monospacedDigit()
+                    .foregroundStyle(Self.tint(window.usedPercentage))
+                Spacer(minLength: 2)
+                if !compact {
+                    (Text("reset ") + Text(window.resetsAt, style: .relative))
+                        .font(.system(size: 9.5)).foregroundStyle(.white.opacity(0.45)).lineLimit(1)
+                }
+            }
+            ProgressView(value: min(window.usedPercentage, 100), total: 100)
+                .tint(Self.tint(window.usedPercentage))
+                .controlSize(.mini)
+        }
+        .help("Reset: \(window.resetsAt.formatted(date: .abbreviated, time: .shortened))")
+    }
+
+    static func tint(_ used: Double) -> Color {
+        used >= 90 ? .red : used >= 70 ? .orange : .green
     }
 }

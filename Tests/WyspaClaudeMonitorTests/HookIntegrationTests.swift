@@ -25,10 +25,11 @@ struct HookIntegrationTests {
     /// Krótka ścieżka: sun_path ma limit 104 bajtów.
     private func socketPath() -> String { "/tmp/wyspa-test-\(UUID().uuidString.prefix(8)).sock" }
 
-    private func runHook(socket: String, input: [String: Any], decisionTimeout: Int = 5) async throws -> (output: String, seconds: Double) {
+    private func runHook(socket: String, input: [String: Any], decisionTimeout: Int = 5,
+                         arguments: [String] = []) async throws -> (output: String, seconds: Double) {
         let process = Process()
         process.executableURL = try #require(HelperLocator.helperURL)
-        process.arguments = ["--decision-timeout", String(decisionTimeout)]
+        process.arguments = ["--decision-timeout", String(decisionTimeout)] + arguments
         process.environment = ["WYSPA_SOCKET_PATH": socket, "__CFBundleIdentifier": "com.apple.Terminal"]
         let stdin = Pipe(), stdout = Pipe()
         process.standardInput = stdin
@@ -113,6 +114,28 @@ struct HookIntegrationTests {
         #expect(HookServer.isListening(path))
         first.stop()
         #expect(!FileManager.default.fileExists(atPath: path))
+    }
+
+    @Test("Linia statusu: tekst w terminalu i same limity do Wyspy (także bez Wyspy)")
+    func statusLine() async throws {
+        let path = socketPath()
+        let received = Received()
+        let server = HookServer(path: path, onMessage: { envelope, _ in received.record(envelope) }, onClosed: { _ in })
+        try server.start()
+        defer { server.stop() }
+        let input: [String: Any] = [
+            "session_id": "s1", "cwd": "/tmp/projekt", "model": ["display_name": "Opus"],
+            "rate_limits": ["five_hour": ["used_percentage": 50, "resets_at": 1_738_425_600]],
+        ]
+        let result = try await runHook(socket: path, input: input, arguments: ["--statusline"])
+        #expect(result.output == "5h 50%\n")
+        try await Task.sleep(for: .milliseconds(200))
+        #expect(received.events.first?.event.name == HookEvent.statusLineEvent)
+        #expect(received.events.first?.event.cwd == nil, "do Wyspy idą tylko limity")
+        #expect(received.events.first?.event.rateLimits?.fiveHour?.usedPercentage == 50)
+        server.stop()
+        let offline = try await runHook(socket: path, input: input, arguments: ["--statusline"])
+        #expect(offline.output == "5h 50%\n")
     }
 
     @Test("Odmowa z wyspy przekazuje powód do Claude Code")

@@ -81,6 +81,9 @@ zaktualizuj też ten plik. Karty okna: **Ogólne · Wyspa · Moduły · Układ**
     i ustawienia zostają. Gdy Wyspa nie działa, hook kończy się od razu i nic nie zmienia.”
   - „Czas na decyzję w wyspie: … min” — „Po tym czasie (albo gdy Wyspa nie odpowie) decyzja wraca do zwykłego promptu
     w terminalu.”
+  - „Limity planu (5 h i tydzień)”: Pokazuj limity / Wyłącz / „Masz własną linię statusu” — „Limity przekazuje linia
+    statusu Claude Code (oficjalne dane planu Pro/Max). W terminalu pojawi się pasek „5h 23% · tydz. 41%”, a znikną
+    z niego podpowiedzi klawiszy, np. „esc to interrupt”. Działa od następnej sesji.”
   - „Dźwięk, gdy sesja czeka albo kończy” · „Bez dźwięku, gdy terminal sesji jest na wierzchu”
 - **Pobierania** — „Po zakończeniu odkładaj plik na Półkę” · „Działa z Safari, Chrome i innymi przeglądarkami, które
   pokazują postęp na ikonie pliku w Finderze. Na Półkę trafia odnośnik do pliku w Pobranych (wymaga włączonej Półki).”

@@ -22,6 +22,7 @@ public enum HookInstaller {
         case unreadableSettings(String)
         case unexpectedStructure(String)
         case writeFailed(String)
+        case foreignStatusLine
 
         public var errorDescription: String? {
             switch self {
@@ -29,6 +30,8 @@ public enum HookInstaller {
             case .unexpectedStructure(let detail):
                 "Nieoczekiwana struktura ~/.claude/settings.json (\(detail)). Plik nie został zmieniony — popraw go ręcznie."
             case .writeFailed(let detail): "Nie można zapisać ~/.claude/settings.json: \(detail)"
+            case .foreignStatusLine:
+                "Masz już własną linię statusu w ~/.claude/settings.json. Wyspa jej nie nadpisze — usuń ją albo dopisz do niej `wyspa-hook --statusline`."
             }
         }
     }
@@ -99,6 +102,37 @@ public enum HookInstaller {
                 (group["hooks"] as? [[String: Any]] ?? []).contains(where: isOurs)
             }
         }
+    }
+
+    // MARK: - Linia statusu (limity planu)
+
+    public enum StatusLineState: Equatable { case none, ours, foreign }
+
+    public static func statusLineState(in settings: [String: Any]) -> StatusLineState {
+        guard let entry = settings["statusLine"] else { return .none }
+        let command = (entry as? [String: Any])?["command"] as? String ?? ""
+        return isOurStatusLine(command) ? .ours : .foreign
+    }
+
+    /// Linia statusu Claude Code uruchamiająca `wyspa-hook --statusline`. Cudzej linii statusu nie nadpisuje.
+    public static func installingStatusLine(into settings: [String: Any], helperPath: String) throws(InstallError) -> [String: Any] {
+        guard statusLineState(in: settings) != .foreign else { throw .foreignStatusLine }
+        var result = settings
+        // Polecenie linii statusu idzie przez powłokę, więc ścieżka jest w apostrofach.
+        let quoted = "'" + helperPath.replacingOccurrences(of: "'", with: "'\\''") + "'"
+        result["statusLine"] = ["type": "command", "command": "\(quoted) --statusline", "padding": 0] as [String: Any]
+        return result
+    }
+
+    public static func uninstallingStatusLine(from settings: [String: Any]) -> [String: Any] {
+        guard statusLineState(in: settings) == .ours else { return settings }
+        var result = settings
+        result["statusLine"] = nil
+        return result
+    }
+
+    static func isOurStatusLine(_ command: String) -> Bool {
+        command.hasSuffix(" --statusline") && command.contains("/\(marker)")
     }
 
     /// Wpis Wyspy = polecenie, którego plik nazywa się dokładnie `wyspa-hook` (np. `my-wyspa-hook-logger.sh` nie jest nasz).

@@ -343,3 +343,42 @@ struct HookProtocolEdgeTests {
         #expect(event.name == "Notification" && event.sessionID == "s9" && event.transcriptPath == nil)
     }
 }
+
+@Suite("Limity planu Claude (linia statusu)")
+struct ClaudeLimitsTests {
+    let rateLimits: [String: Any] = [
+        "five_hour": ["used_percentage": 23.5, "resets_at": 1_738_425_600],
+        "seven_day": ["used_percentage": 41.2, "resets_at": 1_738_857_600],
+    ]
+
+    @Test("Odczyt okien i tekst do terminala")
+    func parse() throws {
+        let limits = try #require(ClaudeLimits.parse(rateLimits))
+        #expect(limits.fiveHour?.usedPercentage == 23.5)
+        #expect(limits.sevenDay?.resetsAt == Date(timeIntervalSince1970: 1_738_857_600))
+        #expect(limits.statusLineText == "5h 24% · tydz. 41%")
+        #expect(ClaudeLimits.parse(["five_hour": ["used_percentage": 5]]) == nil)
+        #expect(ClaudeLimits.parse(nil) == nil)
+    }
+
+    @Test("Zdarzenie StatusLine niesie limity")
+    func event() throws {
+        let event = try HookEvent.parse(["hook_event_name": HookEvent.statusLineEvent, "session_id": "s", "rate_limits": rateLimits])
+        #expect(event.rateLimits?.fiveHour?.usedPercentage == 23.5)
+    }
+
+    @Test("Instalacja linii statusu: tylko gdy nie ma cudzej; usuwa tylko swoją")
+    func installer() throws {
+        let installed = try HookInstaller.installingStatusLine(into: ["model": "opus"], helperPath: "/Applications/Wyspa.app/Contents/Helpers/wyspa-hook")
+        #expect(HookInstaller.statusLineState(in: installed) == .ours)
+        #expect((installed["statusLine"] as? [String: Any])?["command"] as? String
+                == "'/Applications/Wyspa.app/Contents/Helpers/wyspa-hook' --statusline")
+        #expect(HookInstaller.uninstallingStatusLine(from: installed)["statusLine"] == nil)
+        let foreign: [String: Any] = ["statusLine": ["type": "command", "command": "~/bin/moja-linia.sh"]]
+        #expect(HookInstaller.statusLineState(in: foreign) == .foreign)
+        #expect(throws: HookInstaller.InstallError.foreignStatusLine) {
+            try HookInstaller.installingStatusLine(into: foreign, helperPath: "/x/wyspa-hook")
+        }
+        #expect(HookInstaller.uninstallingStatusLine(from: foreign)["statusLine"] != nil)
+    }
+}

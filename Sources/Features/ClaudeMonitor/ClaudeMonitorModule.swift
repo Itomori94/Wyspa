@@ -37,6 +37,9 @@ public final class ClaudeMonitorModule: IslandModule {
     }
     public private(set) var pending: [PendingPermission] = []
     public private(set) var hookStatus: HookStatus = .unknown
+    /// Limity planu z linii statusu Claude Code (ostatnio przesłane).
+    public private(set) var limits: ClaudeLimits?
+    public private(set) var statusLineState: HookInstaller.StatusLineState = .none
     public private(set) var problem: String?
     /// Sesja, która przed chwilą skończyła (krótka aktywność w zwiniętej wyspie).
     public private(set) var justFinished: ClaudeSession?
@@ -173,6 +176,7 @@ public final class ClaudeMonitorModule: IslandModule {
     func refreshHookStatus() {
         do {
             let settings = try HookInstaller.read()
+            statusLineState = HookInstaller.statusLineState(in: settings)
             if HookInstaller.isInstalled(in: settings) {
                 hookStatus = Self.installedPaths(in: settings).allSatisfy { $0 == helperPath } ? .installed : .outdatedPath
             } else {
@@ -210,6 +214,25 @@ public final class ClaudeMonitorModule: IslandModule {
         }
     }
 
+    func installStatusLine() {
+        do {
+            try HookInstaller.write(try HookInstaller.installingStatusLine(into: try HookInstaller.read(), helperPath: helperPath))
+            refreshHookStatus()
+        } catch {
+            problem = error.localizedDescription
+        }
+    }
+
+    func uninstallStatusLine() {
+        do {
+            try HookInstaller.write(HookInstaller.uninstallingStatusLine(from: try HookInstaller.read()))
+            limits = nil
+            refreshHookStatus()
+        } catch {
+            problem = error.localizedDescription
+        }
+    }
+
     func uninstallHooks() {
         do {
             try HookInstaller.write(try HookInstaller.uninstalling(from: try HookInstaller.read()))
@@ -230,6 +253,11 @@ public final class ClaudeMonitorModule: IslandModule {
     // MARK: - Zdarzenia
 
     private func receive(_ envelope: HookProtocol.Envelope, channel: HookServer.ReplyChannel?) {
+        // Linia statusu niesie tylko limity — nie dotyka stanu sesji.
+        if envelope.event.name == HookEvent.statusLineEvent {
+            if let rateLimits = envelope.event.rateLimits, rateLimits != limits { limits = rateLimits }
+            return
+        }
         let (next, alert) = store.applying(envelope, at: Date())
         store = next
         // Diagnostyka bez treści rozmów: nazwa zdarzenia, początek identyfikatora sesji, wynikowy stan.

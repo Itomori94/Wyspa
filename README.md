@@ -175,6 +175,10 @@ i ostatnie narzędzia. Kilka sesji naraz.
   początek nowego pliku). *Zezwól*, *Odrzuć* albo *W terminalu*. Brak decyzji w ustalonym czasie (domyślnie 5 min)
   albo wyłączona Wyspa = zwykły prompt w terminalu, jak bez Wyspy.
 - **Dźwięk i pulsowanie**, gdy sesja czeka albo kończy; cisza, gdy terminal tej sesji jest na wierzchu.
+- **Limity planu** (Pro/Max): *Pokazuj limity* w ustawieniach modułu ustawia linię statusu Claude Code na
+  `wyspa-hook --statusline`. Wyspa pokazuje zużycie okna 5-godzinnego i tygodniowego z odliczaniem do resetu,
+  a w terminalu pojawia się pasek „5h 23% · tydz. 41%” (bez podpowiedzi klawiszy Claude Code). Twojej własnej linii
+  statusu Wyspa nie nadpisuje.
 - **Podgląd odpowiedzi**: po zakończeniu pracy pod notchem pojawia się karta z początkiem odpowiedzi Claude;
   kliknięcie przenosi do terminala, najechanie zatrzymuje kartę. Na liście sesji widać, od kiedy sesja pracuje.
 - **Kliknięcie sesji** przenosi do jej terminala: właściwa karta w Terminalu i iTerm2, właściwe okno w VS Code i Cursor;

@@ -30,6 +30,20 @@ struct ClaudeSettingsView: View {
                     in: ClaudeMonitorModule.decisionMinutesRange)
             Text("Po tym czasie (albo gdy Wyspa nie odpowie) decyzja wraca do zwykłego promptu w terminalu.")
                 .font(.caption).foregroundStyle(.secondary)
+            Divider()
+            HStack {
+                Label("Limity planu (5 h i tydzień)", systemImage: "gauge.with.dots.needle.33percent")
+                Spacer()
+                switch module.statusLineState {
+                case .ours: Button("Wyłącz", action: module.uninstallStatusLine)
+                case .none: Button("Pokazuj limity", action: module.installStatusLine)
+                case .foreign: Text("Masz własną linię statusu").foregroundStyle(.secondary)
+                }
+            }
+            Text("Limity przekazuje linia statusu Claude Code (oficjalne dane planu Pro/Max). W terminalu pojawi się pasek "
+                 + "„5h 23% · tydz. 41%”, a znikną z niego podpowiedzi klawiszy, np. „esc to interrupt”. Działa od następnej sesji.")
+                .font(.caption).foregroundStyle(.secondary)
+            Divider()
             Toggle("Dźwięk, gdy sesja czeka albo kończy", isOn: $module.soundsEnabled)
             Toggle("Bez dźwięku, gdy terminal sesji jest na wierzchu", isOn: $module.muteWhenTerminalFrontmost)
                 .disabled(!module.soundsEnabled)

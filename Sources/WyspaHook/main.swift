@@ -14,12 +14,18 @@ let connectTimeoutMilliseconds: Int32 = 1000
 
 signal(SIGPIPE, SIG_IGN)
 
+/// W trybie linii statusu tekst trafia do terminala zawsze — także gdy Wyspa nie działa.
+nonisolated(unsafe) var statusLineOutput: String?
+
 func finish(_ output: String? = nil) -> Never {
-    if let output { FileHandle.standardOutput.write(Data((output + "\n").utf8)) }
+    if let text = output ?? statusLineOutput { FileHandle.standardOutput.write(Data((text + "\n").utf8)) }
     exit(0)
 }
 
 let arguments = CommandLine.arguments
+// --statusline: wywołanie jako linia statusu Claude Code. Do Wyspy idą tylko limity planu (bez reszty wejścia),
+// a do terminala krótki tekst „5h 23% · tydz. 41%”.
+let isStatusLine = arguments.contains("--statusline")
 let decisionTimeout: Int = {
     guard let index = arguments.firstIndex(of: "--decision-timeout"), index + 1 < arguments.count,
           let value = Int(arguments[index + 1]), value > 0 else { return 300 }
@@ -27,7 +33,16 @@ let decisionTimeout: Int = {
 }()
 
 let input = FileHandle.standardInput.readDataToEndOfFile()
-guard let event = try? JSONSerialization.jsonObject(with: input) as? [String: Any] else { finish() }
+guard let rawEvent = try? JSONSerialization.jsonObject(with: input) as? [String: Any] else { finish() }
+var event = rawEvent
+if isStatusLine {
+    let limits = ClaudeLimits.parse(rawEvent["rate_limits"])
+    statusLineOutput = limits?.statusLineText ?? ""
+    guard let rateLimits = rawEvent["rate_limits"], limits != nil else { finish() }
+    event = ["hook_event_name": HookEvent.statusLineEvent,
+             "session_id": rawEvent["session_id"] as? String ?? "statusline",
+             "rate_limits": rateLimits]
+}
 let wantsReply = event["hook_event_name"] as? String == "PermissionRequest"
 
 let environment = ProcessInfo.processInfo.environment
