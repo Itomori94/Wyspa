@@ -12,6 +12,7 @@ public final class ShelfModule: IslandModule, IslandDropHandling {
         name: "Półka",
         summary: "Przeciągnij plik nad notch, odłóż go na później i wyciągnij, kiedy będzie potrzebny. Z podglądem i AirDrop.",
         symbol: "tray.full",
+        content: .personal,
         widgetMinWidth: 110
     )
     public static let acceptedDropTypes: [UTType] = [.fileURL, .image, .url, .plainText, .data]

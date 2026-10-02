@@ -11,6 +11,7 @@ public final class HUDModule: IslandModule {
         name: "HUD głośności i jasności",
         summary: "Zamiast systemowego okienka pokazuje głośność, jasność ekranu i podświetlenie klawiatury w wyspie.",
         symbol: "speaker.wave.2.fill",
+        content: .neutral,
         permissions: [.accessibility],
         providesPage: false
     )

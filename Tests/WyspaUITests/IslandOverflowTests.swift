@@ -51,7 +51,7 @@ private class TabModuleBase {
 }
 
 @MainActor @Observable private final class Tab0: TabModuleBase, IslandModule {
-    static let descriptor = ModuleDescriptor(id: "t0", name: "T0", summary: "", symbol: "music.note", widgetMinWidth: 60)
+    static let descriptor = ModuleDescriptor(id: "t0", name: "T0", summary: "", symbol: "music.note", content: .neutral, widgetMinWidth: 60)
     var liveActivity: LiveActivity? {
         Scenario.activityWing.map { wing in
             if let detail = Scenario.detailHeight {
@@ -72,48 +72,48 @@ private class TabModuleBase {
     }
 }
 @MainActor @Observable private final class Tab1: TabModuleBase, IslandModule {
-    static let descriptor = ModuleDescriptor(id: "t1", name: "T1", summary: "", symbol: "tray.full", widgetMinWidth: 60)
+    static let descriptor = ModuleDescriptor(id: "t1", name: "T1", summary: "", symbol: "tray.full", content: .neutral, widgetMinWidth: 60)
     var liveActivity: LiveActivity? { nil }
 }
 @MainActor @Observable private final class Tab2: TabModuleBase, IslandModule {
-    static let descriptor = ModuleDescriptor(id: "t2", name: "T2", summary: "", symbol: "bolt", widgetMinWidth: 60)
+    static let descriptor = ModuleDescriptor(id: "t2", name: "T2", summary: "", symbol: "bolt", content: .neutral, widgetMinWidth: 60)
     var liveActivity: LiveActivity? { nil }
 }
 @MainActor @Observable private final class Tab3: TabModuleBase, IslandModule {
-    static let descriptor = ModuleDescriptor(id: "t3", name: "T3", summary: "", symbol: "headphones", widgetMinWidth: 60)
+    static let descriptor = ModuleDescriptor(id: "t3", name: "T3", summary: "", symbol: "headphones", content: .neutral, widgetMinWidth: 60)
     var liveActivity: LiveActivity? { nil }
 }
 @MainActor @Observable private final class Tab4: TabModuleBase, IslandModule {
-    static let descriptor = ModuleDescriptor(id: "t4", name: "T4", summary: "", symbol: "calendar", widgetMinWidth: 60)
+    static let descriptor = ModuleDescriptor(id: "t4", name: "T4", summary: "", symbol: "calendar", content: .neutral, widgetMinWidth: 60)
     var liveActivity: LiveActivity? { nil }
 }
 @MainActor @Observable private final class Tab5: TabModuleBase, IslandModule {
-    static let descriptor = ModuleDescriptor(id: "t5", name: "T5", summary: "", symbol: "timer", widgetMinWidth: 60)
+    static let descriptor = ModuleDescriptor(id: "t5", name: "T5", summary: "", symbol: "timer", content: .neutral, widgetMinWidth: 60)
     var liveActivity: LiveActivity? { nil }
 }
 @MainActor @Observable private final class Tab6: TabModuleBase, IslandModule {
-    static let descriptor = ModuleDescriptor(id: "t6", name: "T6", summary: "", symbol: "note.text", widgetMinWidth: 60)
+    static let descriptor = ModuleDescriptor(id: "t6", name: "T6", summary: "", symbol: "note.text", content: .neutral, widgetMinWidth: 60)
     var liveActivity: LiveActivity? { nil }
 }
 @MainActor @Observable private final class Tab7: TabModuleBase, IslandModule {
-    static let descriptor = ModuleDescriptor(id: "t7", name: "T7", summary: "", symbol: "doc.on.clipboard", widgetMinWidth: 60)
+    static let descriptor = ModuleDescriptor(id: "t7", name: "T7", summary: "", symbol: "doc.on.clipboard", content: .neutral, widgetMinWidth: 60)
     var liveActivity: LiveActivity? { nil }
 }
 @MainActor @Observable private final class Tab8: TabModuleBase, IslandModule {
-    static let descriptor = ModuleDescriptor(id: "t8", name: "T8", summary: "", symbol: "square.stack.3d.up", widgetMinWidth: 60)
+    static let descriptor = ModuleDescriptor(id: "t8", name: "T8", summary: "", symbol: "square.stack.3d.up", content: .neutral, widgetMinWidth: 60)
     var liveActivity: LiveActivity? { nil }
 }
 @MainActor @Observable private final class Tab9: TabModuleBase, IslandModule {
-    static let descriptor = ModuleDescriptor(id: "t9", name: "T9", summary: "", symbol: "camera", widgetMinWidth: 60)
+    static let descriptor = ModuleDescriptor(id: "t9", name: "T9", summary: "", symbol: "camera", content: .neutral, widgetMinWidth: 60)
     var liveActivity: LiveActivity? { nil }
 }
 
 @MainActor @Observable private final class Tab10: TabModuleBase, IslandModule {
-    static let descriptor = ModuleDescriptor(id: "t10", name: "T10", summary: "", symbol: "checklist", widgetMinWidth: 60)
+    static let descriptor = ModuleDescriptor(id: "t10", name: "T10", summary: "", symbol: "checklist", content: .neutral, widgetMinWidth: 60)
     var liveActivity: LiveActivity? { nil }
 }
 @MainActor @Observable private final class Tab11: TabModuleBase, IslandModule {
-    static let descriptor = ModuleDescriptor(id: "t11", name: "T11", summary: "", symbol: "headphones", widgetMinWidth: 60)
+    static let descriptor = ModuleDescriptor(id: "t11", name: "T11", summary: "", symbol: "headphones", content: .neutral, widgetMinWidth: 60)
     var liveActivity: LiveActivity? { nil }
 }
 

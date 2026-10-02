@@ -12,6 +12,7 @@ public final class RemindersModule: IslandModule {
         name: "Przypomnienia",
         summary: "Przypomnienia na dziś i zaległe; odhaczasz je jednym kliknięciem.",
         symbol: "checklist",
+        content: .personal,
         permissions: [.reminders],
         widgetMinWidth: 140
     )

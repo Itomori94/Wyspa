@@ -6,19 +6,18 @@ import Testing
 struct PrivacyStateTests {
     @Test("Automatycznie: aktywny tylko przy przechwytywaniu ekranu; Zawsze i Nigdy bez wykrywania")
     func modes() {
-        var captured = false
-        var mode = PrivacyState.Mode.automatic
-        var detections = 0
-        let state = PrivacyState(mode: { mode }, isScreenCaptured: { detections += 1; return captured })
+        final class Box { var captured = false; var mode = PrivacyState.Mode.automatic; var detections = 0 }
+        let box = Box()
+        let state = PrivacyState(mode: { box.mode }, isScreenCaptured: { box.detections += 1; return box.captured })
         #expect(!state.refresh())
-        captured = true
+        box.captured = true
         #expect(state.refresh() && state.isActive)
-        mode = .off
+        box.mode = .off
         #expect(!state.refresh())
-        mode = .always
-        captured = false
+        box.mode = .always
+        box.captured = false
         #expect(state.refresh())
-        #expect(detections == 2, "wykrywanie tylko w trybie automatycznym")
+        #expect(box.detections == 2, "wykrywanie tylko w trybie automatycznym")
     }
 
     @Test("Nazwy trybów")

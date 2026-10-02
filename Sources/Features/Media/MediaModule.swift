@@ -11,6 +11,7 @@ public final class MediaModule: IslandModule {
         name: "Teraz odtwarzane",
         summary: "Okładka, tytuł, pasek przewijania i sterowanie odtwarzaniem — z całego systemu albo tylko z Apple Music.",
         symbol: "music.note",
+        content: .neutral,
         widgetMinWidth: 150
     )
 

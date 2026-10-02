@@ -11,6 +11,7 @@ public final class PowerModule: IslandModule {
         name: "Zasilanie",
         summary: "Pokazuje podłączenie ładowarki, pełne naładowanie i niski poziom baterii.",
         symbol: "battery.100percent.bolt",
+        content: .neutral,
         widgetMinWidth: 90
     )
 

@@ -219,6 +219,14 @@ APP=$PWD/build/Wyspa.app/Contents
   zapis (`transcript_path`, `DispatchSource` na pliku) i czytamy ostatnie 32 KB: jeśli ostatnia wiadomość rozmowy to
   „[Request interrupted by user…”, sesja wraca do bezczynności (`TranscriptTail`, testy).
 
+## Tryb prywatny
+
+- `ModuleDescriptor.content` (`.personal`/`.neutral`) bez wartości domyślnej — nowy moduł musi się zadeklarować.
+- `ModuleRegistry.gated` owija każdy widok modułu osobistego (`resolve`, `widgetView`, `standaloneView`) w `PrivacyGate`:
+  w trybie prywatnym `makePrivateView(compact:)` modułu albo zasłona. Karty live activity: `masked()` →
+  `withPrivateDetail` albo brak karty.
+- Test `PrivacyCoverageTests` przechodzi po całym `ModuleCatalog` (lista modułów osobistych jest jawna w teście).
+
 ## Wyjątki od „bez zegarów w spoczynku”
 
 - Historia schowka: odpytywanie schowka tylko przy włączonym module (decyzja użytkownika).

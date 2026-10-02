@@ -21,6 +21,7 @@ public final class ClaudeMonitorModule: IslandModule {
         name: "Claude Code",
         summary: "Sesje Claude Code: czy pracuje, jakiego narzędzia używa, czy czeka na Ciebie. Zatwierdzanie uprawnień z wyspy.",
         symbol: "terminal.fill",
+        content: .personal,
         widgetMinWidth: 150
     )
 
@@ -121,7 +122,8 @@ public final class ClaudeMonitorModule: IslandModule {
             let trailing = {
                 Text(justFinished.projectName).font(.system(size: 10.5, weight: .semibold)).lineLimit(1).foregroundStyle(.green)
             }
-            guard !context.privacy.isActive, let preview = MessagePreview.make(justFinished.lastMessage) else {
+            // W trybie prywatnym wyspa sama usuwa kartę z podglądem (brak wersji prywatnej) — zostają skrzydła.
+            guard let preview = MessagePreview.make(justFinished.lastMessage) else {
                 return LiveActivity(id: "claude.finished", priority: .alert, accent: .green, wingWidth: 56,
                                     leading: leading, trailing: trailing)
             }
@@ -147,6 +149,10 @@ public final class ClaudeMonitorModule: IslandModule {
 
     public func makeExpandedView() -> AnyView? { AnyView(ClaudeSessionsView(module: self, compact: false)) }
     public func makeWidgetView() -> AnyView? { AnyView(ClaudeSessionsView(module: self, compact: true)) }
+    /// Tryb prywatny: sesje i prośby o zgodę widoczne (da się zdecydować), ale bez poleceń, diffów i treści narzędzi.
+    public func makePrivateView(compact: Bool) -> AnyView? {
+        AnyView(ClaudeSessionsView(module: self, compact: compact, isPrivate: true))
+    }
     public func makeSettingsView() -> AnyView? { AnyView(ClaudeSettingsView(module: self)) }
 
     // MARK: - Akcje

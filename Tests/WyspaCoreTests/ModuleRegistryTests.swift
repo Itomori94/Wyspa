@@ -44,7 +44,7 @@ struct ProbeError: LocalizedError {
 @MainActor
 @Observable
 final class PlainModule: IslandModule {
-    static let descriptor = ModuleDescriptor(id: "plain", name: "Prosty", summary: "", symbol: "circle")
+    static let descriptor = ModuleDescriptor(id: "plain", name: "Prosty", summary: "", symbol: "circle", content: .neutral)
     var activity: ActivityPriority?
 
     init(context: ModuleContext) {}
@@ -63,7 +63,7 @@ final class PlainModule: IslandModule {
 @Observable
 final class CameraModule: IslandModule {
     static let descriptor = ModuleDescriptor(
-        id: "camera", name: "Kamera", summary: "", symbol: "camera", permissions: [.camera]
+        id: "camera", name: "Kamera", summary: "", symbol: "camera", content: .neutral, permissions: [.camera]
     )
     init(context: ModuleContext) {}
     func activate() async throws { Probe.activations.append("camera") }
@@ -77,7 +77,7 @@ final class CameraModule: IslandModule {
 @MainActor
 @Observable
 final class DropModule: IslandModule, IslandDropHandling {
-    static let descriptor = ModuleDescriptor(id: "drop", name: "Upuść", summary: "", symbol: "tray")
+    static let descriptor = ModuleDescriptor(id: "drop", name: "Upuść", summary: "", symbol: "tray", content: .neutral)
     static let acceptedDropTypes: [UTType] = [.fileURL, .image]
     static var drops: [String?] = []
 
@@ -95,7 +95,7 @@ final class DropModule: IslandModule, IslandDropHandling {
 @MainActor
 @Observable
 final class MediaLikeModule: IslandModule {
-    static let descriptor = ModuleDescriptor(id: "media-like", name: "Media", summary: "", symbol: "music.note")
+    static let descriptor = ModuleDescriptor(id: "media-like", name: "Media", summary: "", symbol: "music.note", content: .neutral)
     static var playing = false
     init(context: ModuleContext) {}
     func activate() async throws {}
@@ -109,7 +109,7 @@ final class MediaLikeModule: IslandModule {
 @MainActor
 @Observable
 final class HUDLikeModule: IslandModule {
-    static let descriptor = ModuleDescriptor(id: "hud-like", name: "HUD", summary: "", symbol: "speaker")
+    static let descriptor = ModuleDescriptor(id: "hud-like", name: "HUD", summary: "", symbol: "speaker", content: .neutral)
     static var showing = false
     init(context: ModuleContext) {}
     func activate() async throws {}
@@ -418,7 +418,7 @@ struct HeaderActivityTests {
 @MainActor
 @Observable
 final class ActivityPageModule: IslandModule {
-    static let descriptor = ModuleDescriptor(id: "activity-page", name: "Timer", summary: "", symbol: "timer")
+    static let descriptor = ModuleDescriptor(id: "activity-page", name: "Timer", summary: "", symbol: "timer", content: .neutral)
     static var active = false
     init(context: ModuleContext) {}
     func activate() async throws {}
@@ -460,5 +460,43 @@ struct ActivityTabTests {
         await registry.setEnabled("drop", true)
         #expect(registry.deliver([], toZone: "drop.store"))
         #expect(!registry.deliver([], toZone: "shelf.store"))
+    }
+}
+
+@MainActor
+@Observable
+final class PersonalCardModule: IslandModule {
+    static let descriptor = ModuleDescriptor(id: "personal-card", name: "Wiadomości", summary: "", symbol: "message", content: .personal)
+    static var withPrivateCard = true
+    init(context: ModuleContext) {}
+    func activate() async throws {}
+    func deactivate() {}
+    var liveActivity: LiveActivity? {
+        let activity = LiveActivity(id: "msg", priority: .alert, detailHeight: 60,
+                                    leading: { EmptyView() }, trailing: { EmptyView() }, detail: { Text("tajne") })
+        return Self.withPrivateCard ? activity.withPrivateDetail { Text("ukryte") } : activity
+    }
+    func makeExpandedView() -> AnyView? { AnyView(Text("tajne")) }
+}
+
+@Suite("Zasłanianie kart w trybie prywatnym", .serialized)
+@MainActor
+struct PrivateActivityTests {
+    @Test("Karta modułu osobistego: wersja prywatna albo brak karty; poza trybem — pełna")
+    func masking() async throws {
+        let settings = SettingsStore(defaults: try #require(UserDefaults(suiteName: "wyspa.tests.\(UUID().uuidString)")))
+        let registry = ModuleRegistry(catalog: [PersonalCardModule.self], settings: settings,
+                                      permissions: FakePermissions(), requestExpand: { _ in })
+        await registry.setEnabled("personal-card", true)
+        defer { PersonalCardModule.withPrivateCard = true }
+        settings.privacyMode = .off
+        registry.privacy.refresh()
+        #expect(registry.currentActivity?.detail != nil && registry.currentActivity?.detailHeight == 60)
+        settings.privacyMode = .always
+        registry.privacy.refresh()
+        #expect(registry.currentActivity?.detail != nil, "wersja prywatna karty")
+        PersonalCardModule.withPrivateCard = false
+        #expect(registry.currentActivity?.detail == nil && registry.currentActivity?.detailHeight == 0, "bez wersji prywatnej — bez karty")
+        #expect(registry.standaloneView(for: "personal-card") != nil)
     }
 }

@@ -11,6 +11,7 @@ public final class TimerModule: IslandModule {
         name: "Timer",
         summary: "Minutnik, stoper i Pomodoro z odliczaniem widocznym w zwiniętej wyspie.",
         symbol: "timer",
+        content: .neutral,
         widgetMinWidth: 110
     )
 

@@ -1,11 +1,19 @@
 import SwiftUI
 
+/// Czy moduł pokazuje osobistą treść (wiadomości, pliki, plany, kod) — wtedy tryb prywatny ją zasłania.
+public enum ModuleContent: Sendable, Equatable {
+    case personal
+    case neutral
+}
+
 /// Statyczny opis modułu, dostępny bez tworzenia instancji (lista w ustawieniach).
 public struct ModuleDescriptor: Sendable, Identifiable {
     public let id: String
     public let name: String
     public let summary: String
     public let symbol: String
+    /// Bez wartości domyślnej: każdy moduł musi zdecydować, czy jego treść jest osobista.
+    public let content: ModuleContent
     public let permissions: Set<Permission>
     /// Minimalna szerokość widżetu w punktach; nil = moduł nie ma widżetu.
     public let widgetMinWidth: CGFloat?
@@ -13,13 +21,14 @@ public struct ModuleDescriptor: Sendable, Identifiable {
     public let providesPage: Bool
 
     public init(
-        id: String, name: String, summary: String, symbol: String, permissions: Set<Permission> = [],
-        widgetMinWidth: CGFloat? = nil, providesPage: Bool = true
+        id: String, name: String, summary: String, symbol: String, content: ModuleContent,
+        permissions: Set<Permission> = [], widgetMinWidth: CGFloat? = nil, providesPage: Bool = true
     ) {
         self.id = id
         self.name = name
         self.summary = summary
         self.symbol = symbol
+        self.content = content
         self.permissions = permissions
         self.widgetMinWidth = widgetMinWidth
         self.providesPage = providesPage
@@ -58,6 +67,8 @@ public struct LiveActivity {
     /// Opcjonalna karta pod skrzydłami w zwiniętej wyspie (np. treść powiadomienia).
     public let detail: AnyView?
     public let detailHeight: CGFloat
+    /// Karta na czas trybu prywatnego (np. „Nowe powiadomienie” bez treści); nil = bez karty.
+    public let privateDetail: AnyView?
 
     public init<Leading: View, Trailing: View>(
         id: String,
@@ -77,6 +88,7 @@ public struct LiveActivity {
         self.trailing = AnyView(trailing())
         self.detail = nil
         self.detailHeight = 0
+        self.privateDetail = nil
     }
 
     /// Aktywność z kartą pod skrzydłami (wysokość ograniczona do `IslandLayout.maxDetailHeight`).
@@ -99,6 +111,30 @@ public struct LiveActivity {
         self.trailing = AnyView(trailing())
         self.detail = AnyView(detail())
         self.detailHeight = IslandLayout.clampedDetailHeight(detailHeight)
+        self.privateDetail = nil
+    }
+
+    private init(copying other: LiveActivity, detail: AnyView?, privateDetail: AnyView?) {
+        id = other.id
+        priority = other.priority
+        accent = other.accent
+        wingWidth = other.wingWidth
+        showsInExpandedHeader = other.showsInExpandedHeader
+        leading = other.leading
+        trailing = other.trailing
+        self.detail = detail
+        detailHeight = detail == nil ? 0 : other.detailHeight
+        self.privateDetail = privateDetail
+    }
+
+    /// Wersja karty pokazywana w trybie prywatnym.
+    public func withPrivateDetail<Content: View>(@ViewBuilder _ content: () -> Content) -> LiveActivity {
+        LiveActivity(copying: self, detail: detail, privateDetail: AnyView(content()))
+    }
+
+    /// Aktywność w trybie prywatnym: karta zastąpiona wersją prywatną albo usunięta.
+    public func masked() -> LiveActivity {
+        LiveActivity(copying: self, detail: privateDetail, privateDetail: privateDetail)
     }
 }
 
@@ -140,6 +176,8 @@ public protocol IslandModule: AnyObject, Observable {
     var liveActivity: LiveActivity? { get }
     /// Zakładka w rozwiniętej wyspie; nil, gdy moduł nie ma widoku rozwiniętego.
     func makeExpandedView() -> AnyView?
+    /// Widok osobistego modułu w trybie prywatnym (domyślnie nil — zasłona).
+    func makePrivateView(compact: Bool) -> AnyView?
     /// Szczegółowe ustawienia w oknie ustawień; nil, gdy moduł ich nie ma.
     func makeSettingsView() -> AnyView?
     /// Kompaktowy widżet do strony z kilkoma modułami obok siebie; nil, gdy moduł go nie ma.
@@ -149,4 +187,6 @@ public protocol IslandModule: AnyObject, Observable {
 extension IslandModule {
     public func makeSettingsView() -> AnyView? { nil }
     public func makeWidgetView() -> AnyView? { nil }
+    /// Widok na czas trybu prywatnego (np. bez szczegółów); nil = wyspa pokaże zasłonę z nazwą modułu.
+    public func makePrivateView(compact: Bool) -> AnyView? { nil }
 }

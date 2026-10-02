@@ -10,6 +10,7 @@ public final class BluetoothModule: IslandModule {
         name: "Bluetooth",
         summary: "Pokazuje podłączenie słuchawek i innych urządzeń Bluetooth z poziomem ich baterii.",
         symbol: "headphones",
+        content: .neutral,
         permissions: [.bluetooth],
         widgetMinWidth: 130
     )

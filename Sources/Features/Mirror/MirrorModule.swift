@@ -12,6 +12,7 @@ public final class MirrorModule: IslandModule {
         name: "Lusterko",
         summary: "Podgląd z kamery przed rozmową wideo. Kamera włącza się tylko, gdy zakładka jest widoczna; obraz nie jest zapisywany.",
         symbol: "camera.fill",
+        content: .neutral,
         permissions: [.camera],
         widgetMinWidth: 110
     )

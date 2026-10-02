@@ -13,6 +13,7 @@ public final class QuickActionsModule: IslandModule {
         name: "Szybkie akcje",
         summary: "Zrzut zaznaczenia prosto na Półkę, pipeta koloru (kopiuje HEX), blokada ekranu i „nie usypiaj Maca”.",
         symbol: "bolt.circle.fill",
+        content: .neutral,
         widgetMinWidth: 150
     )
 

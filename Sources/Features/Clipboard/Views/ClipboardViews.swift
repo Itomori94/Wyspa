@@ -23,12 +23,7 @@ struct ClipboardView: View {
             .padding(.vertical, 6)
             .background(Capsule().fill(.white.opacity(0.07)))
 
-            if module.isPrivate {
-                Label("Historia ukryta — ekran jest udostępniany", systemImage: "eye.slash")
-                    .font(.system(size: 12))
-                    .foregroundStyle(.white.opacity(0.5))
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-            } else if entries.isEmpty {
+            if entries.isEmpty {
                 Text(module.history.entries.isEmpty ? "Skopiuj coś, a pojawi się tutaj." : "Nic nie pasuje do wyszukiwania.")
                     .font(.system(size: 12))
                     .foregroundStyle(.white.opacity(0.45))

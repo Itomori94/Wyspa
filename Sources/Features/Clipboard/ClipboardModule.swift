@@ -14,6 +14,7 @@ public final class ClipboardModule: IslandModule {
         name: "Historia schowka",
         summary: "Ostatnio kopiowane teksty, pliki i obrazy z wyszukiwaniem. Hasła z menedżerów haseł są pomijane. Historia jest tylko w pamięci.",
         symbol: "doc.on.clipboard",
+        content: .personal,
         widgetMinWidth: 150
     )
 
@@ -27,9 +28,6 @@ public final class ClipboardModule: IslandModule {
     @ObservationIgnored private let context: ModuleContext
     @ObservationIgnored private var timer: Timer?
     @ObservationIgnored private var lastChangeCount = NSPasteboard.general.changeCount
-
-    /// Tryb prywatny: przy udostępnianiu ekranu lista jest ukryta.
-    var isPrivate: Bool { context.privacy.isActive }
 
     public required init(context: ModuleContext) {
         self.context = context

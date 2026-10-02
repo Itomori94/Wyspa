@@ -13,6 +13,7 @@ public final class DownloadsModule: IslandModule {
         name: "Pobierania",
         summary: "Pasek postępu pobieranego pliku w zwiniętej wyspie; po zakończeniu plik ląduje na Półce.",
         symbol: "arrow.down.circle.fill",
+        content: .personal,
         widgetMinWidth: 150
     )
 

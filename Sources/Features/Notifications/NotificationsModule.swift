@@ -11,6 +11,7 @@ public final class NotificationsModule: IslandModule {
         name: "Powiadomienia",
         summary: "Pokazuje powiadomienia macOS w wyspie zamiast w rogu ekranu. Najechanie zatrzymuje kartę, kliknięcie otwiera aplikację.",
         symbol: "bell.badge.fill",
+        content: .personal,
         permissions: [.accessibility],
         providesPage: false
     )
@@ -64,7 +65,13 @@ public final class NotificationsModule: IslandModule {
                 Image(systemName: "bell.fill").font(.system(size: 11)).foregroundStyle(.white.opacity(0.6))
             }
         } detail: {
-            NotificationCardView(card: card, icon: icon, isPrivate: context.privacy.isActive,
+            NotificationCardView(card: card, icon: icon, isPrivate: false,
+                                 hover: { [weak self] in self?.setPaused($0) },
+                                 open: { [weak self] in self?.open(card) },
+                                 close: { [weak self] in self?.next() })
+        }
+        .withPrivateDetail {
+            NotificationCardView(card: card, icon: icon, isPrivate: true,
                                  hover: { [weak self] in self?.setPaused($0) },
                                  open: { [weak self] in self?.open(card) },
                                  close: { [weak self] in self?.next() })

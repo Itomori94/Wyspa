@@ -14,6 +14,7 @@ public final class WeatherModule: IslandModule {
         name: "Pogoda",
         summary: "Temperatura i prognoza na kilka dni dla Twojej okolicy (Open-Meteo). Kliknięcie otwiera aplikację Pogoda.",
         symbol: "cloud.sun.fill",
+        content: .neutral,
         permissions: [.location],
         widgetMinWidth: 130
     )

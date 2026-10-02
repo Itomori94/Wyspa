@@ -11,6 +11,7 @@ public final class ShortcutsModule: IslandModule {
         name: "Skróty",
         summary: "Uruchamia wybrane Skróty macOS jednym kliknięciem z wyspy.",
         symbol: "square.stack.3d.up.fill",
+        content: .neutral,
         widgetMinWidth: 120
     )
 

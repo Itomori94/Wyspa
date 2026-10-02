@@ -12,6 +12,7 @@ public final class NotesModule: IslandModule {
         name: "Notatka",
         summary: "Szybka notatka z autozapisem. Kliknij w tekst, żeby pisać; Esc zwija wyspę.",
         symbol: "note.text",
+        content: .personal,
         widgetMinWidth: 150
     )
 

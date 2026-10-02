@@ -95,7 +95,20 @@ public final class ModuleRegistry {
         activeModules
             .compactMap { module in module.liveActivity.map { ($0, type(of: module).descriptor.id) } }
             .max { $0.0.priority < $1.0.priority }
-            .map { (activity: $0.0, moduleID: $0.1) }
+            .map { (activity: isMasked($0.1) ? $0.0.masked() : $0.0, moduleID: $0.1) }
+    }
+
+    /// Czy treść modułu jest teraz zasłonięta (tryb prywatny i moduł z osobistą treścią).
+    public func isMasked(_ moduleID: String) -> Bool {
+        privacy.isActive && descriptor(for: moduleID)?.content == .personal
+    }
+
+    /// Każdy widok modułu przechodzi tędy: moduł osobisty dostaje bramkę trybu prywatnego.
+    private func gated(_ view: AnyView, of module: any IslandModule, compact: Bool) -> AnyView {
+        let descriptor = type(of: module).descriptor
+        guard descriptor.content == .personal else { return view }
+        return AnyView(PrivacyGate(privacy: privacy, name: descriptor.name, symbol: descriptor.symbol,
+                                   content: view, privateContent: module.makePrivateView(compact: compact)))
     }
 
     /// Czy pokazać aktywność w nagłówku rozwiniętej wyspy: nie, gdy dubluje treść widocznej strony
@@ -150,7 +163,8 @@ public final class ModuleRegistry {
 
     /// Widok widżetu działającego modułu (podgląd w edytorze).
     public func widgetView(for moduleID: String) -> AnyView? {
-        instances[moduleID]?.makeWidgetView()
+        guard let module = instances[moduleID], let view = module.makeWidgetView() else { return nil }
+        return gated(view, of: module, compact: true)
     }
 
     public func isActive(_ moduleID: String) -> Bool {
@@ -162,12 +176,13 @@ public final class ModuleRegistry {
         case .module(let id):
             guard let module = instances[id], let view = module.makeExpandedView() else { return nil }
             let descriptor = type(of: module).descriptor
-            return IslandPage(id: page.id, name: descriptor.name, symbol: descriptor.symbol, content: .module(view), moduleIDs: [id])
+            return IslandPage(id: page.id, name: descriptor.name, symbol: descriptor.symbol,
+                              content: .module(gated(view, of: module, compact: false)), moduleIDs: [id])
         case .widgets(let widgets):
             let resolved = widgets.compactMap { widget -> IslandPage.Widget? in
                 guard let module = instances[widget.moduleID], let view = module.makeWidgetView() else { return nil }
                 return IslandPage.Widget(id: widget.id, moduleID: widget.moduleID, name: type(of: module).descriptor.name,
-                                         width: widget.width, content: view)
+                                         width: widget.width, content: gated(view, of: module, compact: true))
             }
             guard !resolved.isEmpty else { return nil }
             let name = resolved.map(\.name).joined(separator: " · ")
@@ -204,8 +219,8 @@ public final class ModuleRegistry {
 
     /// Pełny widok modułu (albo jego widżet) do pokazania doraźnie, gdy moduł nie ma strony w układzie.
     public func standaloneView(for moduleID: String) -> AnyView? {
-        guard let module = instances[moduleID] else { return nil }
-        return module.makeExpandedView() ?? module.makeWidgetView()
+        guard let module = instances[moduleID], let view = module.makeExpandedView() ?? module.makeWidgetView() else { return nil }
+        return gated(view, of: module, compact: false)
     }
 
     /// Strona modułu: najpierw jego pełny widok, potem strona z jego widżetem.

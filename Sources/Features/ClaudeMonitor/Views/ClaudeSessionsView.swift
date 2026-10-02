@@ -5,6 +5,7 @@ import WyspaUI
 struct ClaudeSessionsView: View {
     let module: ClaudeMonitorModule
     let compact: Bool
+    var isPrivate = false
 
     var body: some View {
         let sessions = module.store.ordered
@@ -15,14 +16,14 @@ struct ClaudeSessionsView: View {
                 }
                 ForEach(module.pending.prefix(compact ? 1 : 3)) { request in
                     PermissionCard(request: request, session: module.store.sessions[request.sessionID],
-                                   decisionSeconds: module.decisionMinutes * 60, compact: compact,
+                                   decisionSeconds: module.decisionMinutes * 60, compact: compact, isPrivate: isPrivate,
                                    decide: { module.decide(request, $0) })
                 }
                 if sessions.isEmpty && module.pending.isEmpty {
                     emptyState
                 }
                 ForEach(sessions.prefix(compact ? 3 : 8)) { session in
-                    SessionRow(session: session, compact: compact) { module.focus(session) }
+                    SessionRow(session: session, compact: compact || isPrivate) { module.focus(session) }
                 }
             }
         }
@@ -132,6 +133,8 @@ private struct PermissionCard: View {
     let session: ClaudeSession?
     let decisionSeconds: Int
     let compact: Bool
+    /// Tryb prywatny: sama nazwa narzędzia, bez polecenia, diffu i treści pliku.
+    var isPrivate = false
     let decide: (HookProtocol.Behavior) -> Void
 
     var body: some View {
@@ -149,7 +152,12 @@ private struct PermissionCard: View {
                         .help("Po tym czasie decyzja wróci do terminala")
                 }
             }
-            if !compact { ToolPreview(input: request.event.toolInput) }
+            if isPrivate {
+                Label("Szczegóły ukryte — ekran jest udostępniany", systemImage: "eye.slash")
+                    .font(.system(size: 11)).foregroundStyle(.white.opacity(0.55))
+            } else if !compact {
+                ToolPreview(input: request.event.toolInput)
+            }
             HStack(spacing: 6) {
                 Button("Odrzuć") { decide(.deny) }
                     .buttonStyle(DecisionStyle(tint: .red.opacity(0.75)))

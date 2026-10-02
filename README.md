@@ -192,8 +192,10 @@ jako pierścień postępu z procentem; kilka pobierań naraz — łączny postę
 
 ### Tryb prywatny
 
-Przy udostępnianiu albo nagrywaniu ekranu (Zoom, Teams, Meet, nagranie ekranu) wyspa chowa treść: karta powiadomienia
-pokazuje tylko aplikację, historia schowka jest ukryta, a po zakończeniu pracy Claude nie ma podglądu odpowiedzi.
+Przy udostępnianiu albo nagrywaniu ekranu (Zoom, Teams, Meet, nagranie ekranu) wyspa zasłania wszystkie moduły
+z osobistą treścią: Półkę, Kalendarz, Przypomnienia, Notatkę, Historię schowka, Powiadomienia, Claude Code i Pobierania.
+Karta powiadomienia pokazuje tylko aplikację, a prośba Claude o zgodę — tylko nazwę narzędzia (bez polecenia i zmian
+w kodzie), więc nadal można zdecydować. Każdy moduł musi zadeklarować, czy jego treść jest osobista.
 Ustawienia → Wyspa → Tryb prywatny: przy udostępnianiu (domyślnie) / zawsze / nigdy. Wyspa dostaje od systemu zdarzenie
 o początku i końcu przechwytywania ekranu, więc treść znika od razu, także przy rozwiniętej wyspie — bez odpytywania. (macOS domyślnie i tak wstrzymuje banery powiadomień
 podczas udostępniania ekranu.)

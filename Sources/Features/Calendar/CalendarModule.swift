@@ -12,6 +12,7 @@ public final class CalendarModule: IslandModule {
         name: "Kalendarz",
         summary: "Plan dnia i najbliższe spotkanie w zwiniętej wyspie na 10 minut przed startem, z przyciskiem „Dołącz”.",
         symbol: "calendar",
+        content: .personal,
         permissions: [.calendars],
         widgetMinWidth: 140
     )
