@@ -41,6 +41,7 @@ zaktualizuj też ten plik. Karty okna: **Ogólne · Wyspa · Moduły · Układ �
 | Skrypty | Komenda wyspa i adresy wyspa:// — karty („Backup gotowy”) i paski postępu ze skryptów, Skrótów i crona. |
 | Szybkie akcje | Zrzut zaznaczenia prosto na Półkę, tekst ze zrzutu do schowka, pipeta koloru (kopiuje HEX), blokada ekranu i „nie usypiaj Maca”. |
 | Mikrofon | Wycisza mikrofon globalnym skrótem (domyślnie ⌃⌥M). Wyciszony mikrofon to czerwona ikona w zwiniętej wyspie. |
+| Aktualizacje | Sprawdza, czy na GitHubie jest nowsza wersja Wyspy, pokazuje listę zmian i aktualizuje jednym przyciskiem. |
 | Lusterko | Podgląd z kamery przed rozmową wideo. Kamera włącza się tylko, gdy zakładka jest widoczna; obraz nie jest zapisywany. |
 | Powiadomienia | Pokazuje powiadomienia macOS w wyspie zamiast w rogu ekranu. Najechanie zatrzymuje kartę, kliknięcie otwiera aplikację. |
 | HUD głośności i jasności | Zamiast systemowego okienka pokazuje głośność, jasność ekranu i podświetlenie klawiatury w wyspie. |
@@ -99,6 +100,14 @@ zaktualizuj też ten plik. Karty okna: **Ogólne · Wyspa · Moduły · Układ �
 - **Mikrofon** — „Wycisz / włącz mikrofon” (skrót) · „„…” nie pozwala się wyciszyć ani zmienić głośności wejścia.” ·
   „Wyciszenie działa dla domyślnego wejścia z Ustawień systemowych → Dźwięk. Gdy mikrofon nie ma przełącznika wyciszenia,
   Wyspa ustawia głośność wejścia na zero i przywraca ją po włączeniu. Wyspa nie słucha dźwięku z mikrofonu.”
+- **Aktualizacje** — „Zainstalowana wersja: … (z niezapisanymi zmianami)” · „Sprawdzanie…” / „Masz najnowszą wersję” /
+  „Dostępna nowa wersja: … zmian” + lista (najwyżej 8, „… i … więcej”) / „Aktualizowanie… Wyspa za chwilę uruchomi się
+  ponownie.” / błędy („Ta kopia Wyspy nie została zbudowana z repozytorium git — nie ma z czym porównać.”, „Brak połączenia
+  z GitHubem.”, „GitHub zwrócił nieoczekiwaną odpowiedź.”, „Nie ma katalogu projektu (…) — …”, „W katalogu projektu aktywna
+  jest gałąź „…”, a nie master — zaktualizuj ręcznie.”, „W katalogu projektu są niezapisane zmiany — …”, „Nie udało się
+  pobrać zmian (git pull): …”) · „Sprawdź teraz” · „Zaktualizuj teraz” · „GitHub” · „Aktualizacja pobiera zmiany do
+  katalogu projektu (git pull), buduje i instaluje Wyspę — aplikacja zamknie się i uruchomi ponownie. Przebieg:
+  ~/Library/Logs/Wyspa/aktualizacja.log. Sprawdzanie: przy starcie i co 6 godzin.” · karta w wyspie: „Nowa wersja Wyspy · … zmian”
 - **Historia schowka** — „Zapamiętuj … wpisów” · „Wyczyść historię” · „Kliknięcie wkleja do aktywnej aplikacji” ·
   „Wklejanie wymaga uprawnienia Dostępność — bez niego kliknięcie tylko kopiuje.” + „Otwórz: Dostępność” ·
   „Przypięte wpisy (pinezka przy wpisie) nie wypadają z historii i zostają po „Wyczyść”. Cała historia, także przypięta,

@@ -34,6 +34,15 @@ cp "$BIN_DIR/Wyspa" "$APP/Contents/MacOS/Wyspa"
 # Hook Claude Code uruchamiany przez Claude Code (ścieżka wpisywana do ~/.claude/settings.json przy instalacji).
 cp "$BIN_DIR/wyspa-hook" "$APP/Contents/Helpers/wyspa-hook"
 cp Resources/Info.plist "$APP/Contents/Info.plist"
+# Skąd pochodzi build — dla modułu Aktualizacje (porównanie z GitHubem i „Zaktualizuj teraz”). Bez gita pola są puste.
+SOURCE_COMMIT="$(git rev-parse HEAD 2>/dev/null || true)"
+SOURCE_BRANCH="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || true)"
+SOURCE_REMOTE="$(git remote get-url origin 2>/dev/null || true)"
+SOURCE_DIRTY="$([ -n "$(git status --porcelain 2>/dev/null)" ] && echo 1 || echo 0)"
+for entry in "WyspaSourceCommit:$SOURCE_COMMIT" "WyspaSourceBranch:$SOURCE_BRANCH" "WyspaSourceRemote:$SOURCE_REMOTE" \
+             "WyspaSourcePath:$PWD" "WyspaSourceDirty:$SOURCE_DIRTY"; do
+    /usr/libexec/PlistBuddy -c "Add :${entry%%:*} string ${entry#*:}" "$APP/Contents/Info.plist"
+done
 cp Resources/AppIcon.icns "$APP/Contents/Resources/AppIcon.icns"
 # Komenda `wyspa` (moduł Skrypty) — skrypt w zasobach, instalowany do ~/.local/bin przyciskiem w ustawieniach.
 cp Resources/wyspa "$APP/Contents/Resources/wyspa"

@@ -245,6 +245,14 @@ mniej ważna niż timer i prośby Claude). Mikrofony bez przełącznika wyciszen
 ustawioną na zero — po włączeniu wraca poprzednia. Bez zgody na mikrofon: Wyspa nie słucha dźwięku, zmienia tylko
 ustawienie urządzenia (publiczne CoreAudio, zmiany z Ustawień systemowych widać od razu, bez odpytywania).
 
+### Aktualizacje
+
+Wyspa porównuje wersję, z której została zbudowana, z najnowszą na GitHubie — przy włączeniu modułu i potem co
+6 godzin. Gdy jest coś nowego, w wyspie na chwilę pojawia się karta z liczbą zmian, a w ustawieniach modułu lista
+zmian i przycisk **Zaktualizuj teraz**: pobiera zmiany do katalogu projektu (`git pull --ff-only`), buduje
+i instaluje nową wersję (Wyspa zamknie się i uruchomi ponownie). Odmawia, gdy w katalogu są niezapisane zmiany
+albo aktywna jest inna gałąź niż `master`. Do GitHuba trafia tylko zapytanie o porównanie commitów, bez konta.
+
 ### Skrypty (komenda `wyspa`)
 
 Karty i paski postępu z dowolnego skryptu, Skrótu albo crona. Ustawienia → Moduły → Skrypty → *Zainstaluj w ~/.local/bin*

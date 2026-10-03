@@ -17,6 +17,7 @@ import WyspaScripts
 import WyspaShelf
 import WyspaShortcuts
 import WyspaTimer
+import WyspaUpdates
 import WyspaWeather
 
 /// Jedyne miejsce rejestracji modułów. Nowy moduł = nowy target w Sources/Features i jedna linia tutaj.
@@ -43,5 +44,6 @@ public enum ModuleCatalog {
         HUDModule.self,
         PowerModule.self,
         BluetoothModule.self,
+        UpdatesModule.self,
     ]
 }

@@ -227,6 +227,18 @@ wyspy). Wszystko wyłączone przy „Ogranicz ruch”. Szybkie akcje: `TileSpec.
 - Aktywność „wyciszony” ma priorytet 52 (nad mediami i spotkaniem, pod pobieraniem i timerem); przełączenie pokazuje
   na 1,5 s komunikat z priorytetem `.alert`. Skrót domyślny ⌃⌥M (`StoredShortcut` odróżnia „bez skrótu” od domyślnego).
 
+## Aktualizacje (moduł `WyspaUpdates`)
+
+- `scripts/build-app.sh` zapisuje w Info.plist `WyspaSourceCommit/Branch/Remote/Path/Dirty` (`BuildSource.from`).
+  Bez gita (np. kopia z ZIP-a) moduł tylko mówi, że nie ma z czym porównać.
+- Sprawdzanie: `GET api.github.com/repos/<owner>/<repo>/compare/<commit>...master` (sesja ephemeral, bez tokenu,
+  limit GitHuba 60/h) przy włączeniu i potem jedno `Task.sleep` 6 h — zaakceptowany wyjątek od zasady „bez zegarów”,
+  działa tylko gdy moduł jest włączony. Status `ahead`/`diverged` = są zmiany (`UpdateCheck.parse`).
+- Karta w wyspie (8 s) raz na nowy commit (`announcedCommit` w ustawieniach modułu); lista zmian w ustawieniach.
+- „Zaktualizuj teraz”: `UpdatesModule.prepare` (katalog z `scripts/install.sh`, gałąź `master`, czyste
+  `git status --porcelain`, `git pull --ff-only`), potem `scripts/install.sh` jako proces potomny z wyjściem
+  do `~/Library/Logs/Wyspa/aktualizacja.log` — instalator zamyka Wyspę i uruchamia nową wersję.
+
 ## Skrypty (moduł `WyspaScripts`)
 
 - Adresy `wyspa://notify|progress|done` (Info.plist `CFBundleURLTypes`) → `AppDelegate.application(_:open:)` →
