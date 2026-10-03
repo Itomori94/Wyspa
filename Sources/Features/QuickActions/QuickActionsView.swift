@@ -67,7 +67,7 @@ struct QuickActionsView: View {
 struct TileSpec {
     var symbol: String
     var title: String
-    var tint: Color
+    /// Włączony stan (tryb ciemny, nie usypiaj, nagrywanie) — jasny kafelek zamiast animacji w kółko.
     var isOn = false
     var tapEffect: TapEffect = .bounce
     var busyEffect: BusyEffect = .pulse
@@ -79,13 +79,15 @@ struct TileSpec {
         var isDarkMode = false
         var desktopIconsVisible = true
         var isKeepingAwake = false
+        var isRecording = false
         var isDone = false
     }
 
     @MainActor
     static func make(_ action: QuickActionsModule.Action, module: QuickActionsModule, compact: Bool) -> TileSpec {
         make(action, state: State(isDarkMode: module.isDarkMode, desktopIconsVisible: module.desktopIconsVisible,
-                                  isKeepingAwake: module.isKeepingAwake, isDone: module.confirmed.contains(action)),
+                                  isKeepingAwake: module.isKeepingAwake,
+                                  isRecording: module.busy.contains(.record), isDone: module.confirmed.contains(action)),
              compact: compact)
     }
 
@@ -94,34 +96,32 @@ struct TileSpec {
         switch action {
         case .capture:
             return TileSpec(symbol: done ? "checkmark.circle.fill" : "camera.viewfinder",
-                            title: compact ? "Zrzut" : "Zrzut na Półkę", tint: .blue)
+                            title: compact ? "Zrzut" : "Zrzut na Półkę")
         case .captureScreen:
-            return TileSpec(symbol: done ? "checkmark.circle.fill" : "macwindow", title: "Cały ekran", tint: .blue)
+            return TileSpec(symbol: done ? "checkmark.circle.fill" : "macwindow", title: "Cały ekran")
         case .captureText:
             return TileSpec(symbol: done ? "checkmark.circle.fill" : "text.viewfinder",
-                            title: compact ? "Tekst" : "Tekst ze zrzutu", tint: .green, busyEffect: .breathe)
+                            title: compact ? "Tekst" : "Tekst ze zrzutu", busyEffect: .breathe)
         case .record:
-            return TileSpec(symbol: done ? "checkmark.circle.fill" : "record.circle", title: "Nagrywanie", tint: .red,
-                            busyEffect: .breathe)
+            return TileSpec(symbol: done ? "checkmark.circle.fill" : state.isRecording ? "record.circle.fill" : "record.circle",
+                            title: "Nagrywanie", isOn: state.isRecording)
         case .pickColor:
-            return TileSpec(symbol: done ? "checkmark.circle.fill" : "eyedropper", title: compact ? "Pipeta" : "Pipeta koloru",
-                            tint: .pink, tapEffect: .wiggle)
+            return TileSpec(symbol: done ? "checkmark.circle.fill" : "eyedropper", title: compact ? "Pipeta" : "Pipeta koloru", tapEffect: .wiggle)
         case .password:
-            return TileSpec(symbol: done ? "checkmark.circle.fill" : "key.fill", title: "Hasło", tint: .yellow, tapEffect: .rotate)
+            return TileSpec(symbol: done ? "checkmark.circle.fill" : "key.fill", title: "Hasło", tapEffect: .rotate)
         case .darkMode:
             return TileSpec(symbol: state.isDarkMode ? "moon.fill" : "sun.max.fill",
-                            title: state.isDarkMode ? "Tryb ciemny" : "Tryb jasny", tint: .indigo, isOn: state.isDarkMode,
+                            title: state.isDarkMode ? "Tryb ciemny" : "Tryb jasny", isOn: state.isDarkMode,
                             hoverEffect: state.isDarkMode ? .bounce : .rotate)
         case .desktopIcons:
             return TileSpec(symbol: state.desktopIconsVisible ? "eye" : "eye.slash",
-                            title: state.desktopIconsVisible ? "Ukryj biurko" : "Pokaż biurko", tint: .teal,
+                            title: state.desktopIconsVisible ? "Ukryj biurko" : "Pokaż biurko",
                             isOn: !state.desktopIconsVisible)
         case .lock:
-            return TileSpec(symbol: done ? "lock.fill" : "lock.open.fill", title: compact ? "Blokada" : "Zablokuj ekran", tint: .gray)
+            return TileSpec(symbol: done ? "lock.fill" : "lock.open.fill", title: compact ? "Blokada" : "Zablokuj ekran")
         case .keepAwake:
             return TileSpec(symbol: state.isKeepingAwake ? "cup.and.heat.waves.fill" : "cup.and.saucer",
-                            title: state.isKeepingAwake ? "Nie usypia" : "Nie usypiaj", tint: .orange, isOn: state.isKeepingAwake,
-                            busyEffect: .variableColor)
+                            title: state.isKeepingAwake ? "Nie usypia" : "Nie usypiaj", isOn: state.isKeepingAwake)
         }
     }
 }
@@ -161,7 +161,7 @@ struct ActionTile: View {
     let spec: TileSpec
     let compact: Bool
     let tap: Int
-    /// Akcja w toku (zaznaczanie, rozpoznawanie, nagrywanie) albo stan włączony z animacją (para nad kubkiem).
+    /// Krótka akcja w toku (zaznaczanie obszaru, rozpoznawanie tekstu).
     let isBusy: Bool
     let action: () -> Void
     @State private var isHovered = false
@@ -174,7 +174,7 @@ struct ActionTile: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .background(
                     RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .fill(spec.isOn ? spec.tint : .white.opacity(isHovered ? 0.14 : 0.07))
+                        .fill(spec.isOn ? .white.opacity(isHovered ? 1 : 0.9) : .white.opacity(isHovered ? 0.14 : 0.07))
                 )
         }
         .buttonStyle(IslandPressStyle())
@@ -208,11 +208,12 @@ struct ActionTile: View {
     private func icon(size: CGFloat) -> some View {
         Image(systemName: spec.symbol)
             .font(.system(size: size, weight: .semibold))
-            .foregroundStyle(spec.isOn ? .black : spec.tint)
+            .foregroundStyle(spec.isOn ? .black : .white.opacity(0.9))
             .symbolSwapTransition()
             .tapEffect(spec.tapEffect, value: tap)
             .tapEffect(spec.hoverEffect, value: hoverCount)
-            .busyEffect(spec.busyEffect, isActive: isBusy || (spec.isOn && spec.busyEffect == .variableColor))
+            // Animacja w toku tylko dla krótkich czynności (zaznaczanie, rozpoznawanie); stan włączony to jasny kafelek.
+            .busyEffect(spec.busyEffect, isActive: isBusy && !spec.isOn)
             .animation(.snappy, value: spec.symbol)
     }
 

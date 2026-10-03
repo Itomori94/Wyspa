@@ -162,6 +162,16 @@ struct QuickActionsGridTests {
 @Suite("Animacje kafelków")
 @MainActor
 struct QuickActionsTileSpecTests {
+    @Test("Włączone stany to jasny kafelek, bez animacji w kółko")
+    func onStates() {
+        let on = TileSpec.State(isDarkMode: true, desktopIconsVisible: false, isKeepingAwake: true, isRecording: true)
+        for action in [QuickActionsModule.Action.darkMode, .desktopIcons, .keepAwake, .record] {
+            #expect(TileSpec.make(action, state: on, compact: false).isOn, "\(action)")
+        }
+        #expect(TileSpec.make(.record, state: on, compact: false).symbol == "record.circle.fill")
+        #expect(!TileSpec.make(.record, state: .init(), compact: false).isOn)
+    }
+
     @Test("Symbole i efekty w stanie spoczynku")
     func specs() throws {
         let defaults = try #require(UserDefaults(suiteName: "wyspa.quick.tiles.\(UUID().uuidString)"))
@@ -169,9 +179,9 @@ struct QuickActionsTileSpecTests {
                                                                requestExpand: {}))
         let spec = { (action: QuickActionsModule.Action) in TileSpec.make(action, module: module, compact: false) }
         #expect(spec(.lock).symbol == "lock.open.fill", "kłódka zatrzaskuje się dopiero po kliknięciu")
-        #expect(spec(.keepAwake).symbol == "cup.and.saucer" && spec(.keepAwake).busyEffect == .variableColor)
+        #expect(spec(.keepAwake).symbol == "cup.and.saucer" && !spec(.keepAwake).isOn)
         #expect(spec(.password).tapEffect == .rotate && spec(.pickColor).tapEffect == .wiggle)
-        #expect(spec(.record).busyEffect == .breathe && spec(.captureText).busyEffect == .breathe)
+        #expect(spec(.captureText).busyEffect == .breathe)
         #expect(["eye", "eye.slash"].contains(spec(.desktopIcons).symbol))
         #expect(QuickActionsModule.Action.allCases.allSatisfy { NSImage(systemSymbolName: spec($0).symbol, accessibilityDescription: nil) != nil },
                 "każdy symbol istnieje w systemie")

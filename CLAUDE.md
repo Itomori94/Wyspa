@@ -217,7 +217,11 @@ przekreślenia), `tapEffect` (bounce / wiggle / rotate na zmianę licznika), `bu
 dopóki trwa) i `ToggleSymbol` (zmiana stanu w tym samym miejscu; przy pojawieniu się animuje tylko
 z `animatesAppearance`, np. mikrofon przez 1 s po przełączeniu). Lewe skrzydło wjeżdża z lewej (`SlideInFromLeading`)
 tylko dla nowej aktywności — `IslandView.shownActivityID` pomija ponowne pokazanie tej samej po zwinięciu wyspy. Wszystko wyłączone przy „Ogranicz ruch”. Szybkie akcje: `TileSpec.make` (symbol, efekty) + stan modułu
-`taps` / `busy` / `confirmed`; blokada ekranu czeka 400 ms na animację kłódki.
+`taps` / `busy` / `confirmed`; blokada ekranu czeka 400 ms na animację kłódki. Bez animacji w kółko dla stanów
+włączonych: włączony kafelek (tryb ciemny, ukryte biurko, nie usypiaj, nagrywanie) jest jasny z czarną ikoną,
+`busyEffect` tylko dla krótkich czynności (zaznaczanie, rozpoznawanie tekstu). Kafelki są jednobarwne (biel na czerni
+jak reszta wyspy); kolory zostają dla znaczenia (czerwony mikrofon, pomarańczowa prośba Claude, fioletowa praca Claude
+— bez pulsowania, pulsuje tylko prośba o zgodę).
 
 ## Mikrofon (moduł `WyspaMicrophone`)
 

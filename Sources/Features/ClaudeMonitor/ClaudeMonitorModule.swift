@@ -152,7 +152,6 @@ public final class ClaudeMonitorModule: IslandModule {
             Image(systemName: "sparkle")
                 .font(.system(size: 13, weight: .semibold))
                 .foregroundStyle(.purple)
-                .symbolEffect(.pulse, options: .repeating)
         } trailing: {
             Text("\(working)").font(.system(size: 12, weight: .semibold, design: .rounded)).foregroundStyle(.purple)
         }
