@@ -91,21 +91,31 @@ public final class ClipboardModule: IslandModule, IslandKeyboardHandling {
     }
 
     /// Kopiuje wpis z powrotem do schowka (trafia na górę historii, przypięty zostaje przypięty).
-    func copy(_ entry: ClipboardEntry) {
+    /// `false`, gdy plików z wpisu już nie ma — wpis znika wtedy z historii, a schowek zostaje bez zmian.
+    @discardableResult
+    func copy(_ entry: ClipboardEntry) -> Bool {
+        guard let content = entry.availableContent(fileExists: { FileManager.default.fileExists(atPath: $0.path) }) else {
+            history = history.removing(entry.id)
+            show("Pliku „\(entry.searchableText)” już nie ma — usunięto z historii")
+            return false
+        }
         let pasteboard = NSPasteboard.general
         pasteboard.clearContents()
-        switch entry.content {
+        switch content {
         case .text(let text): pasteboard.setString(text, forType: .string)
         case .files(let urls): pasteboard.writeObjects(urls as [NSURL])
         case .image(let png, _, _): pasteboard.setData(png, forType: .png)
         }
         lastChangeCount = pasteboard.changeCount
-        history = history.adding(ClipboardEntry(content: entry.content, copiedAt: Date(), sourceBundleID: entry.sourceBundleID))
+        // Bez starego wpisu: po odrzuceniu brakujących plików treść (i klucz) mogą się różnić — nie zostaje duplikat.
+        history = history.removing(entry.id).adding(ClipboardEntry(content: content, copiedAt: Date(),
+                                                                   sourceBundleID: entry.sourceBundleID, isPinned: entry.isPinned))
+        return true
     }
 
     /// Kliknięcie wpisu: wklejenie do aplikacji pod spodem albo samo skopiowanie (ustawienie, brak Dostępności).
     func choose(_ entry: ClipboardEntry) {
-        copy(entry)
+        guard copy(entry) else { return }
         guard pastesOnClick else {
             show("Skopiowano")
             return

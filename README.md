@@ -201,7 +201,7 @@ klawiaturę poprzedniej aplikacji.
 Ostatnie teksty, pliki i obrazy z wyszukiwaniem (bez rozróżniania polskich znaków). Kliknięcie wkleja wpis prosto do
 aplikacji, w której piszesz (wyspa się zwija, Wyspa wysyła ⌘V — wymaga uprawnienia Dostępność; bez niego albo po
 wyłączeniu tej opcji kliknięcie tylko kopiuje). Pinezka przy wpisie go przypina: przypięte są na górze, nie wypadają
-z historii przez limit i zostają po „Wyczyść”. Hasła z menedżerów haseł (oznaczone jako poufne) i treści tymczasowe
+z historii przez limit i zostają po „Wyczyść”. Wpis z plikiem, którego już nie ma (np. usuniętym z Półki), jest przekreślony; kliknięcie usuwa go z historii zamiast wklejać martwy odnośnik. Hasła z menedżerów haseł (oznaczone jako poufne) i treści tymczasowe
 nie są zapisywane. Historia, także przypięta, jest tylko w pamięci — znika po wyłączeniu modułu albo aplikacji.
 
 ### Skróty i Lusterko

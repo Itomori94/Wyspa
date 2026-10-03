@@ -103,6 +103,16 @@ struct ClipboardHistoryTests {
         #expect(ClipboardSelection.chosen(nil, count: 0) == nil)
     }
 
+    @Test("Pliki, których już nie ma, nie trafiają do schowka; wpis bez żadnego pliku jest niedostępny")
+    func missingFiles() {
+        let kept = URL(fileURLWithPath: "/tmp/zostal.pdf")
+        let gone = URL(fileURLWithPath: "/tmp/Items/1/Tekst.txt")
+        let entry = ClipboardEntry(content: .files([gone, kept]), copiedAt: now)
+        #expect(entry.availableContent(fileExists: { $0 == kept }) == .files([kept]))
+        #expect(entry.availableContent(fileExists: { _ in false }) == nil)
+        #expect(text("a").availableContent(fileExists: { _ in false }) == .text("a"), "tekst nie zależy od plików")
+    }
+
     @Test("Pliki i obrazy mają czytelny opis")
     func descriptions() {
         let files = ClipboardEntry(content: .files([URL(fileURLWithPath: "/tmp/raport.pdf")]), copiedAt: now)
