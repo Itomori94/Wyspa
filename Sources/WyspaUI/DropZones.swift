@@ -51,6 +51,12 @@ struct IslandDropDelegate: DropDelegate {
     let model: IslandViewModel
     let types: [UTType]
 
+    /// Pliki i foldery z Findera: tylko adresy plików. Prośba o `public.data`/`image` dla folderu każe systemowi
+    /// przygotować jego treść (np. archiwum), co przy dużym folderze blokuje sesję przeciągania — i cały ekran.
+    static func requestedTypes(for info: DropInfo, accepted types: [UTType]) -> [UTType] {
+        info.hasItemsConforming(to: [.fileURL]) && types.contains(.fileURL) ? [.fileURL] : types
+    }
+
     func validateDrop(info: DropInfo) -> Bool {
         !IslandDragSession.isDraggingOut && info.hasItemsConforming(to: types)
     }
@@ -74,7 +80,8 @@ struct IslandDropDelegate: DropDelegate {
     func performDrop(info: DropInfo) -> Bool {
         let zone = DropZoneHitTest.zone(at: info.location, in: model.dropZoneFrames)
         model.dropTarget = nil
-        let accepted = model.registry.performDrop(info.itemProviders(for: types), zoneID: zone)
+        let accepted = model.registry.performDrop(info.itemProviders(for: Self.requestedTypes(for: info, accepted: types)),
+                                                  zoneID: zone)
         model.onDropFinished()
         return accepted
     }

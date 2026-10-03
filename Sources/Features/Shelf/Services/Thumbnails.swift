@@ -16,6 +16,13 @@ final class Thumbnails {
         let key = "\(url.path)|\(modified)|\(side)"
         if let cached = cache[key] { return cached }
 
+        // Folder: zwykła ikona. Quick Look potrafi przeglądać zawartość dużego folderu (albo pakietu) przy każdym pokazaniu.
+        if (try? url.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) == true,
+           (try? url.resourceValues(forKeys: [.isPackageKey]).isPackage) != true {
+            let icon = NSWorkspace.shared.icon(forFile: url.path)
+            store(icon, for: key)
+            return icon
+        }
         let scale = NSScreen.main?.backingScaleFactor ?? 2
         let request = QLThumbnailGenerator.Request(
             fileAt: url, size: CGSize(width: side, height: side), scale: scale, representationTypes: .all
