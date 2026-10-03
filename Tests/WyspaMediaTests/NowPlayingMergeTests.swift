@@ -4,7 +4,7 @@ import Testing
 
 @Suite("Łączenie adaptera z Muzyką (AirPlay)")
 struct NowPlayingMergeTests {
-    let safariPaused = NowPlaying(bundleIdentifier: "com.apple.WebKit.GPU", title: "Film", isPlaying: false)
+    let safariPaused = NowPlaying(bundleIdentifier: "com.apple.WebKit.GPU", title: "Film", duration: 600, isPlaying: false)
     let safariPlaying = NowPlaying(bundleIdentifier: "com.apple.WebKit.GPU", title: "Film", duration: 600, isPlaying: true)
     let musicAirPlay = NowPlaying(bundleIdentifier: "com.apple.Music", title: "Savages", isPlaying: true)
     let musicPaused = NowPlaying(bundleIdentifier: "com.apple.Music", title: "Savages", isPlaying: false)
@@ -38,8 +38,10 @@ struct NowPlayingMergeTests {
             #expect(NowPlayingMerge.pick(adapter: sound, music: musicAirPlay, scope: .system, now: now)?.1 == .music)
         }
         #expect(NowPlayingMerge.pick(adapter: video, music: musicAirPlay, scope: .system, now: now)?.1 == .adapter)
-        // Bez grającej Muzyki pokazujemy to, co zgłasza system (nawet krótki dźwięk).
-        #expect(NowPlayingMerge.pick(adapter: ding, music: musicPaused, scope: .system, now: now)?.1 == .adapter)
+        // Wstrzymana Muzyka też nie ustępuje dźwiękowi (pauza nie może pokazać Facebooka i przekierować przycisków).
+        #expect(NowPlayingMerge.pick(adapter: ding, music: musicPaused, scope: .system, now: now)?.1 == .music)
+        // Bez Muzyki pokazujemy to, co zgłasza system (nawet krótki dźwięk).
+        #expect(NowPlayingMerge.pick(adapter: ding, music: nil, scope: .system, now: now)?.1 == .adapter)
         #expect(NowPlayingMerge.looksLikeMedia(video, at: now) && !NowPlayingMerge.looksLikeMedia(ding, at: now))
     }
 

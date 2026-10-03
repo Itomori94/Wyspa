@@ -27,13 +27,13 @@ public enum NowPlayingMerge {
 
     public static func pick(adapter: NowPlaying?, music: NowPlaying?, scope: MediaScope, now: Date = Date()) -> (NowPlaying, Origin)? {
         let adapterInScope = scope.filter(adapter)
-        if let adapterInScope, adapterInScope.isPlaying {
-            // Grająca Muzyka nie ustępuje dźwiękowi powiadomienia z innej aplikacji.
-            let isOtherSound = adapterInScope.bundleIdentifier != ScriptablePlayer.music.rawValue
-                && !looksLikeMedia(adapterInScope, at: now)
-            if isOtherSound, let music, music.isPlaying { return (music, .music) }
-            return (adapterInScope, .adapter)
-        }
+        // Dźwięk powiadomienia (np. Facebook) nigdy nie zastępuje Muzyki — ani grającej, ani wstrzymanej: po pauzie
+        // wyspa pokazywała logo Facebooka, a przyciski trafiały do niego zamiast do Muzyki.
+        let isOtherSound = adapterInScope.map {
+            $0.bundleIdentifier != ScriptablePlayer.music.rawValue && !looksLikeMedia($0, at: now)
+        } ?? false
+        if let music, isOtherSound { return (music, .music) }
+        if let adapterInScope, adapterInScope.isPlaying { return (adapterInScope, .adapter) }
         if let music, music.isPlaying { return (music, .music) }
         if let adapterInScope { return (adapterInScope, .adapter) }
         return music.map { ($0, .music) }
