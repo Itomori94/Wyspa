@@ -340,7 +340,8 @@ final class IslandWindowController {
         yieldedActivityID = activity.id
         withAnimation(IslandMotion.animation(to: .collapsed)) { model.wingsYielded = true }
         updateInteractiveRect()
-        // Monitor globalny tylko na czas schowania skrzydeł (bez ciągłego śledzenia kursora).
+        // Monitor globalny tylko na czas schowania skrzydeł (bez ciągłego śledzenia kursora); nigdy dwa naraz.
+        stopYieldMonitor()
         yieldMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.mouseMoved, .leftMouseDragged]) { [weak self] _ in
             MainActor.assumeIsolated {
                 if WingYield.shouldReturn(NSEvent.mouseLocation, wingSpan: span) { self?.restoreWings() }

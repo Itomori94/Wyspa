@@ -123,7 +123,8 @@ final class AppleScriptNowPlayingSource: NowPlayingSource {
     }
 
     private func download(_ url: URL?) async -> Data? {
-        guard let url else { return nil }
+        // Adres okładki przychodzi z AppleScriptu Spotify: tylko https (żadnych file://, http ani innych schematów).
+        guard let url, url.scheme?.lowercased() == "https" else { return nil }
         do {
             let (data, response) = try await URLSession.shared.data(from: url)
             guard (response as? HTTPURLResponse)?.statusCode == 200 else { return nil }
