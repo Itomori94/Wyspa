@@ -94,9 +94,10 @@ binarka ma `minos 14.0` dla obu architektur (sprawdź: `vtool -arch x86_64 -show
   Framework wołamy zawsze ścieżką bezwzględną (względna nie ładuje się w Perlu).
 - **Warstwa Swift**: protokół `NowPlayingSource` (`AdapterNowPlayingSource`, `AppleScriptNowPlayingSource`).
   Moduł zna tylko protokół; nowe źródło = nowa implementacja + przypadek w `MediaSourceKind`.
-- **Dźwięki powiadomień** (`NowPlayingMerge.looksLikeMedia`): grająca Muzyka (AppleScript) nie ustępuje innej
-  aplikacji z adaptera, która nie wygląda na utwór (bez tytułu, bez długości, < 20 s albo już po końcu) — dźwięk
-  powiadomienia z Facebooka przejmował „teraz odtwarzane” systemu i wyspa nie wracała do Muzyki.
+- **Dźwięki powiadomień** (`NowPlayingMerge.looksLikeMedia`): Muzyka (AppleScript) — grająca **i wstrzymana** — nie
+  ustępuje innej aplikacji z adaptera, która nie wygląda na utwór (bez tytułu, bez długości, < 20 s albo już po końcu).
+  Dźwięk powiadomienia z Facebooka przejmował „teraz odtwarzane” systemu i zostawał „grający”: wyspa nie wracała do
+  Muzyki, a po pauzie pokazywała Facebooka i przyciski trafiały do niego.
 - **Wybór źródła** (`MediaSourceSelector`): Automatycznie → `test` adaptera (kod 0) → adapter, inaczej AppleScript.
   W trakcie działania przejście na AppleScript, gdy adapter padnie 3 razy z rzędu albo milczy ≥ 4 s,
   choć Muzyka/Spotify zgłaszają odtwarzanie (`SilentAdapterDetector`). Wybór źródła nie jest pokazywany w ustawieniach (decyzja użytkownika z 2.10.2026); ustawienia pokazują tylko błąd, gdy żadne źródło nie działa. Aktywne źródło jest w logu (`media`).

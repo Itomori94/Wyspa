@@ -114,6 +114,8 @@ Tabela rośnie wraz z kolejnymi modułami.
 
 Okładka, tytuł, wykonawca, pasek przewijania i sterowanie dla dowolnej aplikacji odtwarzającej dźwięk
 (Muzyka, Spotify, przeglądarki, podcasty). W zwiniętej wyspie: miniatura okładki i wizualizer w kolorze okładki.
+Gdy Muzyka nie oddaje okładki (np. utwór z subskrypcji grany przez AirPlay), Wyspa szuka jej w katalogu iTunes:
+do Apple trafiają wtedy tytuł i wykonawca utworu (bez konta, raz na utwór).
 
 W Ustawieniach → Moduły → Teraz odtwarzane wybierasz:
 

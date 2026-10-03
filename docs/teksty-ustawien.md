@@ -5,7 +5,7 @@ zaktualizuj też ten plik. Karty okna: **Ogólne · Wyspa · Moduły · Układ �
 
 ## Menu Wyspy (ikona w pasku menu)
 
-- „Rozwiń lub zwiń wyspę” · „Ustawienia…” · „Sprawdź aktualizacje…” · „Wersja …” (nieaktywna, zainstalowany commit) · „Wesprzyj autora…” (otwiera suppi.pl/itomori94) · „Zakończ Wyspę”
+- „Ustawienia…” · „Sprawdź aktualizacje…” · „Wersja …” (nieaktywna, zainstalowany commit) · „Wesprzyj autora…” (otwiera suppi.pl/itomori94) · „Zakończ Wyspę”
 - Okienka „Sprawdź aktualizacje…”: „Dostępna nowa wersja Wyspy” (… zmian: lista najwyżej 6, „… i … więcej”; „Aktualizacja
   pobierze zmiany, zbuduje i zainstaluje Wyspę — aplikacja zamknie się i uruchomi ponownie.”; „Zaktualizuj teraz” /
   „Później”) · „Masz najnowszą wersję Wyspy” („Zainstalowana wersja: …”) · „Nie udało się sprawdzić aktualizacji” ·
