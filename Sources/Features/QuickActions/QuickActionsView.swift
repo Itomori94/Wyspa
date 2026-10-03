@@ -56,38 +56,58 @@ struct QuickActionsView: View {
         return max(1, min(fitting, 4, tiles))
     }
 
-    @ViewBuilder
     private func tile(_ action: QuickActionsModule.Action) -> some View {
+        let spec = TileSpec.make(action, module: module, compact: compact)
+        return ActionTile(spec: spec, compact: compact, tap: module.taps[action, default: 0],
+                          isBusy: module.busy.contains(action)) { module.run(action) }
+    }
+}
+
+/// Wygląd i animacje kafelka jednej akcji.
+struct TileSpec {
+    var symbol: String
+    var title: String
+    var tint: Color
+    var isOn = false
+    var tapEffect: TapEffect = .bounce
+    var busyEffect: BusyEffect = .pulse
+    /// Efekt po najechaniu (domyślnie lekki podskok; słońce się obraca).
+    var hoverEffect: TapEffect = .bounce
+
+    @MainActor
+    static func make(_ action: QuickActionsModule.Action, module: QuickActionsModule, compact: Bool) -> TileSpec {
+        let done = module.confirmed.contains(action)
         switch action {
         case .capture:
-            ActionTile(symbol: "camera.viewfinder", title: compact ? "Zrzut" : "Zrzut na Półkę", tint: .blue, compact: compact,
-                       action: module.captureToShelf)
+            return TileSpec(symbol: done ? "checkmark.circle.fill" : "camera.viewfinder",
+                            title: compact ? "Zrzut" : "Zrzut na Półkę", tint: .blue)
         case .captureScreen:
-            ActionTile(symbol: "macwindow", title: "Cały ekran", tint: .blue, compact: compact, action: module.captureScreen)
+            return TileSpec(symbol: done ? "checkmark.circle.fill" : "macwindow", title: "Cały ekran", tint: .blue)
         case .captureText:
-            ActionTile(symbol: "text.viewfinder", title: compact ? "Tekst" : "Tekst ze zrzutu", tint: .green, compact: compact,
-                       action: module.captureText)
+            return TileSpec(symbol: done ? "checkmark.circle.fill" : "text.viewfinder",
+                            title: compact ? "Tekst" : "Tekst ze zrzutu", tint: .green, busyEffect: .breathe)
         case .record:
-            ActionTile(symbol: "record.circle", title: "Nagrywanie", tint: .red, compact: compact, action: module.startRecording)
+            return TileSpec(symbol: done ? "checkmark.circle.fill" : "record.circle", title: "Nagrywanie", tint: .red,
+                            busyEffect: .breathe)
         case .pickColor:
-            ActionTile(symbol: "eyedropper", title: compact ? "Pipeta" : "Pipeta koloru", tint: .pink, compact: compact,
-                       action: module.pickColor)
+            return TileSpec(symbol: done ? "checkmark.circle.fill" : "eyedropper", title: compact ? "Pipeta" : "Pipeta koloru",
+                            tint: .pink, tapEffect: .wiggle)
         case .password:
-            ActionTile(symbol: "key.fill", title: "Hasło", tint: .yellow, compact: compact, action: module.copyPassword)
+            return TileSpec(symbol: done ? "checkmark.circle.fill" : "key.fill", title: "Hasło", tint: .yellow, tapEffect: .rotate)
         case .darkMode:
-            ActionTile(symbol: module.isDarkMode ? "moon.fill" : "sun.max.fill", title: module.isDarkMode ? "Tryb ciemny" : "Tryb jasny",
-                       tint: .indigo, compact: compact, isOn: module.isDarkMode, action: module.toggleDarkMode)
+            return TileSpec(symbol: module.isDarkMode ? "moon.fill" : "sun.max.fill",
+                            title: module.isDarkMode ? "Tryb ciemny" : "Tryb jasny", tint: .indigo, isOn: module.isDarkMode,
+                            hoverEffect: module.isDarkMode ? .bounce : .rotate)
         case .desktopIcons:
-            ActionTile(symbol: module.desktopIconsVisible ? "menubar.dock.rectangle" : "eye.slash",
-                       title: module.desktopIconsVisible ? "Ukryj biurko" : "Pokaż biurko",
-                       tint: .teal, compact: compact, isOn: !module.desktopIconsVisible, action: module.toggleDesktopIcons)
+            return TileSpec(symbol: module.desktopIconsVisible ? "eye" : "eye.slash",
+                            title: module.desktopIconsVisible ? "Ukryj biurko" : "Pokaż biurko", tint: .teal,
+                            isOn: !module.desktopIconsVisible)
         case .lock:
-            ActionTile(symbol: "lock.fill", title: compact ? "Blokada" : "Zablokuj ekran", tint: .gray, compact: compact,
-                       action: module.lockScreen)
+            return TileSpec(symbol: done ? "lock.fill" : "lock.open.fill", title: compact ? "Blokada" : "Zablokuj ekran", tint: .gray)
         case .keepAwake:
-            ActionTile(symbol: module.isKeepingAwake ? "cup.and.saucer.fill" : "cup.and.saucer",
-                       title: module.isKeepingAwake ? "Nie usypia" : "Nie usypiaj", tint: .orange, compact: compact,
-                       isOn: module.isKeepingAwake, action: { module.toggleKeepAwake() })
+            return TileSpec(symbol: module.isKeepingAwake ? "cup.and.heat.waves.fill" : "cup.and.saucer",
+                            title: module.isKeepingAwake ? "Nie usypia" : "Nie usypiaj", tint: .orange, isOn: module.isKeepingAwake,
+                            busyEffect: .variableColor)
         }
     }
 }
@@ -124,28 +144,32 @@ extension EnvironmentValues {
 }
 
 private struct ActionTile: View {
-    let symbol: String
-    let title: String
-    let tint: Color
+    let spec: TileSpec
     let compact: Bool
-    var isOn = false
+    let tap: Int
+    /// Akcja w toku (zaznaczanie, rozpoznawanie, nagrywanie) albo stan włączony z animacją (para nad kubkiem).
+    let isBusy: Bool
     let action: () -> Void
     @State private var isHovered = false
+    @State private var hoverCount = 0
     @Environment(\.tileLayout) private var layout
 
     var body: some View {
         Button(action: action) {
             content
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .background(
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .fill(isOn ? tint : .white.opacity(isHovered ? 0.14 : 0.07))
-            )
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .fill(spec.isOn ? spec.tint : .white.opacity(isHovered ? 0.14 : 0.07))
+                )
         }
         .buttonStyle(IslandPressStyle())
-        .onHover { isHovered = $0 }
-        .help(title)
-        .accessibilityLabel(title)
+        .onHover { inside in
+            isHovered = inside
+            if inside { hoverCount += 1 }
+        }
+        .help(spec.title)
+        .accessibilityLabel(spec.title)
     }
 
     @ViewBuilder
@@ -168,15 +192,20 @@ private struct ActionTile: View {
     }
 
     private func icon(size: CGFloat) -> some View {
-        Image(systemName: symbol)
+        Image(systemName: spec.symbol)
             .font(.system(size: size, weight: .semibold))
-            .foregroundStyle(isOn ? .black : tint)
+            .foregroundStyle(spec.isOn ? .black : spec.tint)
+            .symbolSwapTransition()
+            .tapEffect(spec.tapEffect, value: tap)
+            .tapEffect(spec.hoverEffect, value: hoverCount)
+            .busyEffect(spec.busyEffect, isActive: isBusy || (spec.isOn && spec.busyEffect == .variableColor))
+            .animation(.snappy, value: spec.symbol)
     }
 
     private func label(size: CGFloat) -> some View {
-        Text(title)
+        Text(spec.title)
             .font(.system(size: size, weight: .medium))
-            .foregroundStyle(isOn ? .black : .white.opacity(0.85))
+            .foregroundStyle(spec.isOn ? .black : .white.opacity(0.85))
             .lineLimit(1)
             .minimumScaleFactor(0.75)
     }

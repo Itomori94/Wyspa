@@ -298,6 +298,11 @@ miejsce zamienia je miejscami). Do wyboru:
 - **Zablokuj ekran**: od razu blokuje Maca.
 - **Nie usypiaj**: Mac i ekran nie zasypiają (jak `caffeinate -d`), dopóki nie klikniesz ponownie albo nie wyłączysz modułu.
 
+Ikony są animowane: klucz obraca się przy kopiowaniu hasła, pipeta się przechyla, słońce zamienia w księżyc,
+przez oko rysuje się kreska przy ukrywaniu biurka, kłódka się zatrzaskuje, nad kubkiem unosi się para, a w trakcie
+nagrywania czerwona kropka „oddycha”. Po wykonaniu akcji na chwilę pojawia się ptaszek. Przy „Ogranicz ruch”
+w ustawieniach dostępności animacje są wyłączone.
+
 Każdej akcji — także niewidocznej w wyspie — możesz przypisać globalny skrót klawiszowy w ustawieniach modułu
 (domyślnie brak); skróty działają tylko przy włączonym module.
 

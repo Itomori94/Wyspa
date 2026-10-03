@@ -210,6 +210,14 @@ APP=$PWD/build/Wyspa.app/Contents
   zapisuje przez dowiązania, zachowuje prawa pliku, trzyma 5 ostatnich kopii; zmiana czasu decyzji zapisuje hooki po 0,8 s.
 - Sesje znikają po zakończeniu procesu Claude Code (`DispatchSource.makeProcessSource(.exit)`), bez odpytywania.
 
+## Animacje ikon
+
+`WyspaUI/SymbolEffects.swift`: `symbolSwapTransition()` (magiczna zamiana symbolu na macOS 15+, np. rysowanie kreski
+przekreślenia), `tapEffect` (bounce / wiggle / rotate na zmianę licznika), `busyEffect` (pulse / variableColor / breathe,
+dopóki trwa) i `EnteringSymbolSwap` (widok powstaje w poprzednim stanie i przechodzi w bieżący — dla nowych aktywności
+wyspy). Wszystko wyłączone przy „Ogranicz ruch”. Szybkie akcje: `TileSpec.make` (symbol, efekty) + stan modułu
+`taps` / `busy` / `confirmed`; blokada ekranu czeka 400 ms na animację kłódki.
+
 ## Mikrofon (moduł `WyspaMicrophone`)
 
 - CoreAudio, domyślne wejście: `Mute` (zakres wejścia), a bez niego `VolumeScalar` (element główny albo kanały 1…n)

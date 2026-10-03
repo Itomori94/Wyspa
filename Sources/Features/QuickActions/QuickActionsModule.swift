@@ -65,6 +65,14 @@ public final class QuickActionsModule: IslandModule {
     public private(set) var slots: [Slot]
     /// Kafelki w wyspie: akcje z włączonych miejsc, w kolejności miejsc.
     public var visibleActions: [Action] { slots.filter(\.isEnabled).map(\.action) }
+    /// Animacje kafelków: licznik kliknięć (efekt po kliknięciu), akcje w toku (zaznaczanie, rozpoznawanie,
+    /// nagrywanie) i krótkie potwierdzenie „zrobione”.
+    public private(set) var taps: [Action: Int] = [:]
+    public private(set) var busy: Set<Action> = []
+    public private(set) var confirmed: Set<Action> = []
+    static let confirmationDisplay: Duration = .milliseconds(1200)
+    /// Kłódka zdąży się zatrzasnąć, zanim ekran się zablokuje.
+    static let lockAnimationDelay: Duration = .milliseconds(400)
     public private(set) var isDarkMode = false
     public private(set) var desktopIconsVisible = true
     /// Hasło znika ze schowka po tym czasie, jeśli nic innego nie zostało skopiowane.
@@ -140,6 +148,29 @@ public final class QuickActionsModule: IslandModule {
         registerHotkeys()
     }
 
+    /// Kliknięcie kafelka albo skrót: animacja kliknięcia i sama akcja.
+    func run(_ action: Action) {
+        taps[action, default: 0] += 1
+        if action == .lock {
+            confirm(.lock)
+            Task { [weak self] in
+                try? await Task.sleep(for: Self.lockAnimationDelay)
+                self?.lockScreen()
+            }
+            return
+        }
+        perform(action)
+    }
+
+    /// Krótkie „zrobione” na kafelku (np. ptaszek po skopiowaniu hasła).
+    private func confirm(_ action: Action) {
+        confirmed.insert(action)
+        Task { [weak self] in
+            try? await Task.sleep(for: Self.confirmationDisplay)
+            self?.confirmed.remove(action)
+        }
+    }
+
     func perform(_ action: Action) {
         switch action {
         case .capture: captureToShelf()
@@ -162,7 +193,7 @@ public final class QuickActionsModule: IslandModule {
         var problems: [String] = []
         for action in Action.allCases {
             guard let shortcut = shortcuts[action] else { continue }
-            let hotkey = GlobalHotkey { [weak self] in self?.perform(action) }
+            let hotkey = GlobalHotkey { [weak self] in self?.run(action) }
             do {
                 try hotkey.register(shortcut)
                 hotkeys.append(hotkey)
@@ -177,12 +208,12 @@ public final class QuickActionsModule: IslandModule {
 
     /// Zaznaczenie obszaru systemowym `screencapture`; plik trafia na Półkę, a bez Półki — do schowka.
     func captureToShelf() {
-        startCapture { [weak self] url in self?.screenshotFinished(url) }
+        startCapture(for: .capture) { [weak self] url in self?.screenshotFinished(url, action: .capture) }
     }
 
     /// Zaznaczenie obszaru → tekst rozpoznany na urządzeniu (Vision, polski i angielski) → schowek.
     func captureText() {
-        startCapture { [weak self] url in self?.recognizeText(in: url) }
+        startCapture(for: .captureText) { [weak self] url in self?.recognizeText(in: url) }
     }
 
     /// Cały ekran główny na Półkę (albo do schowka): wyspa najpierw się zwija, żeby nie było jej na zrzucie.
@@ -190,7 +221,9 @@ public final class QuickActionsModule: IslandModule {
         context.requestCollapse()
         Task { [weak self] in
             try? await Task.sleep(for: Self.collapseDelay)
-            self?.startCapture(arguments: ["-m"]) { [weak self] url in self?.screenshotFinished(url) }
+            self?.startCapture(arguments: ["-m"], for: .captureScreen) { [weak self] url in
+                self?.screenshotFinished(url, action: .captureScreen)
+            }
         }
     }
 
@@ -204,7 +237,7 @@ public final class QuickActionsModule: IslandModule {
                                                              home: FileManager.default.homeDirectoryForCurrentUser)
         let url = QuickActionsLogic.recordingURL(in: directory, at: Date())
         // Plik docelowy: przy wyłączeniu modułu w trakcie zostaje na dysku (to nagranie użytkownika).
-        runScreencapture(["-i", "-U", "-J", "video", "-k", url.path], output: url, isTemporary: false,
+        runScreencapture(["-i", "-U", "-J", "video", "-k", url.path], output: url, isTemporary: false, action: .record,
                          failureMessage: "Nie udało się uruchomić nagrywania") { [weak self] url in self?.recordingFinished(url) }
     }
 
@@ -212,6 +245,7 @@ public final class QuickActionsModule: IslandModule {
     private func recordingFinished(_ url: URL) {
         // Anulowanie (Esc) nie zostawia pliku.
         guard FileManager.default.fileExists(atPath: url.path) else { return }
+        confirm(.record)
         if let provider = NSItemProvider(contentsOf: url), context.deliver([provider], Self.shelfZone) {
             show("Nagranie na Półce")
         } else {
@@ -229,6 +263,7 @@ public final class QuickActionsModule: IslandModule {
         pasteboard.setString(QuickActionsLogic.password(), forType: .string)
         pasteboard.setString("", forType: concealed)
         let change = pasteboard.changeCount
+        confirm(.password)
         show("Hasło w schowku — zniknie za 90 s")
         Task {
             try? await Task.sleep(for: Self.passwordLifetime)
@@ -281,17 +316,19 @@ public final class QuickActionsModule: IslandModule {
 
     /// Zrzut ekranu (domyślnie zaznaczenie obszaru); `completion` dostaje plik (może go nie być po Esc)
     /// i odpowiada za jego usunięcie.
-    private func startCapture(arguments: [String] = ["-i"], _ completion: @escaping @MainActor @Sendable (URL) -> Void) {
+    private func startCapture(arguments: [String] = ["-i"], for action: Action,
+                              _ completion: @escaping @MainActor @Sendable (URL) -> Void) {
         let url = QuickActionsLogic.screenshotURL(in: FileManager.default.temporaryDirectory, at: Date())
-        runScreencapture(arguments + ["-x", url.path], output: url, isTemporary: true,
+        runScreencapture(arguments + ["-x", url.path], output: url, isTemporary: true, action: action,
                          failureMessage: "Nie udało się uruchomić zrzutu ekranu", completion)
     }
 
     /// Jeden `screencapture` naraz. Po zakończeniu `completion` dostaje plik (może go nie być po Esc).
     /// Gdy moduł wyłączono w trakcie, nic nie przekazujemy; plik tymczasowy jest wtedy kasowany.
-    private func runScreencapture(_ arguments: [String], output url: URL, isTemporary: Bool, failureMessage: String,
-                                  _ completion: @escaping @MainActor @Sendable (URL) -> Void) {
+    private func runScreencapture(_ arguments: [String], output url: URL, isTemporary: Bool, action: Action,
+                                  failureMessage: String, _ completion: @escaping @MainActor @Sendable (URL) -> Void) {
         guard captureProcess == nil else { return }
+        busy.insert(action)
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/usr/sbin/screencapture")
         process.arguments = arguments
@@ -302,6 +339,8 @@ public final class QuickActionsModule: IslandModule {
                     return
                 }
                 self.captureProcess = nil
+                // Rozpoznawanie tekstu trwa jeszcze po zrzucie — kończy je `recognizeText`.
+                if action != .captureText { self.busy.remove(action) }
                 completion(url)
             }
         }
@@ -309,16 +348,18 @@ public final class QuickActionsModule: IslandModule {
             try process.run()
             captureProcess = process
         } catch {
+            busy.remove(action)
             log.error("screencapture: \(error.localizedDescription, privacy: .public)")
             show(failureMessage)
         }
     }
 
     /// Zrzut trafia na Półkę jako dane (Półka trzyma własną kopię), plik tymczasowy znika od razu.
-    private func screenshotFinished(_ url: URL) {
+    private func screenshotFinished(_ url: URL, action: Action) {
         defer { try? FileManager.default.removeItem(at: url) }
         // Esc w trakcie zaznaczania: pliku nie ma, nic nie robimy.
         guard let data = try? Data(contentsOf: url), !data.isEmpty else { return }
+        confirm(action)
         let provider = NSItemProvider(item: data as NSData, typeIdentifier: UTType.png.identifier)
         provider.suggestedName = url.deletingPathExtension().lastPathComponent
         if context.deliver([provider], Self.shelfZone) {
@@ -332,10 +373,16 @@ public final class QuickActionsModule: IslandModule {
 
     private func recognizeText(in url: URL) {
         // Esc w trakcie zaznaczania: pliku nie ma, nic nie robimy.
-        guard FileManager.default.fileExists(atPath: url.path) else { return }
+        guard FileManager.default.fileExists(atPath: url.path) else {
+            busy.remove(.captureText)
+            return
+        }
         show("Rozpoznawanie tekstu…")
         Task { [weak self] in
-            defer { try? FileManager.default.removeItem(at: url) }
+            defer {
+                try? FileManager.default.removeItem(at: url)
+                self?.busy.remove(.captureText)
+            }
             do {
                 let lines = try await TextRecognition.lines(inImageAt: url)
                 guard let self else { return }
@@ -345,6 +392,7 @@ public final class QuickActionsModule: IslandModule {
                 }
                 NSPasteboard.general.clearContents()
                 NSPasteboard.general.setString(text, forType: .string)
+                self.confirm(.captureText)
                 self.show(QuickActionsLogic.copiedLinesMessage(text.split(separator: "\n").count))
             } catch {
                 self?.log.error("OCR: \(error.localizedDescription, privacy: .public)")
@@ -364,6 +412,7 @@ public final class QuickActionsModule: IslandModule {
                 let hex = QuickActionsLogic.hex(red: rgb.redComponent, green: rgb.greenComponent, blue: rgb.blueComponent)
                 NSPasteboard.general.clearContents()
                 NSPasteboard.general.setString(hex, forType: .string)
+                self?.confirm(.pickColor)
                 self?.show("Skopiowano \(hex)")
             }
         }

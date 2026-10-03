@@ -2,6 +2,7 @@ import AppKit
 import Carbon.HIToolbox
 import SwiftUI
 import WyspaCore
+import WyspaUI
 
 /// Wyciszanie mikrofonu globalnym skrótem; wyciszony mikrofon to czerwona ikona w zwiniętej wyspie.
 @MainActor
@@ -59,7 +60,8 @@ public final class MicrophoneModule: IslandModule {
         if let feedback {
             let muted = reading?.isMuted ?? false
             return LiveActivity(id: "microphone.feedback", priority: .alert, accent: muted ? .red : .green, wingWidth: 80) {
-                Image(systemName: muted ? "mic.slash.fill" : "mic.fill")
+                // Ikona pojawia się w poprzednim stanie i przechodzi w bieżący: kreska rysuje się albo zmazuje.
+                EnteringSymbolSwap(from: muted ? "mic.fill" : "mic.slash.fill", to: muted ? "mic.slash.fill" : "mic.fill")
                     .font(.system(size: 13, weight: .semibold))
                     .foregroundStyle(muted ? .red : .green)
             } trailing: {

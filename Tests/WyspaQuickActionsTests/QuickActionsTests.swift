@@ -1,3 +1,4 @@
+import AppKit
 import Foundation
 import Testing
 @testable import WyspaQuickActions
@@ -155,5 +156,26 @@ struct QuickActionsGridTests {
         #expect(QuickActionsView.tileHeight(available: 150, tiles: 8, columns: 2) * 4 + 3 * QuickActionsView.spacing <= 150)
         #expect(ActionTileLayout(height: 60) == .stacked && ActionTileLayout(height: 40) == .inline && ActionTileLayout(height: 20) == .iconOnly)
         #expect(ActionTileLayout(height: 40, width: 80) == .iconOnly, "wąski i niski kafelek: sama ikona zamiast uciętego napisu")
+    }
+}
+
+@Suite("Animacje kafelków")
+@MainActor
+struct QuickActionsTileSpecTests {
+    @Test("Symbole i efekty w stanie spoczynku")
+    func specs() throws {
+        let defaults = try #require(UserDefaults(suiteName: "wyspa.quick.tiles.\(UUID().uuidString)"))
+        let module = QuickActionsModule(context: ModuleContext(settings: SettingsStore(defaults: defaults).moduleSettings(for: "quickactions"),
+                                                               requestExpand: {}))
+        let spec = { (action: QuickActionsModule.Action) in TileSpec.make(action, module: module, compact: false) }
+        #expect(spec(.lock).symbol == "lock.open.fill", "kłódka zatrzaskuje się dopiero po kliknięciu")
+        #expect(spec(.keepAwake).symbol == "cup.and.saucer" && spec(.keepAwake).busyEffect == .variableColor)
+        #expect(spec(.password).tapEffect == .rotate && spec(.pickColor).tapEffect == .wiggle)
+        #expect(spec(.record).busyEffect == .breathe && spec(.captureText).busyEffect == .breathe)
+        #expect(["eye", "eye.slash"].contains(spec(.desktopIcons).symbol))
+        #expect(QuickActionsModule.Action.allCases.allSatisfy { NSImage(systemSymbolName: spec($0).symbol, accessibilityDescription: nil) != nil },
+                "każdy symbol istnieje w systemie")
+        #expect(["cup.and.heat.waves.fill", "lock.fill", "checkmark.circle.fill", "moon.fill", "sun.max.fill", "mic.slash.fill"]
+            .allSatisfy { NSImage(systemSymbolName: $0, accessibilityDescription: nil) != nil })
     }
 }
