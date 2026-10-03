@@ -25,10 +25,16 @@ public final class MicrophoneModule: IslandModule {
     static let toggleFeedback: Duration = .milliseconds(1500)
     private static let shortcutKey = "shortcut"
     private static let volumesKey = "restoreVolumes"
+    private static let soundKey = "playsSound"
+
+    /// Dźwięk po przełączeniu skrótem albo kliknięciem: niski przy wyciszeniu, wysoki przy włączeniu (dźwięki systemowe).
+    static func soundName(muted: Bool) -> String { muted ? "Bottle" : "Tink" }
 
     private(set) var reading: MicrophoneControl.Reading?
     public private(set) var shortcut: HotkeyShortcut?
     public private(set) var shortcutProblem: String?
+    /// Dźwięk przy wyciszeniu i włączeniu mikrofonu (domyślnie włączony).
+    public var playsSound: Bool { didSet { context.settings.set(playsSound, for: Self.soundKey) } }
     /// Krótki komunikat po przełączeniu („Mikrofon wyciszony”) — także przy niewyciszonym mikrofonie.
     public var feedback: String? { message.text }
 
@@ -43,6 +49,7 @@ public final class MicrophoneModule: IslandModule {
     public required init(context: ModuleContext) {
         self.context = context
         shortcut = context.settings.value(Self.shortcutKey, default: StoredShortcut(shortcut: Self.defaultShortcut)).shortcut
+        playsSound = context.settings.value(Self.soundKey, default: true)
     }
 
     public func activate() async throws {
@@ -101,7 +108,9 @@ public final class MicrophoneModule: IslandModule {
             return
         }
         refresh()
-        show(reading?.isMuted == true ? "Wyciszony" : "Włączony")
+        let muted = reading?.isMuted == true
+        show(muted ? "Wyciszony" : "Włączony")
+        if playsSound { NSSound(named: Self.soundName(muted: muted))?.play() }
     }
 
     /// Wycisza albo włącza wszystkie wejścia; głośności sprzed wyciszenia zapamiętane per urządzenie.

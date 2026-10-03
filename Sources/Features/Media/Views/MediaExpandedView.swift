@@ -3,6 +3,9 @@ import SwiftUI
 import WyspaUI
 
 struct MediaExpandedView: View {
+    /// Zapas na rozmycie cienia okładki (≈ 2 × promień + przesunięcie).
+    static let glowMargin: CGFloat = 32
+
     let module: MediaModule
     var metrics: PlayerMetrics = .full
 
@@ -10,7 +13,11 @@ struct MediaExpandedView: View {
         if let nowPlaying = module.nowPlaying {
             HStack(alignment: .center, spacing: metrics.spacing) {
                 ArtworkView(image: module.artwork, size: metrics.artworkSize, cornerRadius: 16 * metrics.artworkSize / 92)
+                    // Cień w ramie powiększonej o zasięg rozmycia: wygasa w granicach własnej warstwy, zamiast
+                    // kończyć się prostą linią na krawędzi okładki (szkło na ekranie). Układ bez zmian (−margines).
+                    .padding(Self.glowMargin)
                     .shadow(color: (module.accent ?? .black).opacity(0.45), radius: 14, y: 4)
+                    .padding(-Self.glowMargin)
                 VStack(alignment: .leading, spacing: 8) {
                     TrackInfo(nowPlaying: nowPlaying, module: module)
                     Scrubber(nowPlaying: nowPlaying, accent: module.accent ?? .white, seek: module.seek)
@@ -244,3 +251,4 @@ private struct NothingPlaying: View {
         }
     }
 }
+

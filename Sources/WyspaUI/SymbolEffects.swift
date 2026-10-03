@@ -99,6 +99,7 @@ public struct ToggleSymbol: View {
     let off: String
     let isOn: Bool
     @State private var shown: Bool?
+    @Environment(\.islandStaticSnapshot) private var isStaticSnapshot
 
     public init(on: String, off: String, isOn: Bool, animatesAppearance: Bool = false) {
         self.on = on
@@ -108,7 +109,7 @@ public struct ToggleSymbol: View {
     }
 
     public var body: some View {
-        Image(systemName: (shown ?? !isOn) ? on : off)
+        Image(systemName: (isStaticSnapshot ? isOn : (shown ?? !isOn)) ? on : off)
             .symbolSwapTransition()
             .task(id: isOn) {
                 if shown == nil { try? await Task.sleep(for: .milliseconds(120)) }

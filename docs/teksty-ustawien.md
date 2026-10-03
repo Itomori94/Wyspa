@@ -5,7 +5,7 @@ zaktualizuj też ten plik. Karty okna: **Ogólne · Wyspa · Moduły · Układ �
 
 ## Menu Wyspy (ikona w pasku menu)
 
-- „Rozwiń lub zwiń wyspę” · „Ustawienia…” · „Sprawdź aktualizacje…” · „Wersja …” (nieaktywna, zainstalowany commit) · „Zakończ Wyspę”
+- „Rozwiń lub zwiń wyspę” · „Ustawienia…” · „Sprawdź aktualizacje…” · „Wersja …” (nieaktywna, zainstalowany commit) · „Wesprzyj autora…” (otwiera suppi.pl/itomori94) · „Zakończ Wyspę”
 - Okienka „Sprawdź aktualizacje…”: „Dostępna nowa wersja Wyspy” (… zmian: lista najwyżej 6, „… i … więcej”; „Aktualizacja
   pobierze zmiany, zbuduje i zainstaluje Wyspę — aplikacja zamknie się i uruchomi ponownie.”; „Zaktualizuj teraz” /
   „Później”) · „Masz najnowszą wersję Wyspy” („Zainstalowana wersja: …”) · „Nie udało się sprawdzić aktualizacji” ·
@@ -36,6 +36,7 @@ zaktualizuj też ten plik. Karty okna: **Ogólne · Wyspa · Moduły · Układ �
     przestał działać, Wyspa stuknie delikatnie.”
 - **Tryb prywatny**: „Ukrywaj powiadomienia, schowek i odpowiedzi Claude”: Przy udostępnianiu i nagrywaniu ekranu / Zawsze / Nigdy
   - „Przy udostępnianiu albo nagrywaniu ekranu (Zoom, Teams, Meet, nagranie) karty pokazują tylko nazwę aplikacji.”
+- **Wsparcie**: „Wesprzyj autora na Suppi” (link) · „Wyspa jest darmowa i open source. Jeśli się przydaje, możesz postawić autorowi kawę.”
 
 ## Moduły
 
@@ -114,7 +115,7 @@ zaktualizuj też ten plik. Karty okna: **Ogólne · Wyspa · Moduły · Układ �
 - **Skrypty** — „Komenda wyspa zainstalowana w ~/.local/bin” + „Usuń komendę” / „Komenda wyspa jest starsza niż aplikacja” +
   „Zaktualizuj” / „Komenda wyspa nie jest zainstalowana.” + „Zainstaluj w ~/.local/bin” / „~/.local/bin/wyspa to inny program —
   Wyspa go nie nadpisze.” · podpowiedź o PATH, przykłady poleceń · „Gdy Wyspa nie działa, komenda kończy się po cichu z kodem 0. …”
-- **Mikrofon** — „Wycisz / włącz mikrofon” (skrót) · „„…” nie pozwala się wyciszyć ani zmienić głośności wejścia.” ·
+- **Mikrofon** — „Dźwięk przy wyciszeniu i włączeniu” · „Wycisz / włącz mikrofon” (skrót) · „„…” nie pozwala się wyciszyć ani zmienić głośności wejścia.” ·
   „Wyciszane są wszystkie mikrofony naraz — także ten, który Zoom, Teams czy Discord wybrały inaczej niż system, i ten
   podłączony w trakcie wyciszenia. Gdy mikrofon nie ma przełącznika wyciszenia, Wyspa ustawia głośność wejścia na zero
   i przywraca ją po włączeniu. Wyspa nie słucha dźwięku z mikrofonu.” · lista mikrofonów (nazwa, „· systemowy”, ikona stanu) · „„…” nie pozwala się wyciszyć ani zmienić głośności wejścia.” ·

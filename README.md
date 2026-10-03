@@ -3,6 +3,8 @@
 Natywna aplikacja macOS, która zamienia notch MacBooka w interaktywną wyspę w stylu Dynamic Island.
 Projekt open source (licencja MIT), dystrybucja poza App Store — budujesz i instalujesz sam.
 
+Jeśli Wyspa Ci się przydaje: [wesprzyj autora na Suppi](https://suppi.pl/itomori94) ☕
+
 ## Zrzuty ekranu
 
 ### Zwinięta wyspa
@@ -257,7 +259,7 @@ widżetu robi to samo. Wyciszony mikrofon to czerwona ikona w zwiniętej wyspie 
 mniej ważna niż timer i prośby Claude). Każdy mikrofon dostaje wyciszenie i głośność wejścia ustawioną na zero
 (programy do rozmów potrafią pominąć samo wyciszenie) — po włączeniu wraca poprzednia głośność. Mikrofon iPhone'a
 przez Continuity nie daje się wyciszyć; ustawienia modułu pokazują stan każdego mikrofonu. Bez zgody na mikrofon: Wyspa nie słucha dźwięku, zmienia tylko
-ustawienie urządzenia (publiczne CoreAudio, zmiany z Ustawień systemowych widać od razu, bez odpytywania).
+ustawienie urządzenia (publiczne CoreAudio, zmiany z Ustawień systemowych widać od razu, bez odpytywania). Przełączeniu towarzyszy krótki dźwięk (niższy przy wyciszeniu, wyższy przy włączeniu) — do wyłączenia w ustawieniach modułu.
 
 ### Aktualizacje
 
@@ -369,6 +371,11 @@ nawet bez kroku 1 Claude Code nie zgłasza błędów, a hooki po prostu nic nie 
   (Ustawienia → Wyspa) korzysta z nieoficjalnego interfejsu MultitouchSupport; gdy przestanie działać, zostaje
   delikatne stuknięcie z publicznego API.
 - Start przy logowaniu najlepiej działa, gdy aplikacja leży w `/Applications`.
+
+## Wsparcie
+
+Wyspa jest darmowa. Jeśli chcesz podziękować albo wesprzeć dalszy rozwój: **[suppi.pl/itomori94](https://suppi.pl/itomori94)**.
+Link jest też w menu Wyspy („Wesprzyj autora…”) i w Ustawieniach → Wyspa → Wsparcie.
 
 ## Licencja
 

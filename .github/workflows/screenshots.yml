@@ -1,0 +1,26 @@
+name: Zrzuty ekranu
+# Zrzuty do README z danymi demonstracyjnymi (scripts/screenshots.sh) generowane na macOS i zapisywane w gałęzi.
+# Uruchomienie: Actions → „Zrzuty ekranu” → Run workflow, albo commit z „[zrzuty]” w opisie.
+on:
+  workflow_dispatch:
+  push:
+    branches-ignore: [master]
+permissions:
+  contents: write
+jobs:
+  screenshots:
+    if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[zrzuty]')
+    runs-on: macos-26
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Zrzuty (scripts/screenshots.sh)
+        run: scripts/screenshots.sh
+      - name: Zapis w gałęzi
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/screenshots
+          if git diff --cached --quiet; then echo "Zrzuty bez zmian"; exit 0; fi
+          git commit -m "docs: odświeżone zrzuty ekranu (CI)"
+          git push

@@ -78,4 +78,10 @@ struct MicrophoneActivityTests {
         let muted = try #require(module.liveActivity)
         #expect(muted.id == "microphone" && muted.wingWidth == MicrophoneModule.wingWidth)
     }
+
+    @Test("Dźwięk wyciszenia i włączenia: różne dźwięki systemowe")
+    @MainActor
+    func sounds() {
+        #expect(MicrophoneModule.soundName(muted: true) != MicrophoneModule.soundName(muted: false))
+    }
 }

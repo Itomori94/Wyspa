@@ -94,6 +94,9 @@ binarka ma `minos 14.0` dla obu architektur (sprawdź: `vtool -arch x86_64 -show
   Framework wołamy zawsze ścieżką bezwzględną (względna nie ładuje się w Perlu).
 - **Warstwa Swift**: protokół `NowPlayingSource` (`AdapterNowPlayingSource`, `AppleScriptNowPlayingSource`).
   Moduł zna tylko protokół; nowe źródło = nowa implementacja + przypadek w `MediaSourceKind`.
+- **Dźwięki powiadomień** (`NowPlayingMerge.looksLikeMedia`): grająca Muzyka (AppleScript) nie ustępuje innej
+  aplikacji z adaptera, która nie wygląda na utwór (bez tytułu, bez długości, < 20 s albo już po końcu) — dźwięk
+  powiadomienia z Facebooka przejmował „teraz odtwarzane” systemu i wyspa nie wracała do Muzyki.
 - **Wybór źródła** (`MediaSourceSelector`): Automatycznie → `test` adaptera (kod 0) → adapter, inaczej AppleScript.
   W trakcie działania przejście na AppleScript, gdy adapter padnie 3 razy z rzędu albo milczy ≥ 4 s,
   choć Muzyka/Spotify zgłaszają odtwarzanie (`SilentAdapterDetector`). Wybór źródła nie jest pokazywany w ustawieniach (decyzja użytkownika z 2.10.2026); ustawienia pokazują tylko błąd, gdy żadne źródło nie działa. Aktywne źródło jest w logu (`media`).
@@ -256,6 +259,7 @@ jak reszta wyspy); kolory zostają dla znaczenia (czerwony mikrofon, pomarańczo
   Nie czytamy dźwięku, więc bez `NSMicrophoneUsageDescription` i zgody TCC.
 - Aktywność „wyciszony” ma priorytet 52 (nad mediami i spotkaniem, pod pobieraniem i timerem); przełączenie pokazuje
   na 1,5 s komunikat z priorytetem `.alert`. Skrót domyślny ⌃⌥M (`StoredShortcut` odróżnia „bez skrótu” od domyślnego).
+  Dźwięk po przełączeniu (`playsSound`, domyślnie wł.): systemowe „Bottle” przy wyciszeniu, „Tink” przy włączeniu.
 
 ## Aktualizacje (moduł `WyspaUpdates`)
 
@@ -313,7 +317,9 @@ jak reszta wyspy); kolory zostają dla znaczenia (czerwony mikrofon, pomarańczo
 
 ## Zrzuty ekranu
 
-`scripts/screenshots.sh` → `docs/screenshots/*.png`: test `WyspaScreenshotTests` (pomijany bez `WYSPA_SCREENSHOTS_DIR`)
+`scripts/screenshots.sh` → `docs/screenshots/*.png` (albo workflow „Zrzuty ekranu” w GitHub Actions: uruchomienie ręczne
+lub commit z `[zrzuty]` w opisie — zrzuty z macOS trafiają do gałęzi). Render: zawsze 2×, `pl_PL`, bez animacji wejścia
+(`\.islandStaticSnapshot`). Test `WyspaScreenshotTests` (pomijany bez `WYSPA_SCREENSHOTS_DIR`)
 renderuje prawdziwe widoki modułów z danymi demonstracyjnymi (`showDemo` w modułach, tylko `#if DEBUG`). Nigdy nie
 wrzucaj prawdziwych zrzutów ekranu do publicznego repo. Po zmianie wyglądu odśwież zrzuty.
 
