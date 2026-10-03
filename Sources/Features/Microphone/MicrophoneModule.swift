@@ -121,21 +121,19 @@ public final class MicrophoneModule: IslandModule {
         _ = setAllMuted(true)
     }
 
-    /// „Mikrofon (MacBook Air) + 2 inne” — domyślne wejście i ile jeszcze jest wyciszanych razem z nim.
+    /// Podpis w widżecie: jeden mikrofon z nazwy, kilka — „Wszystkie mikrofony (3)”.
     nonisolated static func devicesLabel(name: String, count: Int) -> String {
-        let others = count - 1
-        guard others > 0 else { return name }
-        return "\(name) + \(PolishPlural.format(others, one: "inny", few: "inne", many: "innych"))"
+        count > 1 ? "Wszystkie mikrofony (\(count))" : name
     }
 
     private func refresh() {
         let previous = reading
         reading = control?.reading
-        if previous == nil || previous?.deviceUID == reading?.deviceUID {
-            // Ten sam mikrofon: zmiana wyciszenia (także z Ustawień systemowych) to nowa intencja.
+        if previous == nil || previous?.deviceUIDs == reading?.deviceUIDs {
+            // Te same mikrofony: zmiana wyciszenia (także z Ustawień systemowych) to nowa intencja.
             wantsMuted = reading?.isMuted ?? false
         } else if wantsMuted, reading?.isMuted == false, setAllMuted(true) {
-            // Nowe domyślne wejście w trakcie wyciszenia (np. podłączone AirPods) — też wyciszone.
+            // Nowy mikrofon w trakcie wyciszenia (np. podłączone AirPods) — też wyciszony.
             reading = control?.reading
         }
         if let previous, previous.isMuted != reading?.isMuted { mutedChangedAt = Date() }
@@ -181,7 +179,9 @@ struct StoredShortcut: Codable, Equatable {
 extension MicrophoneModule {
     /// Dane demonstracyjne do zrzutów ekranu w README (tylko build debug).
     func showDemo(muted: Bool) {
-        reading = MicrophoneControl.Reading(deviceUID: "demo", deviceName: "Mikrofon MacBooka Pro", isMuted: muted, canMute: true)
+        reading = MicrophoneControl.Reading(inputs: [
+            MicrophoneControl.Input(uid: "demo", name: "Mikrofon MacBooka Pro", isDefault: true, isMuted: muted, canMute: true),
+        ])
     }
 }
 #endif

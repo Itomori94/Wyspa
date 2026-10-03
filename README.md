@@ -249,11 +249,12 @@ jako pierścień postępu z procentem; kilka pobierań naraz — łączny postę
 
 ### Mikrofon
 
-Globalny skrót (domyślnie ⌃⌥M, do zmiany w ustawieniach modułu) wycisza i włącza **wszystkie** mikrofony naraz (także ten, który Zoom, Teams czy Discord wybrały inaczej niż system,
+Globalny skrót (domyślnie ⌃⌥M, do zmiany w ustawieniach modułu) wycisza i włącza **wszystkie** mikrofony naraz (także ten, który Jabber, Zoom, Teams czy Discord wybrały inaczej niż system,
 i podłączony w trakcie wyciszenia); kliknięcie
 widżetu robi to samo. Wyciszony mikrofon to czerwona ikona w zwiniętej wyspie (ważniejsza niż odtwarzanie i spotkanie,
-mniej ważna niż timer i prośby Claude). Mikrofony bez przełącznika wyciszenia są wyciszane głośnością wejścia
-ustawioną na zero — po włączeniu wraca poprzednia. Bez zgody na mikrofon: Wyspa nie słucha dźwięku, zmienia tylko
+mniej ważna niż timer i prośby Claude). Każdy mikrofon dostaje wyciszenie i głośność wejścia ustawioną na zero
+(programy do rozmów potrafią pominąć samo wyciszenie) — po włączeniu wraca poprzednia głośność. Mikrofon iPhone'a
+przez Continuity nie daje się wyciszyć; ustawienia modułu pokazują stan każdego mikrofonu. Bez zgody na mikrofon: Wyspa nie słucha dźwięku, zmienia tylko
 ustawienie urządzenia (publiczne CoreAudio, zmiany z Ustawień systemowych widać od razu, bez odpytywania).
 
 ### Aktualizacje

@@ -19,7 +19,7 @@ struct MicrophoneView: View {
                 Text(muted ? "Wyciszony" : "Włączony")
                     .font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(muted ? .red : .white)
-                Text(module.reading.map { MicrophoneModule.devicesLabel(name: $0.deviceName, count: $0.inputCount) } ?? "Brak mikrofonu")
+                Text(module.reading.map { MicrophoneModule.devicesLabel(name: $0.defaultName, count: $0.mutable.count) } ?? "Brak mikrofonu")
                     .font(.system(size: 10.5))
                     .foregroundStyle(.white.opacity(0.5))
                     .lineLimit(1)
@@ -49,9 +49,21 @@ struct MicrophoneSettingsView: View {
             if let problem = module.shortcutProblem {
                 Text(problem).font(.caption).foregroundStyle(.orange)
             }
-            if let reading = module.reading, !reading.canMute {
-                Text("„\(reading.deviceName)” nie pozwala się wyciszyć ani zmienić głośności wejścia.")
-                    .font(.caption).foregroundStyle(.orange)
+            if let reading = module.reading {
+                ForEach(reading.inputs, id: \.uid) { input in
+                    Label {
+                        Text(input.name) + Text(input.isDefault ? " · systemowy" : "").foregroundStyle(.secondary)
+                    } icon: {
+                        Image(systemName: !input.canMute ? "exclamationmark.triangle.fill" : input.isMuted ? "mic.slash.fill" : "mic.fill")
+                            .foregroundStyle(!input.canMute ? .orange : input.isMuted ? .red : .green)
+                    }
+                    .font(.callout)
+                    .help(!input.canMute ? "Tego mikrofonu nie da się wyciszyć" : input.isMuted ? "Wyciszony" : "Włączony")
+                }
+                if !reading.unmutable.isEmpty {
+                    Text("\(reading.unmutable.map { "„\($0.name)”" }.joined(separator: ", ")) nie pozwala się wyciszyć ani zmienić głośności wejścia.")
+                        .font(.caption).foregroundStyle(.orange)
+                }
             }
             Text("Wyciszane są wszystkie mikrofony naraz — także ten, który Zoom, Teams czy Discord wybrały inaczej niż "
                  + "system, i ten podłączony w trakcie wyciszenia. Gdy mikrofon nie ma przełącznika wyciszenia, Wyspa "

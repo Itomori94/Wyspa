@@ -238,12 +238,16 @@ jak reszta wyspy); kolory zostają dla znaczenia (czerwony mikrofon, pomarańczo
 
 ## Mikrofon (moduł `WyspaMicrophone`)
 
-- Wyciszane są wszystkie urządzenia z wejściem (`kAudioHardwarePropertyDevices`, kanały wejścia > 0); stan w wyspie =
-  domyślne wejście. `wantsMuted` (intencja) przeżywa zmianę domyślnego wejścia; nowe urządzenie w trakcie wyciszenia
-  (lista urządzeń albo nowe domyślne) jest wyciszane od razu.
-- CoreAudio, każde wejście: `Mute` (zakres wejścia), a bez niego `VolumeScalar` (element główny albo kanały 1…n)
-  ustawiane na 0; głośność sprzed wyciszenia zapamiętana per UID urządzenia (`restoreVolumes`), przy braku — 75%.
-- Zmiany urządzenia, wyciszenia i głośności przez `AudioObjectAddPropertyListenerBlock` na kolejce głównej (bez odpytywania).
+- Wyciszane są wszystkie urządzenia z wejściem (`kAudioHardwarePropertyDevices`, kanały wejścia > 0). „Wyciszony” =
+  wszystkie, które da się wyciszyć (`Reading.isMuted`); mikrofon bez `Mute` i bez głośności (iPhone przez Continuity)
+  jest tylko wymieniony w ustawieniach. `wantsMuted` (intencja) przeżywa zmianę zestawu urządzeń; nowe urządzenie
+  w trakcie wyciszenia jest wyciszane od razu.
+- Każde wejście dostaje **oba** zabezpieczenia: `Mute` (zakres wejścia) i `VolumeScalar` = 0 (element główny albo
+  kanały 1…n). Sama flaga nie wystarcza: Jabber z wbudowanym mikrofonem MacBooka nagrywał mimo `Mute = 1`.
+  Stan liczony z głośności, gdy jest (`Controls.isMuted`). Włączenie przywraca głośność (zapamiętaną per UID, inaczej
+  75%) tylko wtedy, gdy jest zerowa — nie rusza głośności ustawionej ręcznie.
+- Zmiany urządzeń, wyciszenia i głośności każdego wejścia przez `AudioObjectAddPropertyListenerBlock` na kolejce
+  głównej (bez odpytywania); po zmianie listy urządzeń obserwacja jest zakładana od nowa.
   Nie czytamy dźwięku, więc bez `NSMicrophoneUsageDescription` i zgody TCC.
 - Aktywność „wyciszony” ma priorytet 52 (nad mediami i spotkaniem, pod pobieraniem i timerem); przełączenie pokazuje
   na 1,5 s komunikat z priorytetem `.alert`. Skrót domyślny ⌃⌥M (`StoredShortcut` odróżnia „bez skrótu” od domyślnego).

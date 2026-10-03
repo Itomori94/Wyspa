@@ -113,7 +113,8 @@ zaktualizuj też ten plik. Karty okna: **Ogólne · Wyspa · Moduły · Układ �
 - **Mikrofon** — „Wycisz / włącz mikrofon” (skrót) · „„…” nie pozwala się wyciszyć ani zmienić głośności wejścia.” ·
   „Wyciszane są wszystkie mikrofony naraz — także ten, który Zoom, Teams czy Discord wybrały inaczej niż system, i ten
   podłączony w trakcie wyciszenia. Gdy mikrofon nie ma przełącznika wyciszenia, Wyspa ustawia głośność wejścia na zero
-  i przywraca ją po włączeniu. Wyspa nie słucha dźwięku z mikrofonu.” · widżet: nazwa domyślnego wejścia + „… inne”
+  i przywraca ją po włączeniu. Wyspa nie słucha dźwięku z mikrofonu.” · lista mikrofonów (nazwa, „· systemowy”, ikona stanu) · „„…” nie pozwala się wyciszyć ani zmienić głośności wejścia.” ·
+  widżet: nazwa mikrofonu albo „Wszystkie mikrofony (…)”
 - **Aktualizacje** — „Zainstalowana wersja: … (z niezapisanymi zmianami)” · „Sprawdzanie…” / „Masz najnowszą wersję” /
   „Dostępna nowa wersja: … zmian” + lista (najwyżej 8, „… i … więcej”) / „Aktualizowanie… Wyspa za chwilę uruchomi się
   ponownie.” / błędy („Ta kopia Wyspy nie została zbudowana z repozytorium git — nie ma z czym porównać.”, „Brak połączenia
