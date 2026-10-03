@@ -8,6 +8,19 @@ import WyspaCore
 @Observable
 public final class UpdateService {
     public static let shared = UpdateService(source: BuildSource.from(infoDictionary: Bundle.main.infoDictionary ?? [:]))
+    static let pendingKey = "updates.pending"
+
+    /// Zapisane przed instalacją: z jakiej wersji i jakie zmiany — po ponownym uruchomieniu Wyspa potwierdza wynik.
+    struct PendingUpdate: Codable, Equatable {
+        let fromCommit: String
+        let titles: [String]
+    }
+
+    /// Wynik aktualizacji uruchomionej w poprzedniej kopii Wyspy.
+    public enum FinishedUpdate: Equatable {
+        case updated(to: String, titles: [String])
+        case unchanged
+    }
 
     public enum Status: Equatable {
         case idle
@@ -25,8 +38,21 @@ public final class UpdateService {
     @ObservationIgnored private let session = URLSession(configuration: .ephemeral)
     @ObservationIgnored private let log = Log.logger("updates")
 
-    init(source: BuildSource?) {
+    @ObservationIgnored private let defaults: UserDefaults
+
+    init(source: BuildSource?, defaults: UserDefaults = .standard) {
         self.source = source
+        self.defaults = defaults
+    }
+
+    /// Jednorazowo po starcie: czy poprzednia kopia Wyspy zaczęła aktualizację i czy ta wersja jest już nowa.
+    public func consumeFinishedUpdate() -> FinishedUpdate? {
+        guard let data = defaults.data(forKey: Self.pendingKey) else { return nil }
+        defaults.removeObject(forKey: Self.pendingKey)
+        guard let pending = try? JSONDecoder().decode(PendingUpdate.self, from: data), let source else { return nil }
+        guard source.commit != pending.fromCommit else { return .unchanged }
+        status = .upToDate
+        return .updated(to: source.shortCommit, titles: pending.titles)
     }
 
     public var isBusy: Bool { status == .checking || status == .updating }
@@ -62,6 +88,7 @@ public final class UpdateService {
     /// przebieg trafia do ~/Library/Logs/Wyspa/aktualizacja.log.
     public func update() {
         guard !isBusy, let source, !source.path.isEmpty else { return }
+        let titles: [String] = if case .available(let check) = status { check.changes.map(\.title) } else { [] }
         status = .updating
         let path = source.path
         Task.detached { [weak self] in
@@ -70,7 +97,7 @@ public final class UpdateService {
                 if let problem {
                     self?.status = .failed(problem)
                 } else {
-                    self?.launchInstall(path: path)
+                    self?.launchInstall(path: path, pending: PendingUpdate(fromCommit: source.commit, titles: titles))
                 }
             }
         }
@@ -111,7 +138,7 @@ public final class UpdateService {
         return (process.terminationStatus, String(decoding: data, as: UTF8.self).trimmingCharacters(in: .whitespacesAndNewlines))
     }
 
-    private func launchInstall(path: String) {
+    private func launchInstall(path: String, pending: PendingUpdate) {
         let logs = FileManager.default.urls(for: .libraryDirectory, in: .userDomainMask)[0].appendingPathComponent("Logs/Wyspa")
         try? FileManager.default.createDirectory(at: logs, withIntermediateDirectories: true)
         let logURL = logs.appendingPathComponent("aktualizacja.log")
@@ -123,11 +150,13 @@ public final class UpdateService {
             process.standardOutput = handle
             process.standardError = handle
         }
+        if let data = try? JSONEncoder().encode(pending) { defaults.set(data, forKey: Self.pendingKey) }
         do {
             // Skrypt instalacji zamknie tę kopię Wyspy; proces potomny działa dalej i uruchamia nową wersję.
             try process.run()
             log.notice("Aktualizacja uruchomiona")
         } catch {
+            defaults.removeObject(forKey: Self.pendingKey)
             status = .failed("Nie udało się uruchomić instalacji: \(error.localizedDescription)")
         }
     }

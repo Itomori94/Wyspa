@@ -36,6 +36,28 @@ enum UpdatePrompt {
         alert.runModal()
     }
 
+    /// Po ponownym uruchomieniu: potwierdzenie aktualizacji zaczętej w poprzedniej kopii Wyspy.
+    static func confirmFinishedUpdate(service: UpdateService = .shared) {
+        guard let finished = service.consumeFinishedUpdate() else { return }
+        NSApp.activate()
+        let alert = NSAlert()
+        switch finished {
+        case .updated(let version, let titles):
+            alert.messageText = "Wyspa została zaktualizowana"
+            var text = "Masz najnowszą wersję: \(version)."
+            if !titles.isEmpty {
+                text += "\n\nZmiany:\n" + titles.prefix(maxListedChanges).map { "• \($0)" }.joined(separator: "\n")
+                if titles.count > maxListedChanges { text += "\n… i \(titles.count - maxListedChanges) więcej" }
+            }
+            alert.informativeText = text
+        case .unchanged:
+            alert.alertStyle = .warning
+            alert.messageText = "Aktualizacja się nie udała"
+            alert.informativeText = "Wyspa uruchomiła się w poprzedniej wersji. Przebieg: ~/Library/Logs/Wyspa/aktualizacja.log."
+        }
+        alert.runModal()
+    }
+
     private static func changesText(_ check: UpdateCheck) -> String {
         let count = PolishPlural.format(check.changes.count, one: "zmiana", few: "zmiany", many: "zmian")
         var lines = check.changes.prefix(maxListedChanges).map { "• \($0.title)" }

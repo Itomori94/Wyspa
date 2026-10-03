@@ -146,3 +146,40 @@ struct UpdateGuardTests {
         #expect(UpdateService.prepare(path: dir.path)?.contains("git pull") == true)
     }
 }
+
+@Suite("Aktualizacje — potwierdzenie po ponownym uruchomieniu")
+@MainActor
+struct FinishedUpdateTests {
+    private let defaults = UserDefaults(suiteName: "wyspa.tests.updates.\(UUID().uuidString)")!
+    private let old = String(repeating: "a", count: 40)
+    private let new = String(repeating: "b", count: 40)
+
+    private func service(commit: String) -> UpdateService {
+        UpdateService(source: BuildSource(commit: commit, branch: "master", repository: nil, path: "", isDirty: false), defaults: defaults)
+    }
+
+    private func savePending(titles: [String] = ["feat: x"]) throws {
+        let pending = UpdateService.PendingUpdate(fromCommit: old, titles: titles)
+        defaults.set(try JSONEncoder().encode(pending), forKey: UpdateService.pendingKey)
+    }
+
+    @Test("bez rozpoczętej aktualizacji nic nie pokazuje")
+    func nothingPending() {
+        #expect(service(commit: new).consumeFinishedUpdate() == nil)
+    }
+
+    @Test("nowa wersja: potwierdzenie z listą zmian, tylko raz")
+    func updated() throws {
+        try savePending()
+        let service = service(commit: new)
+        #expect(service.consumeFinishedUpdate() == .updated(to: "bbbbbbb", titles: ["feat: x"]))
+        #expect(service.status == .upToDate)
+        #expect(service.consumeFinishedUpdate() == nil)
+    }
+
+    @Test("ta sama wersja po restarcie: aktualizacja się nie udała")
+    func unchanged() throws {
+        try savePending()
+        #expect(service(commit: old).consumeFinishedUpdate() == .unchanged)
+    }
+}

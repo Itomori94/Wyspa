@@ -55,6 +55,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
 
         Task { await registry.startEnabledModules() }
+        Task { UpdatePrompt.confirmFinishedUpdate() }
         observeAccessibilityChanges(registry)
     }
 
