@@ -110,6 +110,7 @@ struct CollapsedActivityView: View {
         HStack(spacing: 0) {
             activity.leading
                 .matchedGeometryEffect(id: ActivityGeometryID.leading(activity), in: namespace)
+                .modifier(SlideInFromLeading())
                 .frame(maxWidth: .infinity)
             Color.clear.frame(width: notchWidth)
             activity.trailing
@@ -126,4 +127,20 @@ struct CollapsedActivityView: View {
 enum ActivityGeometryID {
     static func leading(_ activity: LiveActivity) -> String { "activity.\(activity.id).leading" }
     static func trailing(_ activity: LiveActivity) -> String { "activity.\(activity.id).trailing" }
+}
+
+/// Nowa aktywność: zawartość lewego skrzydła wjeżdża z lewej do swojego miejsca przy notchu (przycina ją kształt wyspy).
+struct SlideInFromLeading: ViewModifier {
+    static let distance: CGFloat = 28
+    @State private var hasAppeared = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    func body(content: Content) -> some View {
+        content
+            .offset(x: hasAppeared || reduceMotion ? 0 : -Self.distance)
+            .opacity(hasAppeared || reduceMotion ? 1 : 0)
+            .onAppear {
+                withAnimation(.spring(response: 0.42, dampingFraction: 0.78)) { hasAppeared = true }
+            }
+    }
 }

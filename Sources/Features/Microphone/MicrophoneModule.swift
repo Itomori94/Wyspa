@@ -19,6 +19,7 @@ public final class MicrophoneModule: IslandModule {
 
     public static let defaultShortcut = HotkeyShortcut(keyCode: UInt32(kVK_ANSI_M), modifiers: [.control, .option], keyName: "M")
     /// Ważniejsze niż odtwarzanie i najbliższe spotkanie (wyciszenie liczy się w trakcie rozmowy), mniej ważne niż timer.
+    static let wingWidth: CGFloat = 80
     static let mutedPriority = ActivityPriority(52)
     static let toggleFeedback: Duration = .milliseconds(1500)
     private static let shortcutKey = "shortcut"
@@ -56,26 +57,22 @@ public final class MicrophoneModule: IslandModule {
         reading = nil
     }
 
+    /// Jedna aktywność o stałej szerokości dla komunikatu po przełączeniu i dla stałego wyciszenia — ikona zostaje
+    /// w tym samym miejscu, a zmienia się tylko jej stan (kreska rysuje się albo zmazuje).
     public var liveActivity: LiveActivity? {
-        if let feedback {
-            let muted = reading?.isMuted ?? false
-            return LiveActivity(id: "microphone.feedback", priority: .alert, accent: muted ? .red : .green, wingWidth: 80) {
-                // Ikona pojawia się w poprzednim stanie i przechodzi w bieżący: kreska rysuje się albo zmazuje.
-                EnteringSymbolSwap(from: muted ? "mic.fill" : "mic.slash.fill", to: muted ? "mic.slash.fill" : "mic.fill")
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(muted ? .red : .green)
-            } trailing: {
-                Text(feedback).font(.system(size: 11, weight: .semibold)).lineLimit(1).minimumScaleFactor(0.7)
-                    .foregroundStyle(.white.opacity(0.85))
-            }
-        }
-        guard reading?.isMuted == true else { return nil }
-        return LiveActivity(id: "microphone.muted", priority: Self.mutedPriority, accent: .red) {
-            Image(systemName: "mic.slash.fill")
+        let muted = reading?.isMuted ?? false
+        guard feedback != nil || muted else { return nil }
+        let priority = feedback != nil ? ActivityPriority.alert : Self.mutedPriority
+        return LiveActivity(id: "microphone", priority: priority, accent: muted ? .red : .green, wingWidth: Self.wingWidth) {
+            ToggleSymbol(on: "mic.slash.fill", off: "mic.fill", isOn: muted)
                 .font(.system(size: 13, weight: .semibold))
-                .foregroundStyle(.red)
+                .foregroundStyle(muted ? .red : .green)
         } trailing: {
-            Circle().fill(.red).frame(width: 7, height: 7)
+            Text(feedback ?? "Wyciszony")
+                .font(.system(size: 11, weight: .semibold)).lineLimit(1).minimumScaleFactor(0.7)
+                .foregroundStyle(muted ? .red : .white.opacity(0.85))
+                .contentTransition(.opacity)
+                .animation(.snappy, value: feedback)
         }
     }
 

@@ -29,3 +29,19 @@ struct MicrophoneTests {
         #expect(MicrophoneModule.defaultShortcut.displayString == "⌃⌥M")
     }
 }
+
+@Suite("Aktywność mikrofonu w wyspie")
+@MainActor
+struct MicrophoneActivityTests {
+    @Test("Jedna aktywność o stałym id i szerokości — ikona nie przeskakuje między stanami")
+    func stableActivity() throws {
+        let defaults = try #require(UserDefaults(suiteName: "wyspa.mic.activity.\(UUID().uuidString)"))
+        let module = MicrophoneModule(context: ModuleContext(settings: SettingsStore(defaults: defaults).moduleSettings(for: "microphone"),
+                                                             requestExpand: {}))
+        module.showDemo(muted: false)
+        #expect(module.liveActivity == nil, "włączony mikrofon bez komunikatu nic nie pokazuje")
+        module.showDemo(muted: true)
+        let muted = try #require(module.liveActivity)
+        #expect(muted.id == "microphone" && muted.wingWidth == MicrophoneModule.wingWidth)
+    }
+}

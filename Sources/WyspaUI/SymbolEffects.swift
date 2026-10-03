@@ -91,25 +91,26 @@ private struct BusyEffectModifier: ViewModifier {
     }
 }
 
-/// Symbol, który pojawia się w poprzednim stanie i po chwili przechodzi w bieżący — żeby zmiana była widoczna,
-/// gdy widok powstaje dopiero po niej (np. przekreślenie mikrofonu w nowej aktywności wyspy).
-public struct EnteringSymbolSwap: View {
-    let from: String
-    let to: String
-    @State private var current: String
+/// Symbol z dwoma stanami (np. mikrofon / przekreślony mikrofon), który zawsze animuje zmianę: przy pojawieniu się
+/// startuje z przeciwnego stanu, a każda późniejsza zmiana `isOn` przechodzi płynnie w tym samym miejscu.
+public struct ToggleSymbol: View {
+    let on: String
+    let off: String
+    let isOn: Bool
+    @State private var shown: Bool?
 
-    public init(from: String, to: String) {
-        self.from = from
-        self.to = to
-        _current = State(initialValue: from)
+    public init(on: String, off: String, isOn: Bool) {
+        self.on = on
+        self.off = off
+        self.isOn = isOn
     }
 
     public var body: some View {
-        Image(systemName: current)
+        Image(systemName: (shown ?? !isOn) ? on : off)
             .symbolSwapTransition()
-            .task {
-                try? await Task.sleep(for: .milliseconds(120))
-                withAnimation { current = to }
+            .task(id: isOn) {
+                if shown == nil { try? await Task.sleep(for: .milliseconds(120)) }
+                withAnimation(.snappy) { shown = isOn }
             }
     }
 }
