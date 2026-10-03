@@ -146,21 +146,36 @@ enum ActivityGeometryID {
     static func trailing(_ activity: LiveActivity) -> String { "activity.\(activity.id).trailing" }
 }
 
+/// Zrzut statyczny (zrzuty ekranu do README): bez animacji wejścia. Widok renderowany poza oknem nie odtwarza
+/// animacji, więc wjeżdżające skrzydło zostałoby na zrzucie niewidoczne.
+public struct IslandStaticSnapshotKey: EnvironmentKey {
+    public static let defaultValue = false
+}
+
+public extension EnvironmentValues {
+    var islandStaticSnapshot: Bool {
+        get { self[IslandStaticSnapshotKey.self] }
+        set { self[IslandStaticSnapshotKey.self] = newValue }
+    }
+}
+
 /// Nowa aktywność: zawartość lewego skrzydła wjeżdża z lewej do swojego miejsca przy notchu (przycina ją kształt wyspy).
 public struct SlideInFromLeading: ViewModifier {
     static let distance: CGFloat = 28
     /// Wyłączony wjazd = treść od razu na miejscu (ta sama aktywność pokazana ponownie, np. po zwinięciu wyspy).
     @State private var hasAppeared: Bool
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.islandStaticSnapshot) private var isStaticSnapshot
 
     public init(isEnabled: Bool = true) {
         _hasAppeared = State(initialValue: !isEnabled)
     }
 
     public func body(content: Content) -> some View {
+        let isInPlace = hasAppeared || reduceMotion || isStaticSnapshot
         content
-            .offset(x: hasAppeared || reduceMotion ? 0 : -Self.distance)
-            .opacity(hasAppeared || reduceMotion ? 1 : 0)
+            .offset(x: isInPlace ? 0 : -Self.distance)
+            .opacity(isInPlace ? 1 : 0)
             .onAppear {
                 guard !hasAppeared else { return }
                 withAnimation(.spring(response: 0.42, dampingFraction: 0.78)) { hasAppeared = true }

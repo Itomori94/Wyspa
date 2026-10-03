@@ -17,3 +17,11 @@ jobs:
         run: scripts/test.sh
       - name: Build pakietu (scripts/build-app.sh --native --debug)
         run: scripts/build-app.sh --native --debug
+      - name: Zrzuty ekranu z danymi demonstracyjnymi (scripts/screenshots.sh)
+        run: scripts/screenshots.sh
+      - name: Zrzuty jako artefakt (do podglądu i podmiany w docs/screenshots)
+        uses: actions/upload-artifact@v4
+        with:
+          name: zrzuty
+          path: docs/screenshots/*.png
+          retention-days: 7

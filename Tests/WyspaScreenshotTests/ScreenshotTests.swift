@@ -388,6 +388,8 @@ struct ScreenshotTests {
             IslandView(model: model).frame(width: panel.width, height: panel.height)
         }
         .frame(width: canvas.width, height: canvas.height)
+        // Poza oknem animacje nie biegną: bez tego lewe skrzydło (okładka, pierścień, ikona) zostaje niewidoczne.
+        .environment(\.islandStaticSnapshot, true)
         let host = NSHostingView(rootView: view)
         host.frame = CGRect(origin: .zero, size: canvas)
         host.layoutSubtreeIfNeeded()
