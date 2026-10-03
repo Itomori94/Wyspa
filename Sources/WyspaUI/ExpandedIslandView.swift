@@ -204,7 +204,8 @@ public struct WidgetRow: View {
                                 .frame(width: gap)
                         }
                     }
-                    widgetView(widget.content, width: unit * CGFloat(widget.width.units))
+                    widgetView(widget.content, width: unit * CGFloat(widget.width.units),
+                               isFirst: index == 0, isLast: index == widgets.count - 1)
                 }
                 Spacer(minLength: 0)
             }
@@ -212,7 +213,7 @@ public struct WidgetRow: View {
     }
 
     @ViewBuilder
-    private func widgetView(_ content: AnyView, width: CGFloat) -> some View {
+    private func widgetView(_ content: AnyView, width: CGFloat, isFirst: Bool, isLast: Bool) -> some View {
         if theme == .blackSheet {
             content
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
@@ -223,8 +224,34 @@ public struct WidgetRow: View {
             content
                 .frame(width: width, alignment: .topLeading)
                 .frame(maxHeight: .infinity, alignment: .top)
-                .clipped()
+                // Przycięcie z zapasem tam, gdzie obok nie ma innego widżetu (góra, dół, brzegi wyspy): poświata
+                // okładki i cienie wygasają płynnie zamiast kończyć się prostą linią. Między widżetami — bez zapasu.
+                .clipShape(OutsetRectangle(top: Self.glowRoom, leading: isFirst ? Self.glowRoom : 0,
+                                           bottom: Self.glowRoom, trailing: isLast ? Self.glowRoom : 0))
         }
+    }
+
+    /// Ile poświaty może wyjść poza widżet (cień okładki: promień 14 + przesunięcie 4).
+    static let glowRoom: CGFloat = 20
+}
+
+/// Prostokąt powiększony o zapas z każdej strony — do przycinania z miejscem na cienie.
+public struct OutsetRectangle: Shape {
+    let top: CGFloat
+    let leading: CGFloat
+    let bottom: CGFloat
+    let trailing: CGFloat
+
+    public init(top: CGFloat = 0, leading: CGFloat = 0, bottom: CGFloat = 0, trailing: CGFloat = 0) {
+        self.top = top
+        self.leading = leading
+        self.bottom = bottom
+        self.trailing = trailing
+    }
+
+    public func path(in rect: CGRect) -> Path {
+        Path(CGRect(x: rect.minX - leading, y: rect.minY - top,
+                    width: rect.width + leading + trailing, height: rect.height + top + bottom))
     }
 }
 

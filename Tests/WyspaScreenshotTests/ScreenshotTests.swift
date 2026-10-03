@@ -446,6 +446,9 @@ struct ScreenshotTests {
         try await render("motyw-czarna-tafla", phase: .expanded, tab: "widgets", theme: .blackSheet)
         try await render("motyw-czarna-tafla-karta", phase: .collapsed, activity: ("alerts", Stage.notificationActivity), theme: .blackSheet)
         // Szkła nie da się tu sfotografować: rozmycie okna działa tylko na prawdziwym ekranie.
+        // TYMCZASOWE (diagnostyka poświaty okładki w szkle) — do usunięcia po sprawdzeniu.
+        try await render("diag-szklo-odtwarzacz", phase: .expanded, tab: "media", theme: .glass)
+        try await render("diag-szklo-widzety", phase: .expanded, tab: "widgets", theme: .glass)
     }
 }
 
