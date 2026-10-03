@@ -10,6 +10,8 @@ public final class IslandViewModel {
     public var expandedSize: CGSize
     public var selectedTab: Int
     public var theme: IslandTheme = .classic
+    /// Skrzydła schowane, bo kursor sięga do ikon paska menu pod nimi.
+    public var wingsYielded = false
     public var glassTint: Double = IslandTheme.defaultGlassTint
     /// Strefa upuszczania pod kursorem podczas przeciągania.
     public var dropTarget: String?
@@ -41,7 +43,7 @@ public final class IslandViewModel {
     public var activity: LiveActivity? { registry.currentActivity }
 
     public var islandSize: CGSize {
-        IslandLayout.size(for: phase, notch: notch.size, activityWingWidth: activity?.wingWidth,
+        IslandLayout.size(for: phase, notch: notch.size, activityWingWidth: wingsYielded ? nil : activity?.wingWidth,
                           activityDetailHeight: activity?.detail == nil ? nil : activity?.detailHeight, expanded: expandedSize)
     }
 }

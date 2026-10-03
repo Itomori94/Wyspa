@@ -45,6 +45,11 @@ binarka ma `minos 14.0` dla obu architektur (sprawdź: `vtool -arch x86_64 -show
   kliknięcia (okno `isOpaque = false`). `IslandContainerView` śledzi kursor `NSTrackingArea` tylko nad wyspą
   i zwraca nil z `hitTest` poza nią. Brak globalnych monitorów myszy.
   Ukryta wyspa (wirtualny notch bez aktywności) ma alfę 0.01, żeby okno wciąż dostawało najechanie.
+- **Skrzydła ustępują ikonom paska menu** (`settings.wingsYield`, domyślnie wł.): `mouseEntered` nad skrzydłem
+  zwiniętej wyspy bez karty (`WingYield.isOverWing`, poza notchem w poziomie) nie wysyła `pointerEntered`, tylko
+  ustawia `model.wingsYielded` — wyspa ma rozmiar notcha, obszar klikalny też, ikony pod spodem działają. Powrót:
+  globalny monitor `.mouseMoved` tylko na ten czas (`WingYield.shouldReturn` poza zasięgiem skrzydeł + 6 pt), zmiana
+  fazy, inna aktywność albo karta.
 - **Kliknięcia i przeciąganie**: `IslandContainerView.hitTest` zwraca nil poza wyspą, a w jej obrębie przekazuje
   wszystko do `IslandHostingView` (SwiftUI, `acceptsFirstMouse = true`). Kliknięcie zwiniętej wyspy to `onTapGesture`
   na kształcie wyspy.

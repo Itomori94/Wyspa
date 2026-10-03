@@ -54,6 +54,8 @@ Przy pierwszym podpisie macOS może zapytać, czy `codesign` może użyć klucza
 ## Obsługa
 
 - **Najechanie** na notch: wyspa lekko się powiększa, po chwili rozwija (opóźnienie w ustawieniach).
+- **Najechanie na skrzydło** (obok notcha, np. okładkę albo przekreślony mikrofon): skrzydła chowają się do notcha
+  i odsłaniają ikony paska menu pod spodem; wracają, gdy kursor zjedzie z paska (do wyłączenia w ustawieniach).
 - **Kliknięcie** albo **przesunięcie dwoma palcami w dół**: rozwija od razu. Kliknięcie aktywności (okładki, timera,
   Claude) otwiera stronę jej modułu — także w nagłówku rozwiniętej wyspy. Gdy moduł nie ma strony w układzie,
   jego widok pokazuje się doraźnie (np. prośba Claude o zgodę zawsze ma gdzie się wyświetlić). Gdy pod notchem wisi karta (powiadomienie, odpowiedź Claude), kliknięcie trafia do karty.

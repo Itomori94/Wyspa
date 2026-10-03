@@ -86,7 +86,7 @@ public struct IslandView: View {
         case .hidden:
             EmptyView()
         case .collapsed, .peek:
-            if let activity = model.activity {
+            if let activity = model.activity, !model.wingsYielded {
                 VStack(spacing: 0) {
                     CollapsedActivityView(activity: activity, notchWidth: model.notch.size.width, namespace: namespace,
                                           slidesIn: activity.id != shownActivityID)

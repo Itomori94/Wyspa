@@ -80,6 +80,10 @@ private struct IslandSettingsView: View {
         Form {
             Section("Rozwijanie") {
                 Toggle("Rozwijaj po najechaniu kursorem", isOn: $settings.expandOnHover)
+                Toggle("Skrzydła ustępują ikonom paska menu", isOn: $settings.wingsYield)
+                Text("Najechanie na skrzydło wyspy (obok notcha) chowa je, żeby odsłonić ikony paska menu pod spodem; "
+                     + "wracają, gdy kursor zjedzie z paska. Najechanie na sam notch dalej rozwija wyspę.")
+                    .font(.caption).foregroundStyle(.secondary)
                 DelaySlider(
                     title: "Opóźnienie rozwinięcia",
                     value: $settings.hoverDelay,

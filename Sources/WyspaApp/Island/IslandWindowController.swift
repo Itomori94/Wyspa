@@ -19,6 +19,9 @@ final class IslandWindowController {
     private var timers: [IslandTimer: Task<Void, Never>] = [:]
     private var swipeRecognizer = SwipeRecognizer()
     private var scrollMonitor: Any?
+    private var yieldMonitor: Any?
+    /// Aktywność, której skrzydła są schowane; inna aktywność albo karta przywraca skrzydła od razu.
+    private var yieldedActivityID: String?
     private var keyMonitor: Any?
     private var keyObservers: [NSObjectProtocol] = []
     /// Aplikacja, która miała klawiaturę, zanim wyspa ją przejęła (do oddania po zakończeniu pisania).
@@ -52,6 +55,7 @@ final class IslandWindowController {
 
         panel.contentView = container
         container.onPointerEntered = { [weak self] in self?.send(.pointerEntered) }
+        container.onPointerEnteredWing = { [weak self] point in self?.yieldWingsIfOver(point) ?? false }
         container.onPointerExited = { [weak self] in self?.send(.pointerExited) }
 
         layout()
@@ -94,6 +98,7 @@ final class IslandWindowController {
         scrollMonitor = nil
         if let keyMonitor { NSEvent.removeMonitor(keyMonitor) }
         keyMonitor = nil
+        stopYieldMonitor()
         keyObservers.forEach(NotificationCenter.default.removeObserver)
         keyObservers = []
         panel.orderOut(nil)
@@ -114,6 +119,7 @@ final class IslandWindowController {
             if next.phase == .expanded { registry.privacy.refresh() }
             if previous.phase == .expanded, panel.isKeyWindow { returnKeyboard() }
         }
+        if next.phase != .collapsed, model.wingsYielded { restoreWings() }
         if next.selectedTab != model.selectedTab {
             model.selectedTab = next.selectedTab
         }
@@ -287,6 +293,7 @@ final class IslandWindowController {
         let tabCount = registry.pages.count
         if hasActivity != state.hasActivity { send(.activityChanged(hasActivity: hasActivity)) }
         let hasCard = registry.currentActivity?.detail != nil
+        if model.wingsYielded, hasCard || registry.currentActivity?.id != yieldedActivityID { restoreWings() }
         if hasCard != state.hasCard { send(.cardChanged(hasCard)) }
         if tabCount != state.tabCount { send(.tabCountChanged(tabCount)) }
         updateInteractiveRect()
@@ -306,7 +313,7 @@ final class IslandWindowController {
         let size = IslandLayout.size(
             for: state.phase,
             notch: screen.notch.size,
-            activityWingWidth: registry.currentActivity?.wingWidth,
+            activityWingWidth: model.wingsYielded ? nil : registry.currentActivity?.wingWidth,
             activityDetailHeight: registry.currentActivity.flatMap { $0.detail == nil ? nil : $0.detailHeight },
             expanded: settings.islandSize.expandedSize
         )
@@ -317,6 +324,41 @@ final class IslandWindowController {
             width: size.width,
             height: size.height
         )
+    }
+
+    // MARK: - Skrzydła ustępują ikonom paska menu
+
+    /// Kursor nad skrzydłem zwiniętej wyspy (bez karty): skrzydła chowają się do notcha, ikony pod nimi są klikalne.
+    private func yieldWingsIfOver(_ point: CGPoint) -> Bool {
+        guard settings.wingsYield, state.phase == .collapsed, let activity = registry.currentActivity, activity.detail == nil
+        else { return false }
+        let bounds = container.bounds
+        let notch = CGRect(x: bounds.midX - screen.notch.size.width / 2, y: bounds.maxY - screen.notch.size.height,
+                           width: screen.notch.size.width, height: screen.notch.size.height)
+        guard WingYield.isOverWing(point, island: container.interactiveRect, notch: notch) else { return false }
+        let span = panel.convertToScreen(container.convert(container.interactiveRect, to: nil))
+        yieldedActivityID = activity.id
+        withAnimation(IslandMotion.animation(to: .collapsed)) { model.wingsYielded = true }
+        updateInteractiveRect()
+        // Monitor globalny tylko na czas schowania skrzydeł (bez ciągłego śledzenia kursora).
+        yieldMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.mouseMoved, .leftMouseDragged]) { [weak self] _ in
+            MainActor.assumeIsolated {
+                if WingYield.shouldReturn(NSEvent.mouseLocation, wingSpan: span) { self?.restoreWings() }
+            }
+        }
+        return true
+    }
+
+    private func restoreWings() {
+        stopYieldMonitor()
+        guard model.wingsYielded else { return }
+        withAnimation(IslandMotion.animation(to: .collapsed)) { model.wingsYielded = false }
+        updateInteractiveRect()
+    }
+
+    private func stopYieldMonitor() {
+        if let yieldMonitor { NSEvent.removeMonitor(yieldMonitor) }
+        yieldMonitor = nil
     }
 
     // MARK: - Gesty

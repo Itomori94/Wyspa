@@ -22,7 +22,9 @@ zaktualizuj też ten plik. Karty okna: **Ogólne · Wyspa · Moduły · Układ �
   - Wirtualny notch: Zawsze widoczny / Tylko gdy coś się dzieje
   - „Na monitorach bez notcha wyspa rysuje wirtualny notch pod paskiem menu.”
 - **Rozwijanie**
-  - Rozwijaj po najechaniu kursorem · Opóźnienie rozwinięcia · Opóźnienie zwinięcia
+  - Rozwijaj po najechaniu kursorem · Skrzydła ustępują ikonom paska menu („Najechanie na skrzydło wyspy (obok notcha)
+    chowa je, żeby odsłonić ikony paska menu pod spodem; wracają, gdy kursor zjedzie z paska. Najechanie na sam notch
+    dalej rozwija wyspę.”) · Opóźnienie rozwinięcia · Opóźnienie zwinięcia
   - „Kliknięcie albo przesunięcie dwoma palcami w dół zawsze rozwija wyspę, w górę ją zwija.”
 - **Wygląd** (karta Wyspa)
   - Rozmiar rozwiniętej wyspy: Mała / Średnia / Duża

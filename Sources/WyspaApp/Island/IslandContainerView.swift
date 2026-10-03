@@ -7,6 +7,8 @@ import SwiftUI
 /// Poza wyspą `hitTest` zwraca nil, a przezroczyste piksele okna przepuszczają kliknięcia do aplikacji pod spodem.
 final class IslandContainerView: NSView {
     var onPointerEntered: () -> Void = {}
+    /// Kursor wszedł nad skrzydło (obok notcha); true = kontroler obsłużył to inaczej (skrzydła ustępują).
+    var onPointerEnteredWing: (CGPoint) -> Bool = { _ in false }
     var onPointerExited: () -> Void = {}
 
     /// Obszar wyspy we współrzędnych widoku (y w górę).
@@ -50,7 +52,10 @@ final class IslandContainerView: NSView {
         trackingArea = area
     }
 
-    override func mouseEntered(with event: NSEvent) { setPointerInside(true) }
+    override func mouseEntered(with event: NSEvent) {
+        if onPointerEnteredWing(convert(event.locationInWindow, from: nil)) { return }
+        setPointerInside(true)
+    }
     override func mouseExited(with event: NSEvent) { setPointerInside(false) }
 
     override func hitTest(_ point: NSPoint) -> NSView? {

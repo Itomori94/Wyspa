@@ -191,3 +191,26 @@ struct SettingsOptionNamesTests {
         #expect(ScreenSelection.main.select(from: []).isEmpty)
     }
 }
+
+@Suite("Skrzydła ustępują ikonom paska menu")
+struct WingYieldTests {
+    // Wyspa 400×32 z notchem 200 pt pośrodku (współrzędne y w górę, jak w AppKit).
+    private let island = CGRect(x: 0, y: 0, width: 400, height: 32)
+    private let notch = CGRect(x: 100, y: 0, width: 200, height: 32)
+
+    @Test("nad skrzydłem — tak, nad notchem i poza wyspą — nie")
+    func overWing() {
+        #expect(WingYield.isOverWing(CGPoint(x: 30, y: 16), island: island, notch: notch))
+        #expect(WingYield.isOverWing(CGPoint(x: 370, y: 16), island: island, notch: notch))
+        #expect(!WingYield.isOverWing(CGPoint(x: 200, y: 16), island: island, notch: notch), "notch dalej rozwija wyspę")
+        #expect(!WingYield.isOverWing(CGPoint(x: 30, y: 60), island: island, notch: notch))
+    }
+
+    @Test("skrzydła wracają po zjechaniu z paska menu albo odsunięciu w bok, nie przy drobnym ruchu")
+    func returns() {
+        #expect(!WingYield.shouldReturn(CGPoint(x: 30, y: 16), wingSpan: island))
+        #expect(!WingYield.shouldReturn(CGPoint(x: -3, y: 16), wingSpan: island), "zapas przy krawędzi")
+        #expect(WingYield.shouldReturn(CGPoint(x: 30, y: -40), wingSpan: island))
+        #expect(WingYield.shouldReturn(CGPoint(x: 500, y: 16), wingSpan: island))
+    }
+}
