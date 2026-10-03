@@ -251,7 +251,8 @@ Wyspa porównuje wersję, z której została zbudowana, z najnowszą na GitHubie
 6 godzin. Gdy jest coś nowego, w wyspie na chwilę pojawia się karta z liczbą zmian, a w ustawieniach modułu lista
 zmian i przycisk **Zaktualizuj teraz**: pobiera zmiany do katalogu projektu (`git pull --ff-only`), buduje
 i instaluje nową wersję (Wyspa zamknie się i uruchomi ponownie). Odmawia, gdy w katalogu są niezapisane zmiany
-albo aktywna jest inna gałąź niż `master`. Do GitHuba trafia tylko zapytanie o porównanie commitów, bez konta.
+albo aktywna jest inna gałąź niż `master`. Po ponownym uruchomieniu Wyspa potwierdza aktualizację okienkiem z nową
+wersją i listą zmian. Do GitHuba trafia tylko zapytanie o porównanie commitów, bez konta.
 
 ### Skrypty (komenda `wyspa`)
 

@@ -237,6 +237,9 @@ tylko dla nowej aktywności — `IslandView.shownActivityID` pomija ponowne poka
   działa tylko gdy moduł jest włączony. Status `ahead`/`diverged` = są zmiany (`UpdateCheck.parse`).
 - Logika w `UpdateService.shared` (status wspólny); moduł dodaje harmonogram i kartę, a menu Wyspy ma „Sprawdź
   aktualizacje…” (`WyspaApp/UpdatePrompt`, okienko `NSAlert` z listą zmian) — działa też przy wyłączonym module.
+- Przed instalacją `UpdateService` zapisuje `updates.pending` (wersja źródłowa + tytuły zmian); nowa kopia po starcie
+  (`UpdatePrompt.confirmFinishedUpdate`) pokazuje „Wyspa została zaktualizowana” albo — gdy commit się nie zmienił —
+  „Aktualizacja się nie udała” z odnośnikiem do logu. Wpis jest kasowany przy odczycie (jednorazowo).
 - Karta w wyspie (8 s) raz na nowy commit (`announcedCommit` w ustawieniach modułu); lista zmian w ustawieniach.
 - „Zaktualizuj teraz”: `UpdateService.prepare` (katalog z `scripts/install.sh`, gałąź `master`, czyste
   `git status --porcelain`, `git pull --ff-only`), potem `scripts/install.sh` jako proces potomny z wyjściem

@@ -10,6 +10,8 @@ zaktualizuj też ten plik. Karty okna: **Ogólne · Wyspa · Moduły · Układ �
   pobierze zmiany, zbuduje i zainstaluje Wyspę — aplikacja zamknie się i uruchomi ponownie.”; „Zaktualizuj teraz” /
   „Później”) · „Masz najnowszą wersję Wyspy” („Zainstalowana wersja: …”) · „Nie udało się sprawdzić aktualizacji” ·
   „Aktualizacja się nie udała” (teksty błędów jak w module Aktualizacje)
+- Po ponownym uruchomieniu po aktualizacji: „Wyspa została zaktualizowana” („Masz najnowszą wersję: ….” + „Zmiany:” i lista)
+  albo „Aktualizacja się nie udała” („Wyspa uruchomiła się w poprzedniej wersji. Przebieg: ~/Library/Logs/Wyspa/aktualizacja.log.”)
 
 ## Ogólne i Wyspa
 
