@@ -5,7 +5,7 @@ import Testing
 @Suite("Łączenie adaptera z Muzyką (AirPlay)")
 struct NowPlayingMergeTests {
     let safariPaused = NowPlaying(bundleIdentifier: "com.apple.WebKit.GPU", title: "Film", isPlaying: false)
-    let safariPlaying = NowPlaying(bundleIdentifier: "com.apple.WebKit.GPU", title: "Film", isPlaying: true)
+    let safariPlaying = NowPlaying(bundleIdentifier: "com.apple.WebKit.GPU", title: "Film", duration: 600, isPlaying: true)
     let musicAirPlay = NowPlaying(bundleIdentifier: "com.apple.Music", title: "Savages", isPlaying: true)
     let musicPaused = NowPlaying(bundleIdentifier: "com.apple.Music", title: "Savages", isPlaying: false)
 
@@ -22,6 +22,25 @@ struct NowPlayingMergeTests {
         #expect(NowPlayingMerge.pick(adapter: safariPlaying, music: musicAirPlay, scope: .system)?.1 == .adapter)
         #expect(NowPlayingMerge.pick(adapter: safariPlaying, music: musicAirPlay, scope: .appleMusic)?.1 == .music)
         #expect(NowPlayingMerge.pick(adapter: safariPlaying, music: nil, scope: .appleMusic) == nil)
+    }
+
+    @Test("Dźwięk powiadomienia (Facebook) nie wypiera grającej Muzyki; film z długością — tak")
+    func notificationSound() {
+        let now = Date(timeIntervalSince1970: 1000)
+        let ding = NowPlaying(bundleIdentifier: "com.facebook.Messenger", title: "", isPlaying: true)
+        let shortSound = NowPlaying(bundleIdentifier: "com.google.Chrome", title: "Facebook", duration: 2,
+                                    elapsedTime: 0, timestamp: now, isPlaying: true)
+        let finished = NowPlaying(bundleIdentifier: "com.google.Chrome", title: "Facebook", duration: 60,
+                                  elapsedTime: 0, timestamp: now.addingTimeInterval(-120), isPlaying: true)
+        let video = NowPlaying(bundleIdentifier: "com.google.Chrome", title: "Film", duration: 600,
+                               elapsedTime: 30, timestamp: now, isPlaying: true)
+        for sound in [ding, shortSound, finished] {
+            #expect(NowPlayingMerge.pick(adapter: sound, music: musicAirPlay, scope: .system, now: now)?.1 == .music)
+        }
+        #expect(NowPlayingMerge.pick(adapter: video, music: musicAirPlay, scope: .system, now: now)?.1 == .adapter)
+        // Bez grającej Muzyki pokazujemy to, co zgłasza system (nawet krótki dźwięk).
+        #expect(NowPlayingMerge.pick(adapter: ding, music: musicPaused, scope: .system, now: now)?.1 == .adapter)
+        #expect(NowPlayingMerge.looksLikeMedia(video, at: now) && !NowPlayingMerge.looksLikeMedia(ding, at: now))
     }
 
     @Test("Nic nie gra: wstrzymane z adaptera przed wstrzymaną Muzyką")

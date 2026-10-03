@@ -259,7 +259,7 @@ widżetu robi to samo. Wyciszony mikrofon to czerwona ikona w zwiniętej wyspie 
 mniej ważna niż timer i prośby Claude). Każdy mikrofon dostaje wyciszenie i głośność wejścia ustawioną na zero
 (programy do rozmów potrafią pominąć samo wyciszenie) — po włączeniu wraca poprzednia głośność. Mikrofon iPhone'a
 przez Continuity nie daje się wyciszyć; ustawienia modułu pokazują stan każdego mikrofonu. Bez zgody na mikrofon: Wyspa nie słucha dźwięku, zmienia tylko
-ustawienie urządzenia (publiczne CoreAudio, zmiany z Ustawień systemowych widać od razu, bez odpytywania).
+ustawienie urządzenia (publiczne CoreAudio, zmiany z Ustawień systemowych widać od razu, bez odpytywania). Przełączeniu towarzyszy krótki dźwięk (niższy przy wyciszeniu, wyższy przy włączeniu) — do wyłączenia w ustawieniach modułu.
 
 ### Aktualizacje
 

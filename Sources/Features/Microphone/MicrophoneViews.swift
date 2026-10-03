@@ -49,6 +49,7 @@ struct MicrophoneSettingsView: View {
             if let problem = module.shortcutProblem {
                 Text(problem).font(.caption).foregroundStyle(.orange)
             }
+            Toggle("Dźwięk przy wyciszeniu i włączeniu", isOn: Binding(get: { module.playsSound }, set: { module.playsSound = $0 }))
             if let reading = module.reading {
                 ForEach(reading.inputs, id: \.uid) { input in
                     Label {

@@ -390,12 +390,19 @@ struct ScreenshotTests {
         .frame(width: canvas.width, height: canvas.height)
         // Poza oknem animacje nie biegną: bez tego lewe skrzydło (okładka, pierścień, ikona) zostaje niewidoczne.
         .environment(\.islandStaticSnapshot, true)
+        // Polskie daty i godziny niezależnie od języka maszyny (runner CI ma angielski).
+        .environment(\.locale, Locale(identifier: "pl_PL"))
         let host = NSHostingView(rootView: view)
         host.frame = CGRect(origin: .zero, size: canvas)
         host.layoutSubtreeIfNeeded()
         try await Task.sleep(for: .milliseconds(400))
         host.layoutSubtreeIfNeeded()
-        let rep = try #require(host.bitmapImageRepForCachingDisplay(in: host.bounds))
+        // Zawsze 2× (Retina) — runner CI bez ekranu Retina dałby obrazki w połowie rozdzielczości.
+        let rep = try #require(NSBitmapImageRep(bitmapDataPlanes: nil, pixelsWide: Int(canvas.width * 2),
+                                                pixelsHigh: Int(canvas.height * 2), bitsPerSample: 8, samplesPerPixel: 4,
+                                                hasAlpha: true, isPlanar: false, colorSpaceName: .deviceRGB,
+                                                bytesPerRow: 0, bitsPerPixel: 0))
+        rep.size = canvas
         host.cacheDisplay(in: host.bounds, to: rep)
         let png = try #require(rep.representation(using: .png, properties: [:]))
         // Kadrowanie: tylko wysokość wyspy (z cieniem), żeby obrazki w README nie miały pustego tła.
@@ -446,9 +453,6 @@ struct ScreenshotTests {
         try await render("motyw-czarna-tafla", phase: .expanded, tab: "widgets", theme: .blackSheet)
         try await render("motyw-czarna-tafla-karta", phase: .collapsed, activity: ("alerts", Stage.notificationActivity), theme: .blackSheet)
         // Szkła nie da się tu sfotografować: rozmycie okna działa tylko na prawdziwym ekranie.
-        // TYMCZASOWE (diagnostyka poświaty okładki w szkle) — do usunięcia po sprawdzeniu.
-        try await render("diag-szklo-odtwarzacz", phase: .expanded, tab: "media", theme: .glass)
-        try await render("diag-szklo-widzety", phase: .expanded, tab: "widgets", theme: .glass)
     }
 }
 

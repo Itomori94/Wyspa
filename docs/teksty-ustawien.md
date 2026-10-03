@@ -115,7 +115,7 @@ zaktualizuj też ten plik. Karty okna: **Ogólne · Wyspa · Moduły · Układ �
 - **Skrypty** — „Komenda wyspa zainstalowana w ~/.local/bin” + „Usuń komendę” / „Komenda wyspa jest starsza niż aplikacja” +
   „Zaktualizuj” / „Komenda wyspa nie jest zainstalowana.” + „Zainstaluj w ~/.local/bin” / „~/.local/bin/wyspa to inny program —
   Wyspa go nie nadpisze.” · podpowiedź o PATH, przykłady poleceń · „Gdy Wyspa nie działa, komenda kończy się po cichu z kodem 0. …”
-- **Mikrofon** — „Wycisz / włącz mikrofon” (skrót) · „„…” nie pozwala się wyciszyć ani zmienić głośności wejścia.” ·
+- **Mikrofon** — „Dźwięk przy wyciszeniu i włączeniu” · „Wycisz / włącz mikrofon” (skrót) · „„…” nie pozwala się wyciszyć ani zmienić głośności wejścia.” ·
   „Wyciszane są wszystkie mikrofony naraz — także ten, który Zoom, Teams czy Discord wybrały inaczej niż system, i ten
   podłączony w trakcie wyciszenia. Gdy mikrofon nie ma przełącznika wyciszenia, Wyspa ustawia głośność wejścia na zero
   i przywraca ją po włączeniu. Wyspa nie słucha dźwięku z mikrofonu.” · lista mikrofonów (nazwa, „· systemowy”, ikona stanu) · „„…” nie pozwala się wyciszyć ani zmienić głośności wejścia.” ·
