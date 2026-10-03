@@ -50,7 +50,7 @@ zaktualizuj też ten plik. Karty okna: **Ogólne · Wyspa · Moduły · Układ �
 | Skróty | Uruchamia wybrane Skróty macOS jednym kliknięciem z wyspy. |
 | Skrypty | Komenda wyspa i adresy wyspa:// — karty („Backup gotowy”) i paski postępu ze skryptów, Skrótów i crona. |
 | Szybkie akcje | Zrzut zaznaczenia prosto na Półkę, tekst ze zrzutu do schowka, pipeta koloru (kopiuje HEX), blokada ekranu i „nie usypiaj Maca”. |
-| Mikrofon | Wycisza mikrofon globalnym skrótem (domyślnie ⌃⌥M). Wyciszony mikrofon to czerwona ikona w zwiniętej wyspie. |
+| Mikrofon | Wycisza wszystkie mikrofony globalnym skrótem (domyślnie ⌃⌥M). Wyciszony mikrofon to czerwona ikona w zwiniętej wyspie. |
 | Aktualizacje | Sprawdza, czy na GitHubie jest nowsza wersja Wyspy, pokazuje listę zmian i aktualizuje jednym przyciskiem. |
 | Lusterko | Podgląd z kamery przed rozmową wideo. Kamera włącza się tylko, gdy zakładka jest widoczna; obraz nie jest zapisywany. |
 | Powiadomienia | Pokazuje powiadomienia macOS w wyspie zamiast w rogu ekranu. Najechanie zatrzymuje kartę, kliknięcie otwiera aplikację. |
@@ -108,8 +108,9 @@ zaktualizuj też ten plik. Karty okna: **Ogólne · Wyspa · Moduły · Układ �
   „Zaktualizuj” / „Komenda wyspa nie jest zainstalowana.” + „Zainstaluj w ~/.local/bin” / „~/.local/bin/wyspa to inny program —
   Wyspa go nie nadpisze.” · podpowiedź o PATH, przykłady poleceń · „Gdy Wyspa nie działa, komenda kończy się po cichu z kodem 0. …”
 - **Mikrofon** — „Wycisz / włącz mikrofon” (skrót) · „„…” nie pozwala się wyciszyć ani zmienić głośności wejścia.” ·
-  „Wyciszenie działa dla domyślnego wejścia z Ustawień systemowych → Dźwięk. Gdy mikrofon nie ma przełącznika wyciszenia,
-  Wyspa ustawia głośność wejścia na zero i przywraca ją po włączeniu. Wyspa nie słucha dźwięku z mikrofonu.”
+  „Wyciszane są wszystkie mikrofony naraz — także ten, który Zoom, Teams czy Discord wybrały inaczej niż system, i ten
+  podłączony w trakcie wyciszenia. Gdy mikrofon nie ma przełącznika wyciszenia, Wyspa ustawia głośność wejścia na zero
+  i przywraca ją po włączeniu. Wyspa nie słucha dźwięku z mikrofonu.” · widżet: nazwa domyślnego wejścia + „… inne”
 - **Aktualizacje** — „Zainstalowana wersja: … (z niezapisanymi zmianami)” · „Sprawdzanie…” / „Masz najnowszą wersję” /
   „Dostępna nowa wersja: … zmian” + lista (najwyżej 8, „… i … więcej”) / „Aktualizowanie… Wyspa za chwilę uruchomi się
   ponownie.” / błędy („Ta kopia Wyspy nie została zbudowana z repozytorium git — nie ma z czym porównać.”, „Brak połączenia

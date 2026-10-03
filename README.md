@@ -239,7 +239,8 @@ jako pierścień postępu z procentem; kilka pobierań naraz — łączny postę
 
 ### Mikrofon
 
-Globalny skrót (domyślnie ⌃⌥M, do zmiany w ustawieniach modułu) wycisza i włącza domyślne wejście dźwięku; kliknięcie
+Globalny skrót (domyślnie ⌃⌥M, do zmiany w ustawieniach modułu) wycisza i włącza **wszystkie** mikrofony naraz (także ten, który Zoom, Teams czy Discord wybrały inaczej niż system,
+i podłączony w trakcie wyciszenia); kliknięcie
 widżetu robi to samo. Wyciszony mikrofon to czerwona ikona w zwiniętej wyspie (ważniejsza niż odtwarzanie i spotkanie,
 mniej ważna niż timer i prośby Claude). Mikrofony bez przełącznika wyciszenia są wyciszane głośnością wejścia
 ustawioną na zero — po włączeniu wraca poprzednia. Bez zgody na mikrofon: Wyspa nie słucha dźwięku, zmienia tylko

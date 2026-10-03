@@ -11,7 +11,7 @@ public final class MicrophoneModule: IslandModule {
     public static let descriptor = ModuleDescriptor(
         id: "microphone",
         name: "Mikrofon",
-        summary: "Wycisza mikrofon globalnym skrótem (domyślnie ⌃⌥M). Wyciszony mikrofon to czerwona ikona w zwiniętej wyspie.",
+        summary: "Wycisza wszystkie mikrofony globalnym skrótem (domyślnie ⌃⌥M). Wyciszony mikrofon to czerwona ikona w zwiniętej wyspie.",
         symbol: "mic.fill",
         content: .neutral,
         widgetMinWidth: 120
@@ -33,6 +33,8 @@ public final class MicrophoneModule: IslandModule {
     public var feedback: String? { message.text }
 
     @ObservationIgnored private var mutedChangedAt: Date?
+    /// Czy użytkownik chce mieć wyciszone — niezależnie od tego, które wejście jest akurat domyślne.
+    @ObservationIgnored private var wantsMuted = false
     @ObservationIgnored private let context: ModuleContext
     @ObservationIgnored private var control: MicrophoneControl?
     @ObservationIgnored private var hotkey: GlobalHotkey?
@@ -44,7 +46,8 @@ public final class MicrophoneModule: IslandModule {
     }
 
     public func activate() async throws {
-        let control = MicrophoneControl { [weak self] in self?.refresh() }
+        let control = MicrophoneControl(onChange: { [weak self] in self?.refresh() },
+                                        onDevicesChanged: { [weak self] in self?.muteNewInputs() })
         control.start()
         self.control = control
         refresh()
@@ -93,23 +96,48 @@ public final class MicrophoneModule: IslandModule {
             show("Tego mikrofonu nie da się wyciszyć")
             return
         }
-        var volumes: [String: Float] = context.settings.value(Self.volumesKey, default: [:])
-        let outcome = control.setMuted(!current.isMuted, restoreVolume: volumes[current.deviceUID])
-        guard outcome.succeeded else {
+        guard setAllMuted(!current.isMuted) else {
             show("Nie udało się przełączyć mikrofonu")
             return
-        }
-        if let remember = outcome.volumeToRemember {
-            volumes[current.deviceUID] = remember
-            context.settings.set(volumes, for: Self.volumesKey)
         }
         refresh()
         show(reading?.isMuted == true ? "Wyciszony" : "Włączony")
     }
 
+    /// Wycisza albo włącza wszystkie wejścia; głośności sprzed wyciszenia zapamiętane per urządzenie.
+    private func setAllMuted(_ muted: Bool) -> Bool {
+        guard let control else { return false }
+        let volumes: [String: Float] = context.settings.value(Self.volumesKey, default: [:])
+        let outcome = control.setMuted(muted, restoreVolumes: volumes)
+        if !outcome.volumesToRemember.isEmpty {
+            context.settings.set(volumes.merging(outcome.volumesToRemember) { _, new in new }, for: Self.volumesKey)
+        }
+        return outcome.succeeded
+    }
+
+    /// Mikrofon podłączony w trakcie wyciszenia (np. AirPods w środku rozmowy) też ma być wyciszony.
+    private func muteNewInputs() {
+        guard wantsMuted else { return }
+        _ = setAllMuted(true)
+    }
+
+    /// „Mikrofon (MacBook Air) + 2 inne” — domyślne wejście i ile jeszcze jest wyciszanych razem z nim.
+    nonisolated static func devicesLabel(name: String, count: Int) -> String {
+        let others = count - 1
+        guard others > 0 else { return name }
+        return "\(name) + \(PolishPlural.format(others, one: "inny", few: "inne", many: "innych"))"
+    }
+
     private func refresh() {
         let previous = reading
         reading = control?.reading
+        if previous == nil || previous?.deviceUID == reading?.deviceUID {
+            // Ten sam mikrofon: zmiana wyciszenia (także z Ustawień systemowych) to nowa intencja.
+            wantsMuted = reading?.isMuted ?? false
+        } else if wantsMuted, reading?.isMuted == false, setAllMuted(true) {
+            // Nowe domyślne wejście w trakcie wyciszenia (np. podłączone AirPods) — też wyciszone.
+            reading = control?.reading
+        }
         if let previous, previous.isMuted != reading?.isMuted { mutedChangedAt = Date() }
     }
 

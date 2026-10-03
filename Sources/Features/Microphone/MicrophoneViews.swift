@@ -19,7 +19,7 @@ struct MicrophoneView: View {
                 Text(muted ? "Wyciszony" : "Włączony")
                     .font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(muted ? .red : .white)
-                Text(module.reading?.deviceName ?? "Brak mikrofonu")
+                Text(module.reading.map { MicrophoneModule.devicesLabel(name: $0.deviceName, count: $0.inputCount) } ?? "Brak mikrofonu")
                     .font(.system(size: 10.5))
                     .foregroundStyle(.white.opacity(0.5))
                     .lineLimit(1)
@@ -53,9 +53,9 @@ struct MicrophoneSettingsView: View {
                 Text("„\(reading.deviceName)” nie pozwala się wyciszyć ani zmienić głośności wejścia.")
                     .font(.caption).foregroundStyle(.orange)
             }
-            Text("Wyciszenie działa dla domyślnego wejścia z Ustawień systemowych → Dźwięk. Gdy mikrofon nie ma "
-                 + "przełącznika wyciszenia, Wyspa ustawia głośność wejścia na zero i przywraca ją po włączeniu. "
-                 + "Wyspa nie słucha dźwięku z mikrofonu.")
+            Text("Wyciszane są wszystkie mikrofony naraz — także ten, który Zoom, Teams czy Discord wybrały inaczej niż "
+                 + "system, i ten podłączony w trakcie wyciszenia. Gdy mikrofon nie ma przełącznika wyciszenia, Wyspa "
+                 + "ustawia głośność wejścia na zero i przywraca ją po włączeniu. Wyspa nie słucha dźwięku z mikrofonu.")
                 .font(.caption).foregroundStyle(.secondary)
         }
     }

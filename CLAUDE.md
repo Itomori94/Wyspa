@@ -225,7 +225,10 @@ jak reszta wyspy); kolory zostają dla znaczenia (czerwony mikrofon, pomarańczo
 
 ## Mikrofon (moduł `WyspaMicrophone`)
 
-- CoreAudio, domyślne wejście: `Mute` (zakres wejścia), a bez niego `VolumeScalar` (element główny albo kanały 1…n)
+- Wyciszane są wszystkie urządzenia z wejściem (`kAudioHardwarePropertyDevices`, kanały wejścia > 0); stan w wyspie =
+  domyślne wejście. `wantsMuted` (intencja) przeżywa zmianę domyślnego wejścia; nowe urządzenie w trakcie wyciszenia
+  (lista urządzeń albo nowe domyślne) jest wyciszane od razu.
+- CoreAudio, każde wejście: `Mute` (zakres wejścia), a bez niego `VolumeScalar` (element główny albo kanały 1…n)
   ustawiane na 0; głośność sprzed wyciszenia zapamiętana per UID urządzenia (`restoreVolumes`), przy braku — 75%.
 - Zmiany urządzenia, wyciszenia i głośności przez `AudioObjectAddPropertyListenerBlock` na kolejce głównej (bez odpytywania).
   Nie czytamy dźwięku, więc bez `NSMicrophoneUsageDescription` i zgody TCC.

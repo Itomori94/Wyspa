@@ -5,6 +5,14 @@ import WyspaCore
 
 @Suite("Mikrofon")
 struct MicrophoneTests {
+    @Test("Podpis urządzeń: domyślne wejście i liczba pozostałych wyciszanych razem")
+    func devicesLabel() {
+        #expect(MicrophoneModule.devicesLabel(name: "MacBook", count: 1) == "MacBook")
+        #expect(MicrophoneModule.devicesLabel(name: "MacBook", count: 2) == "MacBook + 1 inny")
+        #expect(MicrophoneModule.devicesLabel(name: "MacBook", count: 3) == "MacBook + 2 inne")
+        #expect(MicrophoneModule.devicesLabel(name: "MacBook", count: 6) == "MacBook + 5 innych")
+    }
+
     @Test("Przywracana głośność: zapamiętana, a bez niej albo przy zerze — 75%")
     func restoredVolume() {
         #expect(MicrophoneControl.restoredVolume(0.42) == 0.42)
