@@ -38,6 +38,7 @@ final class IslandWindowController {
             registry: registry
         )
         container = IslandContainerView(content: IslandView(model: model))
+        applyAppearance()
         model.onOpenSettings = openSettings
         model.onSelectTab = { [weak self] index in self?.selectTab(index) }
         model.onClick = { [weak self] in self?.clicked() }
@@ -60,6 +61,12 @@ final class IslandWindowController {
         observeKeyboardFocus()
         observeModules()
         syncModuleState()
+    }
+
+    /// Motyw i przyciemnienie szkła — bez przebudowy okna (suwak działa płynnie).
+    func applyAppearance() {
+        model.theme = settings.islandTheme
+        model.glassTint = settings.glassTint
     }
 
     func update(screen: ScreenInfo) {

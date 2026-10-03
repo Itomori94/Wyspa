@@ -366,7 +366,7 @@ struct ScreenshotTests {
     }
 
     private func render(_ name: String, phase: IslandPhase, tab: String? = nil, activity: (String, LiveActivity?)? = nil,
-                        privateMode: Bool = false, size: IslandSize = .medium) async throws {
+                        privateMode: Bool = false, size: IslandSize = .medium, theme: IslandTheme = .classic) async throws {
         Stage.activity = activity.flatMap { slot, activity in activity.map { (slot, $0) } }
         let settings = SettingsStore(defaults: UserDefaults(suiteName: "wyspa.shots.registry.\(UUID())")!)
         let registry = ModuleRegistry(catalog: Self.catalog, settings: settings, permissions: NoPermissions(), requestExpand: { _ in })
@@ -379,6 +379,7 @@ struct ScreenshotTests {
         }
         let model = IslandViewModel(phase: phase, notch: Self.notch, expandedSize: size.expandedSize, registry: registry)
         model.selectedTab = tab.flatMap { tabs[$0] } ?? 0
+        model.theme = theme
         let panel = IslandLayout.panelSize(expanded: size.expandedSize, notch: Self.notch.size, shadowMargin: 36)
         let canvas = CGSize(width: panel.width + 80, height: panel.height + 20)
         let view = ZStack(alignment: .top) {
@@ -440,6 +441,9 @@ struct ScreenshotTests {
         try await render("claude-zgoda", phase: .expanded, tab: "claude-ask")
         try await render("tryb-prywatny", phase: .expanded, tab: "private", privateMode: true)
         try await render("bluetooth", phase: .expanded, tab: "bluetooth")
+        try await render("motyw-czarna-tafla", phase: .expanded, tab: "widgets", theme: .blackSheet)
+        try await render("motyw-czarna-tafla-karta", phase: .collapsed, activity: ("alerts", Stage.notificationActivity), theme: .blackSheet)
+        // Szkła nie da się tu sfotografować: rozmycie okna działa tylko na prawdziwym ekranie.
     }
 }
 

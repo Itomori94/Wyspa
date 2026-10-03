@@ -30,6 +30,10 @@ final class ScreenCoordinator {
             _ = settings.virtualNotchMode
             _ = settings.islandSize
         }) { [weak self] in self?.rebuild() }
+        observeChanges({ [weak self] in
+            _ = self?.settings.islandTheme
+            _ = self?.settings.glassTint
+        }) { [weak self] in self?.islands.values.forEach { $0.applyAppearance() } }
     }
 
     func toggleUnderPointer() {

@@ -28,7 +28,7 @@ Projekt open source (licencja MIT), dystrybucja poza App Store — budujesz i in
 | ![Pomodoro](docs/screenshots/pomodoro.png) Pomodoro i cel dnia | ![Pogoda](docs/screenshots/pogoda.png) Pogoda |
 | ![Schowek](docs/screenshots/schowek.png) Historia schowka | ![Tryb prywatny](docs/screenshots/tryb-prywatny.png) Tryb prywatny (udostępnianie ekranu) |
 | ![Szybkie akcje](docs/screenshots/szybkie-akcje.png) Szybkie akcje | ![Szybkie akcje obok odtwarzacza](docs/screenshots/szybkie-akcje-widzet.png) Szybkie akcje jako widżet |
-| ![Bluetooth](docs/screenshots/bluetooth.png) Bluetooth | |
+| ![Bluetooth](docs/screenshots/bluetooth.png) Bluetooth | ![Motyw Czarna tafla](docs/screenshots/motyw-czarna-tafla.png) Motyw Czarna tafla |
 
 Zrzuty powstają z danych demonstracyjnych (`scripts/screenshots.sh`), więc nie zawierają prywatnych treści.
 
@@ -62,6 +62,16 @@ Przy pierwszym podpisie macOS może zapytać, czy `codesign` może użyć klucza
 - **⌃⌥W** (domyślnie, do zmiany w ustawieniach): rozwija lub zwija wyspę na ekranie z kursorem.
 - Ikona w pasku menu: ustawienia, **Sprawdź aktualizacje…** (działa także przy wyłączonym module Aktualizacje),
   numer zainstalowanej wersji i zamknięcie aplikacji.
+
+### Motywy
+
+Ustawienia → Wyspa → **Motyw**:
+- **Klasyczny**: czarna wyspa, widżety rozdzielone kreskami.
+- **Czarna tafla**: czarna wyspa z cienką jasną krawędzią, zakładki w kapsule, każdy widżet na osobnej karcie.
+- **Szkło**: rozwinięta wyspa i karty z rozmytego szkła (suwak *Przyciemnienie szkła*); przy samym notchu wyspa
+  zostaje czarna, żeby zlewała się z wycięciem ekranu.
+
+Motyw nie zmienia ikon: okładki, ikony aplikacji (np. Apple Music) i symbole modułów wyglądają tak samo w każdym.
 
 ### Klawiatura po skrócie
 

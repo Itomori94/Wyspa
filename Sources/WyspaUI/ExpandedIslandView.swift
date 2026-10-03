@@ -113,15 +113,18 @@ private struct RightHeader<Wing: View>: View {
     var body: some View {
         let selected = min(model.selectedTab, max(tabs.count - 1, 0))
         HStack(spacing: plan.style.spacing) {
-            ForEach(plan.visible, id: \.self) { index in
-                TabButton(symbol: tabs[index].symbol, name: tabs[index].name, isSelected: index == selected,
-                          width: plan.style.buttonWidth) {
-                    model.onSelectTab(index)
+            HStack(spacing: plan.style.spacing) {
+                ForEach(plan.visible, id: \.self) { index in
+                    TabButton(symbol: tabs[index].symbol, name: tabs[index].name, isSelected: index == selected,
+                              width: plan.style.buttonWidth) {
+                        model.onSelectTab(index)
+                    }
+                }
+                if !plan.overflow.isEmpty {
+                    OverflowMenu(tabs: tabs, indices: plan.overflow, select: model.onSelectTab)
                 }
             }
-            if !plan.overflow.isEmpty {
-                OverflowMenu(tabs: tabs, indices: plan.overflow, select: model.onSelectTab)
-            }
+            .modifier(TabStripBackground(theme: model.theme))
             if plan.showsWing {
                 wing().padding(.leading, TabStripPlan.wingSpacing - plan.style.spacing)
             }
@@ -178,28 +181,49 @@ public struct WidgetRow: View {
     public static let dividerSpacing: CGFloat = 14
 
     let widgets: [IslandPage.Widget]
+    @Environment(\.islandTheme) private var theme
+
+    /// Czarna tafla: każdy widżet na własnej karcie, z odstępem zamiast kreski.
+    private var gap: CGFloat { theme == .blackSheet ? 8 : Self.dividerSpacing }
 
     public var body: some View {
         GeometryReader { proxy in
-            let gaps = CGFloat(max(widgets.count - 1, 0)) * Self.dividerSpacing
+            let gaps = CGFloat(max(widgets.count - 1, 0)) * gap
             let totalUnits = max(widgets.map(\.width.units).reduce(0, +), 1)
             let unit = max(0, proxy.size.width - gaps) / CGFloat(totalUnits)
             HStack(spacing: 0) {
                 ForEach(Array(widgets.enumerated()), id: \.element.id) { index, widget in
                     if index > 0 {
-                        Rectangle()
-                            .fill(.white.opacity(0.1))
-                            .frame(width: 1)
-                            .padding(.vertical, 6)
-                            .frame(width: Self.dividerSpacing)
+                        if theme == .blackSheet {
+                            Color.clear.frame(width: gap)
+                        } else {
+                            Rectangle()
+                                .fill(.white.opacity(theme == .glass ? 0.18 : 0.1))
+                                .frame(width: 1)
+                                .padding(.vertical, 6)
+                                .frame(width: gap)
+                        }
                     }
-                    widget.content
-                        .frame(width: unit * CGFloat(widget.width.units), alignment: .topLeading)
-                        .frame(maxHeight: .infinity, alignment: .top)
-                        .clipped()
+                    widgetView(widget.content, width: unit * CGFloat(widget.width.units))
                 }
                 Spacer(minLength: 0)
             }
+        }
+    }
+
+    @ViewBuilder
+    private func widgetView(_ content: AnyView, width: CGFloat) -> some View {
+        if theme == .blackSheet {
+            content
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                .clipped()
+                .modifier(WidgetCard())
+                .frame(width: width)
+        } else {
+            content
+                .frame(width: width, alignment: .topLeading)
+                .frame(maxHeight: .infinity, alignment: .top)
+                .clipped()
         }
     }
 }
@@ -233,16 +257,15 @@ private struct TabButton: View {
     let width: CGFloat
     let action: () -> Void
     @State private var isHovered = false
+    @Environment(\.islandTheme) private var theme
 
     var body: some View {
         Button(action: action) {
             Image(systemName: symbol)
                 .font(.system(size: 12, weight: .semibold))
-                .frame(width: width, height: 22)
-                .foregroundStyle(.white.opacity(isSelected ? 1 : 0.5))
-                .background(
-                    Capsule().fill(.white.opacity(isSelected ? 0.18 : (isHovered ? 0.08 : 0)))
-                )
+                .frame(width: width, height: theme == .blackSheet ? 20 : 22)
+                .foregroundStyle(.white.opacity(isSelected ? 1 : (theme == .classic ? 0.5 : 0.6)))
+                .background(TabPill(theme: theme, isSelected: isSelected, isHovered: isHovered))
         }
         .buttonStyle(IslandPressStyle())
         .onHover { isHovered = $0 }

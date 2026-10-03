@@ -223,6 +223,19 @@ włączonych: włączony kafelek (tryb ciemny, ukryte biurko, nie usypiaj, nagry
 jak reszta wyspy); kolory zostają dla znaczenia (czerwony mikrofon, pomarańczowa prośba Claude, fioletowa praca Claude
 — bez pulsowania, pulsuje tylko prośba o zgodę).
 
+## Motywy wyspy
+
+- `IslandTheme` (Core): `classic` / `black-sheet` / `glass` — nazwy zapisane w ustawieniach, nie zmieniać (test).
+  `SettingsStore.islandTheme` i `glassTint` (0,35–0,9, domyślnie 0,6); zmiana bez przebudowy okien
+  (`IslandWindowController.applyAppearance`).
+- `WyspaUI/IslandThemeViews.swift`: `IslandBackground` (czerń / czerń + krawędź 0,5 pt / szkło = `NSVisualEffectView`
+  `.hudWindow` `.behindWindow` + czarna warstwa `glassTint` + jaśniejąca ku dołowi krawędź), `IslandEdge` (obrys bez
+  górnej krawędzi), `TabStripBackground` i `TabPill` (zakładki), `WidgetCard` (karty widżetów w Czarnej tafli).
+  Motyw trafia do modułów przez `@Environment(\.islandTheme)`.
+- Szkło tylko poza notchem (`usesGlass`: rozwinięta albo karta) — zwinięta przy notchu zostaje czarna.
+- Ikony, okładki, ikony aplikacji i kolory modułów są wspólne dla wszystkich motywów (prośba użytkownika).
+- Zrzut demo tylko dla Czarnej tafli: rozmycie za oknem nie renderuje się poza ekranem.
+
 ## Mikrofon (moduł `WyspaMicrophone`)
 
 - Wyciszane są wszystkie urządzenia z wejściem (`kAudioHardwarePropertyDevices`, kanały wejścia > 0); stan w wyspie =

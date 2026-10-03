@@ -9,6 +9,8 @@ public final class IslandViewModel {
     public var notch: NotchMetrics
     public var expandedSize: CGSize
     public var selectedTab: Int
+    public var theme: IslandTheme = .classic
+    public var glassTint: Double = IslandTheme.defaultGlassTint
     /// Strefa upuszczania pod kursorem podczas przeciągania.
     public var dropTarget: String?
     /// Moduł pokazywany doraźnie w rozwiniętej wyspie, bo nie ma strony w układzie (np. Claude prosi o zgodę).

@@ -15,6 +15,8 @@ public final class SettingsStore {
         static let hoverDelay = "island.hoverDelay"
         static let collapseDelay = "island.collapseDelay"
         static let islandSize = "island.size"
+        static let islandTheme = "island.theme"
+        static let glassTint = "island.glassTint"
         static let privacyMode = "privacy.mode"
         static let hapticsEnabled = "island.haptics"
         static let screenSelection = "screens.selection"
@@ -31,6 +33,13 @@ public final class SettingsStore {
     public var collapseDelay: Double { didSet { defaults.set(collapseDelay, forKey: Key.collapseDelay) } }
     public var hapticsEnabled: Bool { didSet { defaults.set(hapticsEnabled, forKey: Key.hapticsEnabled) } }
     public var islandSize: IslandSize { didSet { defaults.set(islandSize.rawValue, forKey: Key.islandSize) } }
+    public var islandTheme: IslandTheme { didSet { defaults.set(islandTheme.rawValue, forKey: Key.islandTheme) } }
+    public var glassTint: Double {
+        didSet {
+            let clamped = Self.clamped(glassTint, to: IslandTheme.glassTintRange)
+            if clamped != glassTint { glassTint = clamped } else { defaults.set(glassTint, forKey: Key.glassTint) }
+        }
+    }
     public var privacyMode: PrivacyState.Mode { didSet { defaults.set(privacyMode.rawValue, forKey: Key.privacyMode) } }
     public var screenSelection: ScreenSelection {
         didSet { defaults.set(screenSelection.rawValue, forKey: Key.screenSelection) }
@@ -59,6 +68,9 @@ public final class SettingsStore {
         )
         hapticsEnabled = defaults.object(forKey: Key.hapticsEnabled) as? Bool ?? true
         islandSize = defaults.string(forKey: Key.islandSize).flatMap(IslandSize.init) ?? .medium
+        islandTheme = defaults.string(forKey: Key.islandTheme).flatMap(IslandTheme.init) ?? .classic
+        glassTint = Self.clamped(defaults.object(forKey: Key.glassTint) as? Double ?? IslandTheme.defaultGlassTint,
+                                 to: IslandTheme.glassTintRange)
         privacyMode = defaults.string(forKey: Key.privacyMode).flatMap(PrivacyState.Mode.init) ?? .automatic
         screenSelection = defaults.string(forKey: Key.screenSelection).flatMap(ScreenSelection.init) ?? .all
         virtualNotchMode = defaults.string(forKey: Key.virtualNotchMode).flatMap(VirtualNotchMode.init) ?? .whenActive

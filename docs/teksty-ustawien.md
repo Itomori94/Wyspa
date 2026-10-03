@@ -26,6 +26,9 @@ zaktualizuj też ten plik. Karty okna: **Ogólne · Wyspa · Moduły · Układ �
   - „Kliknięcie albo przesunięcie dwoma palcami w dół zawsze rozwija wyspę, w górę ją zwija.”
 - **Wygląd** (karta Wyspa)
   - Rozmiar rozwiniętej wyspy: Mała / Średnia / Duża
+  - Motyw: Klasyczny / Czarna tafla / Szkło · przy Szkle „Przyciemnienie szkła” (suwak) · podpowiedź: „Czarna wyspa,
+    widżety rozdzielone kreskami.” / „Czarna wyspa z cienką jasną krawędzią, zakładki w kapsule, widżety na osobnych
+    kartach.” / „Rozwinięta wyspa i karty z rozmytego szkła; przy samym notchu wyspa zostaje czarna.”
   - Haptyka gładzika przy rozwinięciu
 - **Tryb prywatny**: „Ukrywaj powiadomienia, schowek i odpowiedzi Claude”: Przy udostępnianiu i nagrywaniu ekranu / Zawsze / Nigdy
   - „Przy udostępnianiu albo nagrywaniu ekranu (Zoom, Teams, Meet, nagranie) karty pokazują tylko nazwę aplikacji.”

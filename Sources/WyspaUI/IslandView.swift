@@ -20,9 +20,9 @@ public struct IslandView: View {
     public var body: some View {
         let size = model.islandSize
         ZStack(alignment: .top) {
-            IslandShape(topRadius: topRadius, bottomRadius: bottomRadius)
-                .fill(Color.black.opacity(model.phase == .hidden ? Self.hiddenAlpha : 1))
-                .shadow(color: .black.opacity(model.phase == .expanded ? 0.5 : 0), radius: 20, y: 10)
+            IslandBackground(topRadius: topRadius, bottomRadius: bottomRadius, theme: model.theme,
+                             isGlass: model.theme.usesGlass(isExpanded: model.phase == .expanded, showsCard: showsCard),
+                             glassTint: model.glassTint, isHidden: model.phase == .hidden, isRaised: isRaised)
                 .contentShape(IslandShape(topRadius: topRadius, bottomRadius: bottomRadius))
                 .onTapGesture {
                     // W rozwiniętej wyspie kliknięcia obsługują kontrolki modułów.
@@ -51,10 +51,21 @@ public struct IslandView: View {
         .onExitCommand(perform: model.onEscape)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .environment(\.colorScheme, .dark)
+        .environment(\.islandTheme, model.theme)
     }
 
     /// Ukryta wyspa musi mieć niezerową przezroczystość, inaczej okno nie dostanie zdarzeń myszy.
     private static let hiddenAlpha = 0.01
+
+    /// Karta pod skrzydłami (powiadomienie, podgląd) w zwiniętej wyspie.
+    private var showsCard: Bool {
+        (model.phase == .collapsed || model.phase == .peek) && model.activity?.detail != nil
+    }
+
+    /// Klasyczna wyspa ma cień tylko rozwinięta; nowe motywy także pod kartą.
+    private var isRaised: Bool {
+        model.phase == .expanded || (model.theme != .classic && showsCard)
+    }
 
     private var topRadius: CGFloat {
         model.phase == .expanded ? IslandLayout.expandedTopRadius : IslandLayout.collapsedTopRadius

@@ -100,6 +100,17 @@ private struct IslandSettingsView: View {
                     ForEach(IslandSize.allCases, id: \.self) { Text($0.displayName).tag($0) }
                 }
                 .pickerStyle(.segmented)
+                Picker("Motyw", selection: $settings.islandTheme) {
+                    ForEach(IslandTheme.allCases, id: \.self) { Text($0.displayName).tag($0) }
+                }
+                .pickerStyle(.segmented)
+                if settings.islandTheme == .glass {
+                    LabeledContent("Przyciemnienie szkła") {
+                        Slider(value: $settings.glassTint, in: IslandTheme.glassTintRange)
+                            .frame(maxWidth: 220)
+                    }
+                }
+                Text(themeHint).font(.caption).foregroundStyle(.secondary)
                 Toggle("Haptyka gładzika przy rozwinięciu", isOn: $settings.hapticsEnabled)
             }
             Section("Tryb prywatny") {
@@ -120,6 +131,14 @@ private struct IslandSettingsView: View {
             }
         }
         .formStyle(.grouped)
+    }
+
+    private var themeHint: String {
+        switch settings.islandTheme {
+        case .classic: "Czarna wyspa, widżety rozdzielone kreskami."
+        case .blackSheet: "Czarna wyspa z cienką jasną krawędzią, zakładki w kapsule, widżety na osobnych kartach."
+        case .glass: "Rozwinięta wyspa i karty z rozmytego szkła; przy samym notchu wyspa zostaje czarna."
+        }
     }
 }
 
