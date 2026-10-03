@@ -135,7 +135,7 @@ final class IslandWindowController {
             timers[timer] = nil
         case .haptic:
             guard settings.hapticsEnabled else { return }
-            NSHapticFeedbackManager.defaultPerformer.perform(.levelChange, performanceTime: .now)
+            TrackpadHaptics.shared.perform(settings.hapticStrength)
         }
     }
 

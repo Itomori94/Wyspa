@@ -338,6 +338,7 @@ wrzucaj prawdziwych zrzutów ekranu do publicznego repo. Po zmianie wyglądu od�
 | `SACLockScreenImmediate` (login.framework) | `QuickActionsModule.lockScreen` | symbol może zniknąć | `pmset displaysleepnow` (blokuje, gdy hasło jest wymagane od razu po uśpieniu) |
 | `SLSRegisterNotifyProc` typy 1502/1503 (SkyLight) | `ScreenCaptureDetector.observe` | numery typów ustalone eksperymentem na 27.2, mogą się zmienić | rejestracja nieudana → sprawdzanie przy rozwinięciu, nowej karcie i zmianie aplikacji; ustawienia to pokazują |
 | `SLSIsScreenWatcherPresent` (SkyLight) | `ScreenCaptureDetector` (tryb prywatny) | symbol może zniknąć | `isAvailable == false` → tryb automatyczny nic nie chowa, ustawienia to mówią; tryb „Zawsze” działa |
+| `MTActuatorCreateFromDeviceID/Open/Actuate` (MultitouchSupport, `dlopen`) | `TrackpadHaptics` (siła Średnia 4 / Mocna 6) | symbole albo numery impulsów mogą się zmienić | brak symboli, silnika albo nieudany impuls → publiczne `NSHapticFeedbackManager` `.levelChange`; „Delikatna” zawsze publiczne |
 | Drzewo Dostępności banerów NotificationCenter (nieudokumentowane) | `NotificationBannerWatcher` | nowy macOS zmieni subrolę/identyfikatory | baner nie zostaje rozpoznany ani schowany — powiadomienia działają systemowo |
 
 Ładowanie funkcji C wyłącznie przez `PrivateSymbol.load` (dlopen/dlsym, log przy braku). Selektory Objective-C zawsze

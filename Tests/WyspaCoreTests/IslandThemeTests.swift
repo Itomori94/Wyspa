@@ -57,3 +57,26 @@ struct IslandThemeTests {
         #expect(IslandTheme.allCases.map(\.rawValue) == ["classic", "black-sheet", "glass"])
     }
 }
+
+@Suite("Siła haptyki")
+@MainActor
+struct HapticStrengthTests {
+    @Test("delikatna to publiczne API, mocniejsze to impulsy silnika gładzika")
+    func actuationIDs() {
+        #expect(HapticStrength.gentle.actuationID == nil)
+        #expect(HapticStrength.medium.actuationID == 4)
+        #expect(HapticStrength.strong.actuationID == 6)
+        #expect(HapticStrength.allCases.map(\.rawValue) == ["gentle", "medium", "strong"])
+    }
+
+    @Test("domyślnie delikatna; wybór zapisuje się, nieznana wartość wraca do delikatnej")
+    func persists() {
+        let defaults = UserDefaults(suiteName: "wyspa.haptics.\(UUID().uuidString)")!
+        let settings = SettingsStore(defaults: defaults)
+        #expect(settings.hapticStrength == .gentle)
+        settings.hapticStrength = .strong
+        #expect(SettingsStore(defaults: defaults).hapticStrength == .strong)
+        defaults.set("tornado", forKey: SettingsStore.Key.hapticStrength)
+        #expect(SettingsStore(defaults: defaults).hapticStrength == .gentle)
+    }
+}

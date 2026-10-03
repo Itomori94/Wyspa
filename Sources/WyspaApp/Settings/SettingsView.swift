@@ -112,6 +112,16 @@ private struct IslandSettingsView: View {
                 }
                 Text(themeHint).font(.caption).foregroundStyle(.secondary)
                 Toggle("Haptyka gładzika przy rozwinięciu", isOn: $settings.hapticsEnabled)
+                if settings.hapticsEnabled {
+                    Picker("Siła stuknięcia", selection: $settings.hapticStrength) {
+                        ForEach(HapticStrength.allCases, id: \.self) { Text($0.displayName).tag($0) }
+                    }
+                    .pickerStyle(.segmented)
+                    .onChange(of: settings.hapticStrength) { _, strength in TrackpadHaptics.shared.perform(strength) }
+                    Text("Stuknięcie czuć, gdy palec dotyka gładzika. Średnia i Mocna korzystają z nieoficjalnego "
+                         + "interfejsu macOS — gdyby przestał działać, Wyspa stuknie delikatnie.")
+                        .font(.caption).foregroundStyle(.secondary)
+                }
             }
             Section("Tryb prywatny") {
                 Picker("Ukrywaj powiadomienia, schowek i odpowiedzi Claude", selection: $settings.privacyMode) {

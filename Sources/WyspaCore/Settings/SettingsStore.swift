@@ -19,6 +19,7 @@ public final class SettingsStore {
         static let glassTint = "island.glassTint"
         static let privacyMode = "privacy.mode"
         static let hapticsEnabled = "island.haptics"
+        static let hapticStrength = "island.hapticStrength"
         static let screenSelection = "screens.selection"
         static let virtualNotchMode = "screens.virtualNotch"
         static let toggleShortcut = "shortcut.toggle"
@@ -32,6 +33,7 @@ public final class SettingsStore {
     public var hoverDelay: Double { didSet { defaults.set(hoverDelay, forKey: Key.hoverDelay) } }
     public var collapseDelay: Double { didSet { defaults.set(collapseDelay, forKey: Key.collapseDelay) } }
     public var hapticsEnabled: Bool { didSet { defaults.set(hapticsEnabled, forKey: Key.hapticsEnabled) } }
+    public var hapticStrength: HapticStrength { didSet { defaults.set(hapticStrength.rawValue, forKey: Key.hapticStrength) } }
     public var islandSize: IslandSize { didSet { defaults.set(islandSize.rawValue, forKey: Key.islandSize) } }
     public var islandTheme: IslandTheme { didSet { defaults.set(islandTheme.rawValue, forKey: Key.islandTheme) } }
     public var glassTint: Double {
@@ -67,6 +69,7 @@ public final class SettingsStore {
             defaults.object(forKey: Key.collapseDelay) as? Double ?? 0.35, to: Limits.collapseDelay
         )
         hapticsEnabled = defaults.object(forKey: Key.hapticsEnabled) as? Bool ?? true
+        hapticStrength = defaults.string(forKey: Key.hapticStrength).flatMap(HapticStrength.init) ?? .gentle
         islandSize = defaults.string(forKey: Key.islandSize).flatMap(IslandSize.init) ?? .medium
         islandTheme = defaults.string(forKey: Key.islandTheme).flatMap(IslandTheme.init) ?? .classic
         glassTint = Self.clamped(defaults.object(forKey: Key.glassTint) as? Double ?? IslandTheme.defaultGlassTint,

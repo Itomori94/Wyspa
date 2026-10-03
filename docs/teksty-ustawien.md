@@ -29,7 +29,9 @@ zaktualizuj też ten plik. Karty okna: **Ogólne · Wyspa · Moduły · Układ �
   - Motyw: Klasyczny / Czarna tafla / Szkło · przy Szkle „Przyciemnienie szkła” (suwak) · podpowiedź: „Czarna wyspa,
     widżety rozdzielone kreskami.” / „Czarna wyspa z cienką jasną krawędzią, zakładki w kapsule, widżety na osobnych
     kartach.” / „Rozwinięta wyspa i karty z rozmytego szkła; przy samym notchu wyspa zostaje czarna.”
-  - Haptyka gładzika przy rozwinięciu
+  - Haptyka gładzika przy rozwinięciu · Siła stuknięcia: Delikatna / Średnia / Mocna (wybór od razu stuka próbnie) ·
+    „Stuknięcie czuć, gdy palec dotyka gładzika. Średnia i Mocna korzystają z nieoficjalnego interfejsu macOS — gdyby
+    przestał działać, Wyspa stuknie delikatnie.”
 - **Tryb prywatny**: „Ukrywaj powiadomienia, schowek i odpowiedzi Claude”: Przy udostępnianiu i nagrywaniu ekranu / Zawsze / Nigdy
   - „Przy udostępnianiu albo nagrywaniu ekranu (Zoom, Teams, Meet, nagranie) karty pokazują tylko nazwę aplikacji.”
 

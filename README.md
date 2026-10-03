@@ -363,7 +363,9 @@ nawet bez kroku 1 Claude Code nie zgłasza błędów, a hooki po prostu nic nie 
 
 - Na monitorach bez notcha wyspa rysuje wirtualny notch. W trybie „Tylko gdy coś się dzieje”
   jest niewidoczna, dopóki nie najedziesz kursorem na środek górnej krawędzi ekranu.
-- Haptyka działa tylko na gładzikach Force Touch i tylko wtedy, gdy palec dotyka gładzika.
+- Haptyka działa tylko na gładzikach Force Touch i tylko wtedy, gdy palec dotyka gładzika. Siła *Średnia* i *Mocna*
+  (Ustawienia → Wyspa) korzysta z nieoficjalnego interfejsu MultitouchSupport; gdy przestanie działać, zostaje
+  delikatne stuknięcie z publicznego API.
 - Start przy logowaniu najlepiej działa, gdy aplikacja leży w `/Applications`.
 
 ## Licencja
