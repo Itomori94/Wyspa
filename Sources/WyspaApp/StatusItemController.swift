@@ -5,12 +5,10 @@ import WyspaUpdates
 @MainActor
 final class StatusItemController: NSObject {
     private let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
-    private let toggleIsland: () -> Void
     private let openSettings: () -> Void
     private let checkForUpdates: () -> Void
 
-    init(toggleIsland: @escaping () -> Void, openSettings: @escaping () -> Void, checkForUpdates: @escaping () -> Void) {
-        self.toggleIsland = toggleIsland
+    init(openSettings: @escaping () -> Void, checkForUpdates: @escaping () -> Void) {
         self.openSettings = openSettings
         self.checkForUpdates = checkForUpdates
         super.init()
@@ -21,7 +19,6 @@ final class StatusItemController: NSObject {
 
     private func makeMenu() -> NSMenu {
         let menu = NSMenu()
-        menu.addItem(withTitle: "Rozwiń lub zwiń wyspę", action: #selector(toggle), keyEquivalent: "").target = self
         menu.addItem(withTitle: "Ustawienia…", action: #selector(settings), keyEquivalent: ",").target = self
         menu.addItem(withTitle: "Sprawdź aktualizacje…", action: #selector(updates), keyEquivalent: "").target = self
         if let source = UpdateService.shared.source {
@@ -36,7 +33,6 @@ final class StatusItemController: NSObject {
         return menu
     }
 
-    @objc private func toggle() { toggleIsland() }
     @objc private func settings() { openSettings() }
     @objc private func updates() { checkForUpdates() }
     @objc private func support() { NSWorkspace.shared.open(SupportLink.url) }

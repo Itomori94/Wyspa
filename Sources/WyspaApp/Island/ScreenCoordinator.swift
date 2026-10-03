@@ -36,10 +36,6 @@ final class ScreenCoordinator {
         }) { [weak self] in self?.islands.values.forEach { $0.applyAppearance() } }
     }
 
-    func toggleUnderPointer() {
-        islandUnderPointer()?.send(.toggleRequested)
-    }
-
     /// Skrót globalny: rozwinięcie z klawiaturą (strzałki, pisanie, Enter, Esc).
     func toggleWithKeyboardUnderPointer() {
         islandUnderPointer()?.toggleWithKeyboard()

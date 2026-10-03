@@ -46,7 +46,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         screens.start()
 
         statusItem = StatusItemController(
-            toggleIsland: { screens.toggleUnderPointer() },
             openSettings: { settingsWindow.show() },
             checkForUpdates: { Task { await UpdatePrompt.checkAndShow() } }
         )
