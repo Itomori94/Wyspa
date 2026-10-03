@@ -3,6 +3,9 @@ import SwiftUI
 import WyspaUI
 
 struct MediaExpandedView: View {
+    /// Zapas na rozmycie cienia okładki (≈ 2 × promień + przesunięcie).
+    static let glowMargin: CGFloat = 32
+
     let module: MediaModule
     var metrics: PlayerMetrics = .full
 
@@ -10,7 +13,11 @@ struct MediaExpandedView: View {
         if let nowPlaying = module.nowPlaying {
             HStack(alignment: .center, spacing: metrics.spacing) {
                 ArtworkView(image: module.artwork, size: metrics.artworkSize, cornerRadius: 16 * metrics.artworkSize / 92)
-                    .background(ArtworkGlow(color: module.accent ?? .black, size: metrics.artworkSize))
+                    // Cień w ramie powiększonej o zasięg rozmycia: wygasa w granicach własnej warstwy, zamiast
+                    // kończyć się prostą linią na krawędzi okładki (szkło na ekranie). Układ bez zmian (−margines).
+                    .padding(Self.glowMargin)
+                    .shadow(color: (module.accent ?? .black).opacity(0.45), radius: 14, y: 4)
+                    .padding(-Self.glowMargin)
                 VStack(alignment: .leading, spacing: 8) {
                     TrackInfo(nowPlaying: nowPlaying, module: module)
                     Scrubber(nowPlaying: nowPlaying, accent: module.accent ?? .white, seek: module.seek)
@@ -245,24 +252,3 @@ private struct NothingPlaying: View {
     }
 }
 
-/// Poświata za okładką: rozmyty prostokąt w kolorze okładki, narysowany w ramie większej od okładki o cały zasięg
-/// rozmycia. Zwykły `.shadow` wychodzi poza ramę widoku i na ekranie (szkło) bywał ucinany prostą linią; tu
-/// wygaszenie mieści się w ramie warstwy, a układ się nie zmienia (tło nie zajmuje miejsca).
-struct ArtworkGlow: View {
-    let color: Color
-    let size: CGFloat
-    static let radius: CGFloat = 14
-    /// Zapas ramy na rozmycie: ~2 × promień z każdej strony, plus przesunięcie w dół.
-    static let margin: CGFloat = 32
-
-    var body: some View {
-        RoundedRectangle(cornerRadius: 16 * size / 92, style: .continuous)
-            .fill(color.opacity(0.45))
-            .frame(width: size, height: size)
-            .offset(y: 4)
-            .frame(width: size + 2 * Self.margin, height: size + 2 * Self.margin)
-            .blur(radius: Self.radius)
-            .allowsHitTesting(false)
-            .accessibilityHidden(true)
-    }
-}
