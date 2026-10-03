@@ -214,8 +214,9 @@ APP=$PWD/build/Wyspa.app/Contents
 
 `WyspaUI/SymbolEffects.swift`: `symbolSwapTransition()` (magiczna zamiana symbolu na macOS 15+, np. rysowanie kreski
 przekreślenia), `tapEffect` (bounce / wiggle / rotate na zmianę licznika), `busyEffect` (pulse / variableColor / breathe,
-dopóki trwa) i `EnteringSymbolSwap` (widok powstaje w poprzednim stanie i przechodzi w bieżący — dla nowych aktywności
-wyspy). Wszystko wyłączone przy „Ogranicz ruch”. Szybkie akcje: `TileSpec.make` (symbol, efekty) + stan modułu
+dopóki trwa) i `ToggleSymbol` (zmiana stanu w tym samym miejscu; przy pojawieniu się animuje tylko
+z `animatesAppearance`, np. mikrofon przez 1 s po przełączeniu). Lewe skrzydło wjeżdża z lewej (`SlideInFromLeading`)
+tylko dla nowej aktywności — `IslandView.shownActivityID` pomija ponowne pokazanie tej samej po zwinięciu wyspy. Wszystko wyłączone przy „Ogranicz ruch”. Szybkie akcje: `TileSpec.make` (symbol, efekty) + stan modułu
 `taps` / `busy` / `confirmed`; blokada ekranu czeka 400 ms na animację kłódki.
 
 ## Mikrofon (moduł `WyspaMicrophone`)
@@ -234,8 +235,10 @@ wyspy). Wszystko wyłączone przy „Ogranicz ruch”. Szybkie akcje: `TileSpec.
 - Sprawdzanie: `GET api.github.com/repos/<owner>/<repo>/compare/<commit>...master` (sesja ephemeral, bez tokenu,
   limit GitHuba 60/h) przy włączeniu i potem jedno `Task.sleep` 6 h — zaakceptowany wyjątek od zasady „bez zegarów”,
   działa tylko gdy moduł jest włączony. Status `ahead`/`diverged` = są zmiany (`UpdateCheck.parse`).
+- Logika w `UpdateService.shared` (status wspólny); moduł dodaje harmonogram i kartę, a menu Wyspy ma „Sprawdź
+  aktualizacje…” (`WyspaApp/UpdatePrompt`, okienko `NSAlert` z listą zmian) — działa też przy wyłączonym module.
 - Karta w wyspie (8 s) raz na nowy commit (`announcedCommit` w ustawieniach modułu); lista zmian w ustawieniach.
-- „Zaktualizuj teraz”: `UpdatesModule.prepare` (katalog z `scripts/install.sh`, gałąź `master`, czyste
+- „Zaktualizuj teraz”: `UpdateService.prepare` (katalog z `scripts/install.sh`, gałąź `master`, czyste
   `git status --porcelain`, `git pull --ff-only`), potem `scripts/install.sh` jako proces potomny z wyjściem
   do `~/Library/Logs/Wyspa/aktualizacja.log` — instalator zamyka Wyspę i uruchamia nową wersję.
 

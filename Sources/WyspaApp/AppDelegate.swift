@@ -15,7 +15,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var accessibilityObserver: NSObjectProtocol?
     /// Zmiana aktywnej aplikacji (np. start udostępniania w Zoomie) — moment na sprawdzenie trybu prywatnego.
     private var privacyObserver: NSObjectProtocol?
-    private var showcase: ShowcaseWindowController?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         handleTerminationSignal()
@@ -46,12 +45,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         self.screens = screens
         screens.start()
 
-        let showcase = ShowcaseWindowController()
-        self.showcase = showcase
         statusItem = StatusItemController(
             toggleIsland: { screens.toggleUnderPointer() },
             openSettings: { settingsWindow.show() },
-            openShowcase: { showcase.show() }
+            checkForUpdates: { Task { await UpdatePrompt.checkAndShow() } }
         )
         hotkey = HotkeyController(settings: settings, settingsWindow: settingsWindow) {
             screens.toggleWithKeyboardUnderPointer()
@@ -90,11 +87,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// Adresy `wyspa://` (komenda `wyspa`, Skróty, cron) trafiają do modułu Skrypty.
     func application(_ application: NSApplication, open urls: [URL]) {
         for url in urls {
-            // Pokaz animacji tylko otwiera okno — bez skutków ubocznych, więc może go otworzyć każdy adres.
-            if url.scheme == ScriptCommand.scheme, url.host == ShowcaseWindowController.urlHost {
-                showcase?.show()
-                continue
-            }
             guard let command = ScriptCommand(url: url) else {
                 Log.logger("scripts").error("Nieznany adres wyspa://: \(url.host ?? url.path, privacy: .public)")
                 continue

@@ -1,7 +1,15 @@
 # Teksty w Ustawieniach Wyspy
 
-Spis tekstów widocznych w oknie **Ustawienia Wyspy** (stan na 2 października 2026). Przy zmianie tekstów w kodzie
+Spis tekstów widocznych w oknie **Ustawienia Wyspy** (stan na 3 października 2026). Przy zmianie tekstów w kodzie
 zaktualizuj też ten plik. Karty okna: **Ogólne · Wyspa · Moduły · Układ · Szybkie akcje**.
+
+## Menu Wyspy (ikona w pasku menu)
+
+- „Rozwiń lub zwiń wyspę” · „Ustawienia…” · „Sprawdź aktualizacje…” · „Zakończ Wyspę”
+- Okienka „Sprawdź aktualizacje…”: „Dostępna nowa wersja Wyspy” (… zmian: lista najwyżej 6, „… i … więcej”; „Aktualizacja
+  pobierze zmiany, zbuduje i zainstaluje Wyspę — aplikacja zamknie się i uruchomi ponownie.”; „Zaktualizuj teraz” /
+  „Później”) · „Masz najnowszą wersję Wyspy” („Zainstalowana wersja: …”) · „Nie udało się sprawdzić aktualizacji” ·
+  „Aktualizacja się nie udała” (teksty błędów jak w module Aktualizacje)
 
 ## Ogólne i Wyspa
 

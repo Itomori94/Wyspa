@@ -19,21 +19,22 @@ struct UpdateCard: View {
 
 struct UpdatesSettingsView: View {
     let module: UpdatesModule
+    private var service: UpdateService { module.service }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            if let source = module.source {
+            if let source = service.source {
                 Text("Zainstalowana wersja: \(source.shortCommit)\(source.isDirty ? " (z niezapisanymi zmianami)" : "")")
                     .font(.callout).monospacedDigit()
             }
             statusView
             HStack {
                 Button("Sprawdź teraz") { Task { await module.check() } }
-                    .disabled(module.status == .checking || module.status == .updating)
-                if case .available = module.status {
-                    Button("Zaktualizuj teraz", action: module.update).buttonStyle(.borderedProminent)
+                    .disabled(service.isBusy)
+                if case .available = service.status {
+                    Button("Zaktualizuj teraz", action: service.update).buttonStyle(.borderedProminent)
                 }
-                if let url = module.source?.repository?.webURL {
+                if let url = service.source?.repository?.webURL {
                     Link("GitHub", destination: url)
                 }
             }
@@ -45,7 +46,7 @@ struct UpdatesSettingsView: View {
 
     @ViewBuilder
     private var statusView: some View {
-        switch module.status {
+        switch service.status {
         case .idle: EmptyView()
         case .checking: Label("Sprawdzanie…", systemImage: "hourglass").foregroundStyle(.secondary)
         case .upToDate: Label("Masz najnowszą wersję", systemImage: "checkmark.circle.fill").foregroundStyle(.green)

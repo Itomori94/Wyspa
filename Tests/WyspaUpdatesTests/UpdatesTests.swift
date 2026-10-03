@@ -122,27 +122,27 @@ struct UpdateGuardTests {
 
     @Test("brak katalogu projektu")
     func missingDirectory() {
-        #expect(UpdatesModule.prepare(path: "/nie/ma/takiego")?.contains("Nie ma katalogu projektu") == true)
+        #expect(UpdateService.prepare(path: "/nie/ma/takiego")?.contains("Nie ma katalogu projektu") == true)
     }
 
     @Test("inna gałąź niż master")
     func otherBranch() throws {
         let dir = try makeRepo(branch: "eksperyment")
         defer { try? FileManager.default.removeItem(at: dir) }
-        #expect(UpdatesModule.prepare(path: dir.path)?.contains("eksperyment") == true)
+        #expect(UpdateService.prepare(path: dir.path)?.contains("eksperyment") == true)
     }
 
     @Test("niezapisane zmiany")
     func dirtyTree() throws {
         let dir = try makeRepo(dirty: true)
         defer { try? FileManager.default.removeItem(at: dir) }
-        #expect(UpdatesModule.prepare(path: dir.path)?.contains("niezapisane zmiany") == true)
+        #expect(UpdateService.prepare(path: dir.path)?.contains("niezapisane zmiany") == true)
     }
 
     @Test("czyste repozytorium bez zdalnego: błąd pobierania, nie instalacja")
     func pullFails() throws {
         let dir = try makeRepo()
         defer { try? FileManager.default.removeItem(at: dir) }
-        #expect(UpdatesModule.prepare(path: dir.path)?.contains("git pull") == true)
+        #expect(UpdateService.prepare(path: dir.path)?.contains("git pull") == true)
     }
 }
