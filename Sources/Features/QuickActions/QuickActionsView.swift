@@ -74,9 +74,23 @@ struct TileSpec {
     /// Efekt po najechaniu (domyślnie lekki podskok; słońce się obraca).
     var hoverEffect: TapEffect = .bounce
 
+    /// Stan potrzebny do wyglądu kafelka — z modułu albo symulowany w pokazie animacji.
+    struct State {
+        var isDarkMode = false
+        var desktopIconsVisible = true
+        var isKeepingAwake = false
+        var isDone = false
+    }
+
     @MainActor
     static func make(_ action: QuickActionsModule.Action, module: QuickActionsModule, compact: Bool) -> TileSpec {
-        let done = module.confirmed.contains(action)
+        make(action, state: State(isDarkMode: module.isDarkMode, desktopIconsVisible: module.desktopIconsVisible,
+                                  isKeepingAwake: module.isKeepingAwake, isDone: module.confirmed.contains(action)),
+             compact: compact)
+    }
+
+    static func make(_ action: QuickActionsModule.Action, state: State, compact: Bool) -> TileSpec {
+        let done = state.isDone
         switch action {
         case .capture:
             return TileSpec(symbol: done ? "checkmark.circle.fill" : "camera.viewfinder",
@@ -95,18 +109,18 @@ struct TileSpec {
         case .password:
             return TileSpec(symbol: done ? "checkmark.circle.fill" : "key.fill", title: "Hasło", tint: .yellow, tapEffect: .rotate)
         case .darkMode:
-            return TileSpec(symbol: module.isDarkMode ? "moon.fill" : "sun.max.fill",
-                            title: module.isDarkMode ? "Tryb ciemny" : "Tryb jasny", tint: .indigo, isOn: module.isDarkMode,
-                            hoverEffect: module.isDarkMode ? .bounce : .rotate)
+            return TileSpec(symbol: state.isDarkMode ? "moon.fill" : "sun.max.fill",
+                            title: state.isDarkMode ? "Tryb ciemny" : "Tryb jasny", tint: .indigo, isOn: state.isDarkMode,
+                            hoverEffect: state.isDarkMode ? .bounce : .rotate)
         case .desktopIcons:
-            return TileSpec(symbol: module.desktopIconsVisible ? "eye" : "eye.slash",
-                            title: module.desktopIconsVisible ? "Ukryj biurko" : "Pokaż biurko", tint: .teal,
-                            isOn: !module.desktopIconsVisible)
+            return TileSpec(symbol: state.desktopIconsVisible ? "eye" : "eye.slash",
+                            title: state.desktopIconsVisible ? "Ukryj biurko" : "Pokaż biurko", tint: .teal,
+                            isOn: !state.desktopIconsVisible)
         case .lock:
             return TileSpec(symbol: done ? "lock.fill" : "lock.open.fill", title: compact ? "Blokada" : "Zablokuj ekran", tint: .gray)
         case .keepAwake:
-            return TileSpec(symbol: module.isKeepingAwake ? "cup.and.heat.waves.fill" : "cup.and.saucer",
-                            title: module.isKeepingAwake ? "Nie usypia" : "Nie usypiaj", tint: .orange, isOn: module.isKeepingAwake,
+            return TileSpec(symbol: state.isKeepingAwake ? "cup.and.heat.waves.fill" : "cup.and.saucer",
+                            title: state.isKeepingAwake ? "Nie usypia" : "Nie usypiaj", tint: .orange, isOn: state.isKeepingAwake,
                             busyEffect: .variableColor)
         }
     }
@@ -143,7 +157,7 @@ extension EnvironmentValues {
     }
 }
 
-private struct ActionTile: View {
+struct ActionTile: View {
     let spec: TileSpec
     let compact: Bool
     let tap: Int

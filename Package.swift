@@ -44,7 +44,7 @@ let package = Package(
         ),
         .executableTarget(
             name: "WyspaApp",
-            dependencies: ["WyspaCore", "WyspaUI", "WyspaFeatures", "WyspaNotifications"],
+            dependencies: ["WyspaCore", "WyspaUI", "WyspaFeatures", "WyspaNotifications", "WyspaQuickActions"],
             path: "Sources/WyspaApp"
         ),
         .testTarget(name: "WyspaCoreTests", dependencies: ["WyspaCore"], path: "Tests/WyspaCoreTests"),

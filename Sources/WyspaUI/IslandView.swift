@@ -130,12 +130,14 @@ enum ActivityGeometryID {
 }
 
 /// Nowa aktywność: zawartość lewego skrzydła wjeżdża z lewej do swojego miejsca przy notchu (przycina ją kształt wyspy).
-struct SlideInFromLeading: ViewModifier {
+public struct SlideInFromLeading: ViewModifier {
     static let distance: CGFloat = 28
     @State private var hasAppeared = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
-    func body(content: Content) -> some View {
+    public init() {}
+
+    public func body(content: Content) -> some View {
         content
             .offset(x: hasAppeared || reduceMotion ? 0 : -Self.distance)
             .opacity(hasAppeared || reduceMotion ? 1 : 0)
@@ -143,4 +145,9 @@ struct SlideInFromLeading: ViewModifier {
                 withAnimation(.spring(response: 0.42, dampingFraction: 0.78)) { hasAppeared = true }
             }
     }
+}
+
+public extension View {
+    /// Wjazd z lewej przy pojawieniu się (jak lewe skrzydło nowej aktywności).
+    func slideInFromLeading() -> some View { modifier(SlideInFromLeading()) }
 }

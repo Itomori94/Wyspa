@@ -60,7 +60,8 @@ Przy pierwszym podpisie macOS może zapytać, czy `codesign` może użyć klucza
 - **Przesunięcie w górę** albo zjechanie kursorem: zwija.
 - **Przesunięcie w poziomie** w rozwiniętej wyspie: zmienia zakładkę modułu.
 - **⌃⌥W** (domyślnie, do zmiany w ustawieniach): rozwija lub zwija wyspę na ekranie z kursorem.
-- Ikona w pasku menu: ustawienia i zamknięcie aplikacji.
+- Ikona w pasku menu: ustawienia, **Pokaz animacji…** (wszystkie animacje odgrywane w kółko, bez wykonywania akcji;
+  także adres `wyspa://pokaz-animacji`) i zamknięcie aplikacji.
 
 ### Klawiatura po skrócie
 
