@@ -145,4 +145,15 @@ struct QuickActionsGridTests {
         #expect(QuickActionsView.columnCount(width: 40, compact: true, tiles: 8) == 1)
         #expect(QuickActionsView.columnCount(width: 532, compact: false, tiles: 8) == 4)
     }
+
+    @Test("Wysokość kafelków: wszystkie rzędy mieszczą się w miejscu; niski kafelek zmienia układ")
+    func tileHeight() {
+        // Mała wyspa: ok. 116 pt na dwa rzędy po 4 — kafelki niższe, ale nic nie wystaje.
+        let small = QuickActionsView.tileHeight(available: 116, tiles: 8, columns: 4)
+        #expect(small * 2 + QuickActionsView.spacing <= 116 && small == 54)
+        #expect(QuickActionsView.tileHeight(available: 400, tiles: 8, columns: 4) == QuickActionsView.maxTileHeight)
+        #expect(QuickActionsView.tileHeight(available: 150, tiles: 8, columns: 2) * 4 + 3 * QuickActionsView.spacing <= 150)
+        #expect(ActionTileLayout(height: 60) == .stacked && ActionTileLayout(height: 40) == .inline && ActionTileLayout(height: 20) == .iconOnly)
+        #expect(ActionTileLayout(height: 40, width: 80) == .iconOnly, "wąski i niski kafelek: sama ikona zamiast uciętego napisu")
+    }
 }

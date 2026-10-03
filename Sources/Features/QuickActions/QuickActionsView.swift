@@ -7,17 +7,20 @@ struct QuickActionsView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            // Kratka dopasowana do szerokości: w wąskim widżecie 2 kolumny, w szerszym więcej (najwyżej 4).
+            // Kratka dopasowana do szerokości i wysokości: kolumny z szerokości, a wysokość kafelków z miejsca, które
+            // zostaje — nic nie jest ucinane ani przewijane, przy ciasnym miejscu kafelek przechodzi w niższy układ.
             GeometryReader { proxy in
-                let columns = Self.columnCount(width: proxy.size.width, compact: compact, tiles: module.visibleActions.count)
-                ScrollView {
-                    LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: columns), spacing: 8) {
-                        ForEach(module.visibleActions, id: \.self) { action in
-                            tile(action)
-                        }
+                let tiles = module.visibleActions.count
+                let columns = Self.columnCount(width: proxy.size.width, compact: compact, tiles: tiles)
+                let height = Self.tileHeight(available: proxy.size.height, tiles: tiles, columns: columns)
+                LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: Self.spacing), count: columns),
+                          spacing: Self.spacing) {
+                    ForEach(module.visibleActions, id: \.self) { action in
+                        tile(action).frame(height: height)
                     }
                 }
-                .scrollIndicators(.never)
+                .environment(\.tileLayout, ActionTileLayout(height: height,
+                                                             width: Self.tileWidth(available: proxy.size.width, columns: columns)))
             }
             if let feedback = module.feedback {
                 Text(feedback)
@@ -28,6 +31,21 @@ struct QuickActionsView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .onAppear(perform: module.refreshSystemState)
+    }
+
+    nonisolated static let spacing: CGFloat = 8
+    /// Większych kafelków nie robimy, nawet gdy miejsca jest dużo.
+    nonisolated static let maxTileHeight: CGFloat = 76
+
+    /// Wysokość kafelka, przy której wszystkie rzędy mieszczą się w dostępnej wysokości.
+    nonisolated static func tileHeight(available: CGFloat, tiles: Int, columns: Int) -> CGFloat {
+        let rows = max(1, Int((Double(tiles) / Double(max(columns, 1))).rounded(.up)))
+        let fitting = (available - spacing * CGFloat(rows - 1)) / CGFloat(rows)
+        return max(0, min(maxTileHeight, fitting.rounded(.down)))
+    }
+
+    nonisolated static func tileWidth(available: CGFloat, columns: Int) -> CGFloat {
+        (available - spacing * CGFloat(max(columns, 1) - 1)) / CGFloat(max(columns, 1))
     }
 
     /// Ile kolumn mieści się w danej szerokości (kafelek najmniej 64 pt w widżecie, 110 pt na pełnej stronie).
@@ -74,6 +92,37 @@ struct QuickActionsView: View {
     }
 }
 
+/// Układ kafelka zależny od jego wysokości: ikona nad napisem, ikona obok napisu albo sama ikona.
+enum ActionTileLayout: Equatable {
+    case stacked
+    case inline
+    case iconOnly
+
+    /// Napis obok ikony potrzebuje szerokości; w wąskim kafelku zostaje sama ikona (nazwa w podpowiedzi).
+    static let minimumInlineWidth: CGFloat = 112
+
+    init(height: CGFloat, width: CGFloat = .infinity) {
+        if height >= 54 {
+            self = .stacked
+        } else if height >= 30, width >= Self.minimumInlineWidth {
+            self = .inline
+        } else {
+            self = .iconOnly
+        }
+    }
+}
+
+private struct TileLayoutKey: EnvironmentKey {
+    static let defaultValue = ActionTileLayout.stacked
+}
+
+extension EnvironmentValues {
+    var tileLayout: ActionTileLayout {
+        get { self[TileLayoutKey.self] }
+        set { self[TileLayoutKey.self] = newValue }
+    }
+}
+
 private struct ActionTile: View {
     let symbol: String
     let title: String
@@ -82,22 +131,12 @@ private struct ActionTile: View {
     var isOn = false
     let action: () -> Void
     @State private var isHovered = false
+    @Environment(\.tileLayout) private var layout
 
     var body: some View {
         Button(action: action) {
-            VStack(spacing: compact ? 3 : 6) {
-                Image(systemName: symbol)
-                    .font(.system(size: compact ? 15 : 20, weight: .semibold))
-                    .foregroundStyle(isOn ? .black : tint)
-                    .frame(height: compact ? 18 : 24)
-                Text(title)
-                    .font(.system(size: compact ? 9.5 : 11, weight: .medium))
-                    .foregroundStyle(isOn ? .black : .white.opacity(0.85))
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.8)
-            }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, compact ? 5 : 9)
+            content
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
                     .fill(isOn ? tint : .white.opacity(isHovered ? 0.14 : 0.07))
@@ -105,7 +144,41 @@ private struct ActionTile: View {
         }
         .buttonStyle(IslandPressStyle())
         .onHover { isHovered = $0 }
+        .help(title)
         .accessibilityLabel(title)
+    }
+
+    @ViewBuilder
+    private var content: some View {
+        switch layout {
+        case .stacked:
+            VStack(spacing: compact ? 3 : 6) {
+                icon(size: compact ? 15 : 20)
+                label(size: compact ? 9.5 : 11)
+            }
+        case .inline:
+            HStack(spacing: 6) {
+                icon(size: compact ? 13 : 15)
+                label(size: compact ? 9.5 : 11)
+            }
+            .padding(.horizontal, 6)
+        case .iconOnly:
+            icon(size: compact ? 16 : 18)
+        }
+    }
+
+    private func icon(size: CGFloat) -> some View {
+        Image(systemName: symbol)
+            .font(.system(size: size, weight: .semibold))
+            .foregroundStyle(isOn ? .black : tint)
+    }
+
+    private func label(size: CGFloat) -> some View {
+        Text(title)
+            .font(.system(size: size, weight: .medium))
+            .foregroundStyle(isOn ? .black : .white.opacity(0.85))
+            .lineLimit(1)
+            .minimumScaleFactor(0.75)
     }
 }
 

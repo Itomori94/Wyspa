@@ -366,7 +366,7 @@ struct ScreenshotTests {
     }
 
     private func render(_ name: String, phase: IslandPhase, tab: String? = nil, activity: (String, LiveActivity?)? = nil,
-                        privateMode: Bool = false) async throws {
+                        privateMode: Bool = false, size: IslandSize = .medium) async throws {
         Stage.activity = activity.flatMap { slot, activity in activity.map { (slot, $0) } }
         let settings = SettingsStore(defaults: UserDefaults(suiteName: "wyspa.shots.registry.\(UUID())")!)
         let registry = ModuleRegistry(catalog: Self.catalog, settings: settings, permissions: NoPermissions(), requestExpand: { _ in })
@@ -377,9 +377,9 @@ struct ScreenshotTests {
             settings.privacyMode = .always
             registry.privacy.refresh()
         }
-        let model = IslandViewModel(phase: phase, notch: Self.notch, expandedSize: Self.expandedSize, registry: registry)
+        let model = IslandViewModel(phase: phase, notch: Self.notch, expandedSize: size.expandedSize, registry: registry)
         model.selectedTab = tab.flatMap { tabs[$0] } ?? 0
-        let panel = IslandLayout.panelSize(expanded: Self.expandedSize, notch: Self.notch.size, shadowMargin: 36)
+        let panel = IslandLayout.panelSize(expanded: size.expandedSize, notch: Self.notch.size, shadowMargin: 36)
         let canvas = CGSize(width: panel.width + 80, height: panel.height + 20)
         let view = ZStack(alignment: .top) {
             LinearGradient(colors: [Color(red: 0.36, green: 0.22, blue: 0.62), Color(red: 0.12, green: 0.32, blue: 0.62)],
