@@ -30,6 +30,8 @@ final class StatusItemController: NSObject {
             version.isEnabled = false
         }
         menu.addItem(.separator())
+        menu.addItem(withTitle: SupportLink.title, action: #selector(support), keyEquivalent: "").target = self
+        menu.addItem(.separator())
         menu.addItem(withTitle: "Zakończ Wyspę", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
         return menu
     }
@@ -37,4 +39,5 @@ final class StatusItemController: NSObject {
     @objc private func toggle() { toggleIsland() }
     @objc private func settings() { openSettings() }
     @objc private func updates() { checkForUpdates() }
+    @objc private func support() { NSWorkspace.shared.open(SupportLink.url) }
 }

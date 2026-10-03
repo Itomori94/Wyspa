@@ -143,6 +143,13 @@ private struct IslandSettingsView: View {
                 Text("Przy udostępnianiu albo nagrywaniu ekranu (Zoom, Teams, Meet, nagranie) wyspa od razu chowa treść modułów osobistych.")
                     .font(.caption).foregroundStyle(.secondary)
             }
+            Section("Wsparcie") {
+                Link(destination: SupportLink.url) {
+                    Label("Wesprzyj autora na Suppi", systemImage: "heart.fill")
+                }
+                Text("Wyspa jest darmowa i open source. Jeśli się przydaje, możesz postawić autorowi kawę.")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
         }
         .formStyle(.grouped)
     }

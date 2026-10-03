@@ -5,7 +5,7 @@ zaktualizuj też ten plik. Karty okna: **Ogólne · Wyspa · Moduły · Układ �
 
 ## Menu Wyspy (ikona w pasku menu)
 
-- „Rozwiń lub zwiń wyspę” · „Ustawienia…” · „Sprawdź aktualizacje…” · „Wersja …” (nieaktywna, zainstalowany commit) · „Zakończ Wyspę”
+- „Rozwiń lub zwiń wyspę” · „Ustawienia…” · „Sprawdź aktualizacje…” · „Wersja …” (nieaktywna, zainstalowany commit) · „Wesprzyj autora…” (otwiera suppi.pl/itomori94) · „Zakończ Wyspę”
 - Okienka „Sprawdź aktualizacje…”: „Dostępna nowa wersja Wyspy” (… zmian: lista najwyżej 6, „… i … więcej”; „Aktualizacja
   pobierze zmiany, zbuduje i zainstaluje Wyspę — aplikacja zamknie się i uruchomi ponownie.”; „Zaktualizuj teraz” /
   „Później”) · „Masz najnowszą wersję Wyspy” („Zainstalowana wersja: …”) · „Nie udało się sprawdzić aktualizacji” ·
@@ -36,6 +36,7 @@ zaktualizuj też ten plik. Karty okna: **Ogólne · Wyspa · Moduły · Układ �
     przestał działać, Wyspa stuknie delikatnie.”
 - **Tryb prywatny**: „Ukrywaj powiadomienia, schowek i odpowiedzi Claude”: Przy udostępnianiu i nagrywaniu ekranu / Zawsze / Nigdy
   - „Przy udostępnianiu albo nagrywaniu ekranu (Zoom, Teams, Meet, nagranie) karty pokazują tylko nazwę aplikacji.”
+- **Wsparcie**: „Wesprzyj autora na Suppi” (link) · „Wyspa jest darmowa i open source. Jeśli się przydaje, możesz postawić autorowi kawę.”
 
 ## Moduły
 
