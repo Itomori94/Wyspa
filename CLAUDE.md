@@ -43,7 +43,7 @@ binarka ma `minos 14.0` dla obu architektur (sprawdź: `vtool -arch x86_64 -show
   Każda zmiana zachowania wyspy = nowy przypadek w reducerze + test.
 - **Zdarzenia bez timerów**: panel ma stały rozmiar (największy stan + cień). Przezroczyste piksele przepuszczają
   kliknięcia (okno `isOpaque = false`). `IslandContainerView` śledzi kursor `NSTrackingArea` tylko nad wyspą
-  i zwraca nil z `hitTest` poza nią. Brak globalnych monitorów myszy.
+  i zwraca nil z `hitTest` poza nią. Globalny monitor myszy tylko na czas schowanych skrzydeł (niżej).
   Ukryta wyspa (wirtualny notch bez aktywności) ma alfę 0.01, żeby okno wciąż dostawało najechanie.
 - **Skrzydła ustępują ikonom paska menu** (`settings.wingsYield`, domyślnie wł.): `mouseEntered` nad skrzydłem
   zwiniętej wyspy bez karty (`WingYield.isOverWing`, poza notchem w poziomie) nie wysyła `pointerEntered`, tylko
