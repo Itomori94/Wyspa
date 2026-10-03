@@ -1,4 +1,5 @@
 import AppKit
+import WyspaUpdates
 
 /// Ikona w pasku menu: jedyne stałe wejście do aplikacji typu agent.
 @MainActor
@@ -23,6 +24,11 @@ final class StatusItemController: NSObject {
         menu.addItem(withTitle: "Rozwiń lub zwiń wyspę", action: #selector(toggle), keyEquivalent: "").target = self
         menu.addItem(withTitle: "Ustawienia…", action: #selector(settings), keyEquivalent: ",").target = self
         menu.addItem(withTitle: "Sprawdź aktualizacje…", action: #selector(updates), keyEquivalent: "").target = self
+        if let source = UpdateService.shared.source {
+            // Zainstalowana wersja (commit) — po aktualizacji widać, że się zmieniła.
+            let version = menu.addItem(withTitle: "Wersja \(source.shortCommit)", action: nil, keyEquivalent: "")
+            version.isEnabled = false
+        }
         menu.addItem(.separator())
         menu.addItem(withTitle: "Zakończ Wyspę", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
         return menu

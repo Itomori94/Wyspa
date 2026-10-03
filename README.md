@@ -60,8 +60,8 @@ Przy pierwszym podpisie macOS może zapytać, czy `codesign` może użyć klucza
 - **Przesunięcie w górę** albo zjechanie kursorem: zwija.
 - **Przesunięcie w poziomie** w rozwiniętej wyspie: zmienia zakładkę modułu.
 - **⌃⌥W** (domyślnie, do zmiany w ustawieniach): rozwija lub zwija wyspę na ekranie z kursorem.
-- Ikona w pasku menu: ustawienia, **Sprawdź aktualizacje…** (działa także przy wyłączonym module Aktualizacje)
-  i zamknięcie aplikacji.
+- Ikona w pasku menu: ustawienia, **Sprawdź aktualizacje…** (działa także przy wyłączonym module Aktualizacje),
+  numer zainstalowanej wersji i zamknięcie aplikacji.
 
 ### Klawiatura po skrócie
 
