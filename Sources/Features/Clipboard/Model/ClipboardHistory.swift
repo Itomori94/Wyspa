@@ -48,6 +48,14 @@ public struct ClipboardEntry: Equatable, Identifiable, Sendable {
         ClipboardEntry(id: id, content: content, copiedAt: copiedAt, sourceBundleID: sourceBundleID, isPinned: pinned)
     }
 
+    /// Treść gotowa do skopiowania: pliki bez tych, których już nie ma (np. kopia „Tekst.txt” usuniętego elementu Półki).
+    /// `nil`, gdy nie został żaden plik — wklejenie samych martwych odnośników daje „Nie można otworzyć aliasu”.
+    public func availableContent(fileExists: (URL) -> Bool) -> Content? {
+        guard case .files(let urls) = content else { return content }
+        let existing = urls.filter(fileExists)
+        return existing.isEmpty ? nil : .files(existing)
+    }
+
     /// Tekst do wyszukiwania i podglądu.
     public var searchableText: String {
         switch content {

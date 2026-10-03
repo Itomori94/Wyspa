@@ -69,16 +69,29 @@ private struct ClipboardRow: View {
     let remove: () -> Void
     @State private var isHovered = false
 
+    /// Wszystkie pliki z wpisu zniknęły z dysku (np. usunięty element Półki) — kliknięcie usunie wpis.
+    private var isMissing: Bool {
+        entry.availableContent(fileExists: { FileManager.default.fileExists(atPath: $0.path) }) == nil
+    }
+
     var body: some View {
         HStack(spacing: 8) {
-            preview
+            preview.opacity(isMissing ? 0.4 : 1)
             VStack(alignment: .leading, spacing: 1) {
                 Text(entry.searchableText)
                     .font(.system(size: 12))
                     .lineLimit(1)
-                Text(entry.copiedAt, format: .relative(presentation: .named))
-                    .font(.system(size: 9.5))
-                    .foregroundStyle(.white.opacity(0.4))
+                    .strikethrough(isMissing)
+                    .foregroundStyle(isMissing ? Color.white.opacity(0.5) : Color.white)
+                if isMissing {
+                    Text("Pliku już nie ma")
+                        .font(.system(size: 9.5))
+                        .foregroundStyle(.orange.opacity(0.8))
+                } else {
+                    Text(entry.copiedAt, format: .relative(presentation: .named))
+                        .font(.system(size: 9.5))
+                        .foregroundStyle(.white.opacity(0.4))
+                }
             }
             Spacer(minLength: 4)
             if isHovered || entry.isPinned {
@@ -100,7 +113,8 @@ private struct ClipboardRow: View {
         .contentShape(Rectangle())
         .onHover { isHovered = $0 }
         .onTapGesture(perform: choose)
-        .help(pastes ? "Kliknij, żeby wkleić do aktywnej aplikacji" : "Kliknij, żeby skopiować ponownie")
+        .help(isMissing ? "Pliku już nie ma — kliknij, żeby usunąć wpis"
+              : pastes ? "Kliknij, żeby wkleić do aktywnej aplikacji" : "Kliknij, żeby skopiować ponownie")
     }
 
     @ViewBuilder
