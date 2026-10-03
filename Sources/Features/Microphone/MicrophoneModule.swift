@@ -21,6 +21,7 @@ public final class MicrophoneModule: IslandModule {
     /// Ważniejsze niż odtwarzanie i najbliższe spotkanie (wyciszenie liczy się w trakcie rozmowy), mniej ważne niż timer.
     static let wingWidth: CGFloat = 80
     static let mutedPriority = ActivityPriority(52)
+    static let toggleAnimationWindow: TimeInterval = 1
     static let toggleFeedback: Duration = .milliseconds(1500)
     private static let shortcutKey = "shortcut"
     private static let volumesKey = "restoreVolumes"
@@ -31,6 +32,7 @@ public final class MicrophoneModule: IslandModule {
     /// Krótki komunikat po przełączeniu („Mikrofon wyciszony”) — także przy niewyciszonym mikrofonie.
     public var feedback: String? { message.text }
 
+    @ObservationIgnored private var mutedChangedAt: Date?
     @ObservationIgnored private let context: ModuleContext
     @ObservationIgnored private var control: MicrophoneControl?
     @ObservationIgnored private var hotkey: GlobalHotkey?
@@ -64,7 +66,7 @@ public final class MicrophoneModule: IslandModule {
         guard feedback != nil || muted else { return nil }
         let priority = feedback != nil ? ActivityPriority.alert : Self.mutedPriority
         return LiveActivity(id: "microphone", priority: priority, accent: muted ? .red : .green, wingWidth: Self.wingWidth) {
-            ToggleSymbol(on: "mic.slash.fill", off: "mic.fill", isOn: muted)
+            ToggleSymbol(on: "mic.slash.fill", off: "mic.fill", isOn: muted, animatesAppearance: justToggled)
                 .font(.system(size: 13, weight: .semibold))
                 .foregroundStyle(muted ? .red : .green)
         } trailing: {
@@ -106,7 +108,14 @@ public final class MicrophoneModule: IslandModule {
     }
 
     private func refresh() {
+        let previous = reading
         reading = control?.reading
+        if let previous, previous.isMuted != reading?.isMuted { mutedChangedAt = Date() }
+    }
+
+    /// Wyciszenie zmieniło się przed chwilą — tylko wtedy ikona rysuje albo zmazuje kreskę przy pojawieniu się.
+    private var justToggled: Bool {
+        mutedChangedAt.map { Date().timeIntervalSince($0) < Self.toggleAnimationWindow } ?? false
     }
 
     private func show(_ text: String) {

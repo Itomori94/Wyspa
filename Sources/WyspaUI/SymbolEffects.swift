@@ -91,18 +91,20 @@ private struct BusyEffectModifier: ViewModifier {
     }
 }
 
-/// Symbol z dwoma stanami (np. mikrofon / przekreślony mikrofon), który zawsze animuje zmianę: przy pojawieniu się
-/// startuje z przeciwnego stanu, a każda późniejsza zmiana `isOn` przechodzi płynnie w tym samym miejscu.
+/// Symbol z dwoma stanami (np. mikrofon / przekreślony mikrofon): zmiana `isOn` przechodzi płynnie w tym samym miejscu.
+/// Przy pojawieniu się animuje tylko z `animatesAppearance` (widok powstał razem ze zmianą stanu, np. po wyciszeniu);
+/// zwykłe ponowne pokazanie wyspy pokazuje od razu bieżący stan.
 public struct ToggleSymbol: View {
     let on: String
     let off: String
     let isOn: Bool
     @State private var shown: Bool?
 
-    public init(on: String, off: String, isOn: Bool) {
+    public init(on: String, off: String, isOn: Bool, animatesAppearance: Bool = false) {
         self.on = on
         self.off = off
         self.isOn = isOn
+        _shown = State(initialValue: animatesAppearance ? nil : isOn)
     }
 
     public var body: some View {

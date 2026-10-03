@@ -10,6 +10,8 @@ public struct IslandView: View {
 
     @Bindable var model: IslandViewModel
     @Namespace private var namespace
+    /// Ostatnio pokazana aktywność — ta sama po rozwinięciu i zwinięciu wyspy nie wjeżdża ponownie.
+    @State private var shownActivityID: String?
 
     public init(model: IslandViewModel) {
         self.model = model
@@ -35,6 +37,7 @@ public struct IslandView: View {
                 .clipShape(IslandShape(topRadius: topRadius, bottomRadius: bottomRadius))
         }
         .frame(width: size.width, height: size.height)
+        .onChange(of: model.activity?.id, initial: true) { _, id in shownActivityID = id }
         .backgroundPreferenceValue(DropZoneKey.self) { anchors in
             GeometryReader { proxy in
                 let frames = anchors.mapValues { proxy[$0] }
@@ -74,7 +77,8 @@ public struct IslandView: View {
         case .collapsed, .peek:
             if let activity = model.activity {
                 VStack(spacing: 0) {
-                    CollapsedActivityView(activity: activity, notchWidth: model.notch.size.width, namespace: namespace)
+                    CollapsedActivityView(activity: activity, notchWidth: model.notch.size.width, namespace: namespace,
+                                          slidesIn: activity.id != shownActivityID)
                         .frame(height: model.notch.size.height)
                     if let detail = activity.detail {
                         detail
@@ -105,12 +109,14 @@ struct CollapsedActivityView: View {
     let activity: LiveActivity
     let notchWidth: CGFloat
     let namespace: Namespace.ID
+    /// Wjazd lewego skrzydła tylko dla nowej aktywności, nie przy każdym ponownym pokazaniu tej samej.
+    var slidesIn = true
 
     var body: some View {
         HStack(spacing: 0) {
             activity.leading
                 .matchedGeometryEffect(id: ActivityGeometryID.leading(activity), in: namespace)
-                .modifier(SlideInFromLeading())
+                .modifier(SlideInFromLeading(isEnabled: slidesIn))
                 .frame(maxWidth: .infinity)
             Color.clear.frame(width: notchWidth)
             activity.trailing
@@ -132,16 +138,20 @@ enum ActivityGeometryID {
 /// Nowa aktywność: zawartość lewego skrzydła wjeżdża z lewej do swojego miejsca przy notchu (przycina ją kształt wyspy).
 public struct SlideInFromLeading: ViewModifier {
     static let distance: CGFloat = 28
-    @State private var hasAppeared = false
+    /// Wyłączony wjazd = treść od razu na miejscu (ta sama aktywność pokazana ponownie, np. po zwinięciu wyspy).
+    @State private var hasAppeared: Bool
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
-    public init() {}
+    public init(isEnabled: Bool = true) {
+        _hasAppeared = State(initialValue: !isEnabled)
+    }
 
     public func body(content: Content) -> some View {
         content
             .offset(x: hasAppeared || reduceMotion ? 0 : -Self.distance)
             .opacity(hasAppeared || reduceMotion ? 1 : 0)
             .onAppear {
+                guard !hasAppeared else { return }
                 withAnimation(.spring(response: 0.42, dampingFraction: 0.78)) { hasAppeared = true }
             }
     }
