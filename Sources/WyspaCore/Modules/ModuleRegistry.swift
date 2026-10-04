@@ -228,6 +228,24 @@ public final class ModuleRegistry {
         return gated(view, of: module, compact: false)
     }
 
+    /// Kolor tła rozwiniętej wyspy: tylko pełny widok modułu (strona albo widok doraźny), nigdy strona z widżetami
+    /// ani moduł zasłonięty w trybie prywatnym.
+    public func islandTint(standaloneModuleID: String?, pageIndex: Int) -> Color? {
+        let moduleID: String?
+        if let standaloneModuleID {
+            moduleID = standaloneModuleID
+        } else {
+            // Ten sam wybór strony co w rozwiniętej wyspie (indeks poza zakresem = ostatnia strona).
+            let pages = pages
+            guard !pages.isEmpty else { return nil }
+            let page = pages[min(max(pageIndex, 0), pages.count - 1)]
+            guard case .module = page.content else { return nil }
+            moduleID = page.moduleIDs.first
+        }
+        guard let moduleID, !isMasked(moduleID) else { return nil }
+        return instances[moduleID]?.islandTint
+    }
+
     /// Strona modułu: najpierw jego pełny widok, potem strona z jego widżetem.
     public func pageIndex(for moduleID: String) -> Int? {
         let pages = pages

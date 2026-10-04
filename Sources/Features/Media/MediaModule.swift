@@ -23,11 +23,14 @@ public final class MediaModule: IslandModule {
 
     private static let preferenceKey = "sourcePreference"
     private static let scopeKey = "scope"
+    private static let tintKey = "tintsIsland"
 
     public private(set) var nowPlaying: NowPlaying?
     public private(set) var status: SourceStatus = .starting
     public private(set) var artwork: NSImage?
     public private(set) var accent: Color?
+    /// Przyciemniony kolor okładki na tło rozwiniętej wyspy (jak odtwarzacz w Apple Music).
+    public private(set) var artworkBackground: Color?
     /// Głośniki AirPlay Muzyki; odczytywane na żądanie (otwarcie odtwarzacza, zmiana wyboru), bez odpytywania.
     public private(set) var airPlayDevices: [AirPlayDevice] = []
 
@@ -51,6 +54,11 @@ public final class MediaModule: IslandModule {
                 publish(latestUpdate)
             }
         }
+    }
+
+    /// Tło rozwiniętej wyspy w kolorze okładki (domyślnie włączone).
+    public var tintsIsland: Bool {
+        didSet { context.settings.set(tintsIsland, for: Self.tintKey) }
     }
 
     @ObservationIgnored private let context: ModuleContext
@@ -77,6 +85,7 @@ public final class MediaModule: IslandModule {
         self.context = context
         self.preference = context.settings.value(Self.preferenceKey, default: MediaSourcePreference.automatic)
         self.scope = context.settings.value(Self.scopeKey, default: MediaScope.system)
+        self.tintsIsland = context.settings.value(Self.tintKey, default: true)
     }
 
     public func activate() async throws {
@@ -91,6 +100,7 @@ public final class MediaModule: IslandModule {
         latestUpdate = nil
         artwork = nil
         accent = nil
+        artworkBackground = nil
         artworkData = nil
         backgroundTasks.values.forEach { $0.cancel() }
         backgroundTasks = [:]
@@ -122,6 +132,11 @@ public final class MediaModule: IslandModule {
 
     public func makeExpandedView() -> AnyView? {
         AnyView(MediaExpandedView(module: self))
+    }
+
+    public var islandTint: Color? {
+        guard tintsIsland, nowPlaying != nil else { return nil }
+        return artworkBackground
     }
 
     public func makeSettingsView() -> AnyView? {
@@ -302,13 +317,13 @@ public final class MediaModule: IslandModule {
         guard let data, let image = NSImage(data: data) else {
             artwork = nil
             accent = nil
+            artworkBackground = nil
             return
         }
         artwork = image
-        let cgImage = image.cgImage(forProposedRect: nil, context: nil, hints: nil)
-        accent = cgImage
-            .flatMap { ArtworkPalette.accent(from: ArtworkPalette.samplePixels(of: $0)) }
-            .map { Color(red: $0.red, green: $0.green, blue: $0.blue) }
+        let pixels = image.cgImage(forProposedRect: nil, context: nil, hints: nil).map { ArtworkPalette.samplePixels(of: $0) } ?? []
+        accent = ArtworkPalette.accent(from: pixels).map { Color($0) }
+        artworkBackground = ArtworkPalette.background(from: pixels).map { Color($0) }
     }
 }
 

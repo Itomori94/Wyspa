@@ -104,6 +104,11 @@ binarka ma `minos 14.0` dla obu architektur (sprawdź: `vtool -arch x86_64 -show
 - **Bez odpytywania**: adapter `stream --no-diff --micros --debounce=100` wysyła dane tylko przy zmianach;
   AppleScript odświeża się po powiadomieniach rozproszonych `com.apple.Music.playerInfo` / `com.spotify.client.PlaybackStateChanged`.
   Pozycja odtwarzania jest liczona lokalnie z `elapsedTime + (teraz − timestamp) × playbackRate`.
+- **Kolor wyspy z okładki** (`tintsIsland`, domyślnie wł., przełącznik w ustawieniach modułu): `ArtworkPalette.background`
+  = odcień akcentu przyciemniony do jasności 0,4 → `IslandModule.islandTint`. `ModuleRegistry.islandTint` podaje go tylko
+  dla pełnego widoku modułu (strona albo widok doraźny), nigdy dla strony z widżetami ani modułu zasłoniętego w trybie
+  prywatnym; `IslandBackground` rysuje gradient (55% u góry → 100% u dołu, w szkle × `glassTint`) tylko w rozwiniętej
+  wyspie. Okładka czarno-biała = brak koloru.
 - **Wizualizer**: `CALayer` + `CABasicAnimation` (animacje w serwerze okien, nie na głównym wątku); wyłączony przy „Ogranicz ruch”.
   To wizualizacja rytmu, nie analiza audio.
 

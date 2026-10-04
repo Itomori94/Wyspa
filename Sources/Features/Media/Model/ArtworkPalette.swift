@@ -1,5 +1,6 @@
 import CoreGraphics
 import Foundation
+import SwiftUI
 
 public struct RGB: Equatable, Sendable {
     public let red: Double
@@ -32,15 +33,34 @@ public struct RGB: Equatable, Sendable {
     }
 }
 
-/// Kolor akcentu z okładki: najliczniejszy odcień wśród żywych pikseli, rozjaśniony do czytelności na czerni.
+extension Color {
+    init(_ rgb: RGB) {
+        self.init(red: rgb.red, green: rgb.green, blue: rgb.blue)
+    }
+}
+
+/// Kolory z okładki: najliczniejszy odcień wśród żywych pikseli — rozjaśniony jako akcent (czytelny na czerni)
+/// i przyciemniony jako tło rozwiniętej wyspy (jak odtwarzacz w Apple Music; biały tekst zostaje czytelny).
 public enum ArtworkPalette {
     static let hueBuckets = 12
     static let minimumSaturation = 0.25
     static let minimumBrightness = 0.2
     /// Akcent ma być czytelny na czarnym tle wyspy.
     static let targetBrightness = 0.85
+    /// Jasność tła: na tyle ciemne, żeby biały tekst i ikony były czytelne.
+    static let backgroundBrightness = 0.4
 
     public static func accent(from pixels: [RGB]) -> RGB? {
+        dominant(in: pixels).map(brightened)
+    }
+
+    /// Kolor tła wyspy z okładki; nil dla okładek bez wyraźnego koloru (wyspa zostaje czarna).
+    public static func background(from pixels: [RGB]) -> RGB? {
+        dominant(in: pixels).map(shaded)
+    }
+
+    /// Średni kolor najliczniejszego odcienia wśród żywych pikseli.
+    static func dominant(in pixels: [RGB]) -> RGB? {
         let vivid = pixels.filter { $0.saturation >= minimumSaturation && $0.maxComponent >= minimumBrightness }
         guard !vivid.isEmpty else { return nil }
 
@@ -58,13 +78,21 @@ public enum ArtworkPalette {
             green: members.map(\.green).reduce(0, +) / count,
             blue: members.map(\.blue).reduce(0, +) / count
         )
-        return brightened(average)
+        return average
     }
 
     static func brightened(_ color: RGB) -> RGB {
         let peak = color.maxComponent
         guard peak > 0, peak < targetBrightness else { return color }
         let scale = targetBrightness / peak
+        return RGB(red: color.red * scale, green: color.green * scale, blue: color.blue * scale)
+    }
+
+    /// Ten sam odcień z jasnością `backgroundBrightness` (przyciemniony albo rozjaśniony).
+    static func shaded(_ color: RGB) -> RGB {
+        let peak = color.maxComponent
+        guard peak > 0 else { return color }
+        let scale = backgroundBrightness / peak
         return RGB(red: color.red * scale, green: color.green * scale, blue: color.blue * scale)
     }
 

@@ -16,6 +16,11 @@ struct MediaSettingsView: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
+            Toggle("Kolor wyspy z okładki", isOn: $module.tintsIsland)
+                .padding(.top, 4)
+            Text("Rozwinięty odtwarzacz przyjmuje przyciemniony kolor okładki, jak w Apple Music.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
             // Źródło danych wybiera się samo (adapter, a awaryjnie AppleScript); komunikat tylko, gdy nic nie działa.
             if case .failed(let message) = module.status {
                 Label(message, systemImage: "exclamationmark.triangle.fill")

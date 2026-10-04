@@ -190,6 +190,8 @@ public protocol IslandModule: AnyObject, Observable {
     func makeSettingsView() -> AnyView?
     /// Kompaktowy widżet do strony z kilkoma modułami obok siebie; nil, gdy moduł go nie ma.
     func makeWidgetView() -> AnyView?
+    /// Kolor tła rozwiniętej wyspy, gdy widać pełny widok modułu (np. kolor okładki); nil = tło motywu.
+    var islandTint: Color? { get }
 }
 
 extension IslandModule {
@@ -197,4 +199,5 @@ extension IslandModule {
     public func makeWidgetView() -> AnyView? { nil }
     /// Widok na czas trybu prywatnego (np. bez szczegółów); nil = wyspa pokaże zasłonę z nazwą modułu.
     public func makePrivateView(compact: Bool) -> AnyView? { nil }
+    public var islandTint: Color? { nil }
 }
