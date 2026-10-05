@@ -73,6 +73,17 @@ final class DriftingArtworkView: NSView {
 
     override func layout() {
         super.layout()
+        layoutLayers()
+    }
+
+    /// Rozmiar nadaje SwiftUI ramką widoku — warstwy układamy od razu, nie czekając na przebieg `layout()`
+    /// (bez tego warstwy mogły zostać zerowej wielkości i tło było puste).
+    override func setFrameSize(_ newSize: NSSize) {
+        super.setFrameSize(newSize)
+        layoutLayers()
+    }
+
+    private func layoutLayers() {
         let diagonal = hypot(bounds.width, bounds.height)
         let center = CGPoint(x: bounds.midX, y: bounds.midY)
         CATransaction.begin()

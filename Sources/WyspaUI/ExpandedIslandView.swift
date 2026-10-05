@@ -204,7 +204,7 @@ public struct WidgetRow: View {
                                 .frame(width: gap)
                         }
                     }
-                    widgetView(widget.content, width: unit * CGFloat(widget.width.units),
+                    widgetView(widget.content, backdrop: widget.backdrop, width: unit * CGFloat(widget.width.units),
                                isFirst: index == 0, isLast: index == widgets.count - 1)
                 }
                 Spacer(minLength: 0)
@@ -213,12 +213,21 @@ public struct WidgetRow: View {
     }
 
     @ViewBuilder
-    private func widgetView(_ content: AnyView, width: CGFloat, isFirst: Bool, isLast: Bool) -> some View {
+    private func widgetView(_ content: AnyView, backdrop: IslandBackdrop?, width: CGFloat, isFirst: Bool,
+                            isLast: Bool) -> some View {
         if theme == .blackSheet {
             content
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
                 .clipped()
                 .modifier(WidgetCard())
+                .background { WidgetBackdrop(backdrop: backdrop) }
+                .frame(width: width)
+        } else if backdrop != nil {
+            // Widżet z tłem (np. rozmyta okładka): na własnej karcie, jak w Czarnej tafli.
+            content
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                .padding(WidgetCard.padding)
+                .background { WidgetBackdrop(backdrop: backdrop) }
                 .frame(width: width)
         } else {
             content
@@ -233,6 +242,23 @@ public struct WidgetRow: View {
 
     /// Ile poświaty może wyjść poza widżet (cień okładki: promień 14 + przesunięcie 4).
     static let glowRoom: CGFloat = 20
+}
+
+/// Tło widżetu na karcie o zaokrąglonych rogach, z przenikaniem przy zmianie (np. nowy utwór).
+private struct WidgetBackdrop: View {
+    let backdrop: IslandBackdrop?
+
+    var body: some View {
+        ZStack {
+            if let backdrop {
+                BackdropLayer(backdrop: backdrop)
+                    .id(backdrop.id)
+                    .transition(.opacity)
+            }
+        }
+        .clipShape(RoundedRectangle(cornerRadius: WidgetCard.cornerRadius, style: .continuous))
+        .animation(.easeInOut(duration: 0.5), value: backdrop?.id)
+    }
 }
 
 /// Prostokąt powiększony o zapas z każdej strony — do przycinania z miejscem na cienie.
