@@ -131,7 +131,8 @@ struct ArtworkBackdropTests {
         ))
         context.setFillColor(CGColor(srgbRed: 0.9, green: 0.2, blue: 0.1, alpha: 1))
         context.fill(CGRect(x: 0, y: 0, width: 600, height: 300))
-        let blurred = try #require(ArtworkBackdrop.blurred(try #require(context.makeImage())))
+        let image = try #require(context.makeImage())
+        let blurred = try #require(ArtworkBackdrop.blurred(image))
         #expect(CGFloat(blurred.width) <= ArtworkBackdrop.side + 1)
         #expect(blurred.width > blurred.height)
     }
