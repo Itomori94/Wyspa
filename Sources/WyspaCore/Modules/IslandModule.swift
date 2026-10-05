@@ -138,6 +138,22 @@ public struct LiveActivity {
     }
 }
 
+/// Tło rozwiniętej wyspy podane przez moduł: obraz (np. rozmyta okładka) albo kolor.
+/// Zmiana `id` przenika jedno tło w drugie (np. przy zmianie utworu).
+public struct IslandBackdrop: Equatable, @unchecked Sendable {
+    public let id: String
+    public let image: CGImage?
+    public let color: Color?
+
+    public init(id: String, image: CGImage? = nil, color: Color? = nil) {
+        self.id = id
+        self.image = image
+        self.color = color
+    }
+
+    public static func == (lhs: IslandBackdrop, rhs: IslandBackdrop) -> Bool { lhs.id == rhs.id }
+}
+
 /// Usługi wyspy udostępniane modułom.
 @MainActor
 public struct ModuleContext {
@@ -190,8 +206,8 @@ public protocol IslandModule: AnyObject, Observable {
     func makeSettingsView() -> AnyView?
     /// Kompaktowy widżet do strony z kilkoma modułami obok siebie; nil, gdy moduł go nie ma.
     func makeWidgetView() -> AnyView?
-    /// Kolor tła rozwiniętej wyspy, gdy widać pełny widok modułu (np. kolor okładki); nil = tło motywu.
-    var islandTint: Color? { get }
+    /// Tło rozwiniętej wyspy, gdy widać pełny widok modułu (np. rozmyta okładka); nil = tło motywu.
+    var islandBackdrop: IslandBackdrop? { get }
 }
 
 extension IslandModule {
@@ -199,5 +215,5 @@ extension IslandModule {
     public func makeWidgetView() -> AnyView? { nil }
     /// Widok na czas trybu prywatnego (np. bez szczegółów); nil = wyspa pokaże zasłonę z nazwą modułu.
     public func makePrivateView(compact: Bool) -> AnyView? { nil }
-    public var islandTint: Color? { nil }
+    public var islandBackdrop: IslandBackdrop? { nil }
 }

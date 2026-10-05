@@ -23,14 +23,20 @@ public final class MediaModule: IslandModule {
 
     private static let preferenceKey = "sourcePreference"
     private static let scopeKey = "scope"
-    private static let tintKey = "tintsIsland"
+    /// Dawny przełącznik „Kolor wyspy z okładki” — tylko do odczytu przy pierwszym starcie z nowym ustawieniem.
+    private static let legacyTintKey = "tintsIsland"
+    private static let backdropKey = "backdrop"
 
     public private(set) var nowPlaying: NowPlaying?
     public private(set) var status: SourceStatus = .starting
     public private(set) var artwork: NSImage?
     public private(set) var accent: Color?
-    /// Przyciemniony kolor okładki na tło rozwiniętej wyspy (jak odtwarzacz w Apple Music).
+    /// Przyciemniony kolor okładki na tło rozwiniętej wyspy.
     public private(set) var artworkBackground: Color?
+    /// Rozmyta okładka na tło rozwiniętej wyspy (jak odtwarzacz w Apple Music).
+    @ObservationIgnored private var blurredArtwork: CGImage?
+    /// Zmienia się z każdą okładką: wyspa przenika wtedy stare tło w nowe.
+    private var artworkGeneration = 0
     /// Głośniki AirPlay Muzyki; odczytywane na żądanie (otwarcie odtwarzacza, zmiana wyboru), bez odpytywania.
     public private(set) var airPlayDevices: [AirPlayDevice] = []
 
@@ -56,9 +62,9 @@ public final class MediaModule: IslandModule {
         }
     }
 
-    /// Tło rozwiniętej wyspy w kolorze okładki (domyślnie włączone).
-    public var tintsIsland: Bool {
-        didSet { context.settings.set(tintsIsland, for: Self.tintKey) }
+    /// Tło rozwiniętego odtwarzacza: czarne, w kolorze okładki albo rozmyta okładka (domyślnie).
+    public var backdropStyle: MediaBackdropStyle {
+        didSet { context.settings.set(backdropStyle, for: Self.backdropKey) }
     }
 
     @ObservationIgnored private let context: ModuleContext
@@ -85,7 +91,8 @@ public final class MediaModule: IslandModule {
         self.context = context
         self.preference = context.settings.value(Self.preferenceKey, default: MediaSourcePreference.automatic)
         self.scope = context.settings.value(Self.scopeKey, default: MediaScope.system)
-        self.tintsIsland = context.settings.value(Self.tintKey, default: true)
+        let tinted = context.settings.value(Self.legacyTintKey, default: true)
+        self.backdropStyle = context.settings.value(Self.backdropKey, default: tinted ? .blurred : .black)
     }
 
     public func activate() async throws {
@@ -101,6 +108,7 @@ public final class MediaModule: IslandModule {
         artwork = nil
         accent = nil
         artworkBackground = nil
+        blurredArtwork = nil
         artworkData = nil
         backgroundTasks.values.forEach { $0.cancel() }
         backgroundTasks = [:]
@@ -134,9 +142,19 @@ public final class MediaModule: IslandModule {
         AnyView(MediaExpandedView(module: self))
     }
 
-    public var islandTint: Color? {
-        guard tintsIsland, nowPlaying != nil else { return nil }
-        return artworkBackground
+    public var islandBackdrop: IslandBackdrop? {
+        guard nowPlaying != nil else { return nil }
+        let id = "media.\(backdropStyle.rawValue).\(artworkGeneration)"
+        switch backdropStyle {
+        case .black:
+            return nil
+        case .color:
+            return artworkBackground.map { IslandBackdrop(id: id, color: $0) }
+        case .blurred:
+            // Bez obrazu (np. nieudane rozmycie) zostaje kolor okładki.
+            if let blurredArtwork { return IslandBackdrop(id: id, image: blurredArtwork) }
+            return artworkBackground.map { IslandBackdrop(id: id, color: $0) }
+        }
     }
 
     public func makeSettingsView() -> AnyView? {
@@ -318,12 +336,17 @@ public final class MediaModule: IslandModule {
             artwork = nil
             accent = nil
             artworkBackground = nil
+            blurredArtwork = nil
+            artworkGeneration += 1
             return
         }
         artwork = image
-        let pixels = image.cgImage(forProposedRect: nil, context: nil, hints: nil).map { ArtworkPalette.samplePixels(of: $0) } ?? []
+        let cgImage = image.cgImage(forProposedRect: nil, context: nil, hints: nil)
+        let pixels = cgImage.map { ArtworkPalette.samplePixels(of: $0) } ?? []
         accent = ArtworkPalette.accent(from: pixels).map { Color($0) }
         artworkBackground = ArtworkPalette.background(from: pixels).map { Color($0) }
+        blurredArtwork = cgImage.flatMap(ArtworkBackdrop.blurred)
+        artworkGeneration += 1
     }
 }
 
