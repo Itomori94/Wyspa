@@ -74,16 +74,23 @@ struct IslandBackground: View {
 /// Ciemniej u góry, przy notchu — wyspa łagodnie przechodzi w czarny notch.
 private struct BackdropLayer: View {
     let backdrop: IslandBackdrop
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.islandStaticSnapshot) private var isStaticSnapshot
 
     var body: some View {
         if let image = backdrop.image {
             // Obraz w nakładce na pustym kolorze: `scaledToFill` nie może wtedy poszerzyć wyspy.
             Color.clear
                 .overlay {
-                    Image(decorative: image, scale: 1)
-                        .resizable()
-                        .interpolation(.high)
-                        .scaledToFill()
+                    // „Ogranicz ruch” i zrzuty ekranu: nieruchomy obraz (warstw Core Animation nie widać na zrzucie).
+                    if reduceMotion || isStaticSnapshot {
+                        Image(decorative: image, scale: 1)
+                            .resizable()
+                            .interpolation(.high)
+                            .scaledToFill()
+                    } else {
+                        DriftingArtwork(image: image, isMoving: backdrop.isMoving)
+                    }
                 }
                 .overlay {
                     LinearGradient(colors: [.black.opacity(0.6), .black.opacity(0.3)], startPoint: .top, endPoint: .bottom)

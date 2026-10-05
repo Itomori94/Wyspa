@@ -139,19 +139,24 @@ public struct LiveActivity {
 }
 
 /// Tło rozwiniętej wyspy podane przez moduł: obraz (np. rozmyta okładka) albo kolor.
-/// Zmiana `id` przenika jedno tło w drugie (np. przy zmianie utworu).
+/// Zmiana `id` przenika jedno tło w drugie (np. przy zmianie utworu); `isMoving` = obraz powoli dryfuje
+/// (np. gdy gra muzyka), bez niego stoi w miejscu.
 public struct IslandBackdrop: Equatable, @unchecked Sendable {
     public let id: String
     public let image: CGImage?
     public let color: Color?
+    public let isMoving: Bool
 
-    public init(id: String, image: CGImage? = nil, color: Color? = nil) {
+    public init(id: String, image: CGImage? = nil, color: Color? = nil, isMoving: Bool = false) {
         self.id = id
         self.image = image
         self.color = color
+        self.isMoving = isMoving
     }
 
-    public static func == (lhs: IslandBackdrop, rhs: IslandBackdrop) -> Bool { lhs.id == rhs.id }
+    public static func == (lhs: IslandBackdrop, rhs: IslandBackdrop) -> Bool {
+        lhs.id == rhs.id && lhs.isMoving == rhs.isMoving
+    }
 }
 
 /// Usługi wyspy udostępniane modułom.
