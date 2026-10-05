@@ -87,6 +87,23 @@ struct ArtworkPaletteTests {
         #expect(ArtworkPalette.accent(from: pixels) == nil)
     }
 
+    @Test("Tło wyspy: ten sam odcień co akcent, przyciemniony pod biały tekst")
+    func background() throws {
+        let bright = RGB(red: 0.9, green: 0.3, blue: 0.1)
+        let pixels = Array(repeating: bright, count: 10)
+        let background = try #require(ArtworkPalette.background(from: pixels))
+        let accent = try #require(ArtworkPalette.accent(from: pixels))
+        #expect(abs(background.maxComponent - ArtworkPalette.backgroundBrightness) < 0.0001)
+        #expect(abs(background.hue - accent.hue) < 0.0001)
+        #expect(background.maxComponent < accent.maxComponent)
+    }
+
+    @Test("Okładka czarno-biała zostawia czarną wyspę")
+    func monochromeBackground() {
+        let pixels = [RGB(red: 0, green: 0, blue: 0), RGB(red: 1, green: 1, blue: 1), RGB(red: 0.4, green: 0.4, blue: 0.4)]
+        #expect(ArtworkPalette.background(from: pixels) == nil)
+    }
+
     @Test("Próbkowanie obrazu zwraca siatkę pikseli")
     func sampling() throws {
         let context = try #require(CGContext(

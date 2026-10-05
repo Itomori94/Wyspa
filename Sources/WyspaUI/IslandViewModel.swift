@@ -42,6 +42,12 @@ public final class IslandViewModel {
 
     public var activity: LiveActivity? { registry.currentActivity }
 
+    /// Kolor tła rozwiniętej wyspy podany przez widoczny moduł (np. kolor okładki w odtwarzaczu).
+    public var tint: Color? {
+        guard phase == .expanded else { return nil }
+        return registry.islandTint(standaloneModuleID: standaloneModuleID, pageIndex: selectedTab)
+    }
+
     public var islandSize: CGSize {
         IslandLayout.size(for: phase, notch: notch.size, activityWingWidth: wingsYielded ? nil : activity?.wingWidth,
                           activityDetailHeight: activity?.detail == nil ? nil : activity?.detailHeight, expanded: expandedSize)

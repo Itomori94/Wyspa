@@ -14,6 +14,8 @@ struct IslandBackground: View {
     let theme: IslandTheme
     let isGlass: Bool
     let glassTint: Double
+    /// Kolor modułu pod treścią rozwiniętej wyspy (np. z okładki); nil = sama czerń albo szkło.
+    let tint: Color?
     let isHidden: Bool
     /// Wyspa wychodzi poza notch (rozwinięta albo z kartą) — wtedy cień i wyraźniejsza krawędź.
     let isRaised: Bool
@@ -33,6 +35,13 @@ struct IslandBackground: View {
                     .transition(.opacity)
             }
             shape.fill(Color.black.opacity(blackOpacity))
+            if let tint, !isHidden {
+                // Ciemniej u góry, przy notchu, pełny kolor u dołu. W szkle kolor jest tak przejrzysty jak czerń.
+                let strength = isGlass ? glassTint : 1
+                shape.fill(LinearGradient(colors: [tint.opacity(0.55 * strength), tint.opacity(strength)],
+                                          startPoint: .top, endPoint: .bottom))
+                    .transition(.opacity)
+            }
             if theme == .blackSheet, !isHidden {
                 edge.stroke(.white.opacity(0.28), lineWidth: 0.5)
                     .transition(.opacity)
@@ -41,6 +50,7 @@ struct IslandBackground: View {
         .compositingGroup()
         .shadow(color: .black.opacity(shadowOpacity), radius: 20, y: isGlass ? 16 : 10)
         .animation(.easeInOut(duration: 0.25), value: isGlass)
+        .animation(.easeInOut(duration: 0.5), value: tint)
     }
 
     private var blackOpacity: Double {
