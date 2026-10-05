@@ -152,7 +152,10 @@ public final class MediaModule: IslandModule {
             return artworkBackground.map { IslandBackdrop(id: id, color: $0) }
         case .blurred:
             // Bez obrazu (np. nieudane rozmycie) zostaje kolor okładki.
-            if let blurredArtwork { return IslandBackdrop(id: id, image: blurredArtwork) }
+            // Tło dryfuje, dopóki gra muzyka; pauza zatrzymuje je w miejscu.
+            if let blurredArtwork {
+                return IslandBackdrop(id: id, image: blurredArtwork, isMoving: nowPlaying?.isPlaying == true)
+            }
             return artworkBackground.map { IslandBackdrop(id: id, color: $0) }
         }
     }

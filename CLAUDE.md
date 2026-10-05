@@ -112,6 +112,10 @@ binarka ma `minos 14.0` dla obu architektur (sprawdź: `vtool -arch x86_64 -show
   o jasności 0,4; okładka czarno-biała = brak koloru). `ModuleRegistry.islandBackdrop` podaje tło tylko dla pełnego
   widoku modułu (strona albo widok doraźny), nigdy dla strony z widżetami ani modułu zasłoniętego w trybie prywatnym;
   `IslandBackground` rysuje je tylko w rozwiniętej wyspie (w szkle × `glassTint`).
+  Ruch jak w Apple Music (`WyspaUI/DriftingArtwork.swift`): trzy warstwy tej samej rozmytej okładki obracają się
+  (31–60 s na obrót) i dryfują tam i z powrotem — `CABasicAnimation` w serwerze okien, bez pracy głównego wątku.
+  `IslandBackdrop.isMoving` = gra muzyka; pauza zamraża wspólny zegar warstw (`stage.speed = 0` + `timeOffset`)
+  i wznawia z tego samego miejsca. „Ogranicz ruch” i `islandStaticSnapshot` → nieruchomy `Image`.
 - **Wizualizer**: `CALayer` + `CABasicAnimation` (animacje w serwerze okien, nie na głównym wątku); wyłączony przy „Ogranicz ruch”.
   To wizualizacja rytmu, nie analiza audio.
 
