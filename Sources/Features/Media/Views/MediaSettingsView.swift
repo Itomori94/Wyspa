@@ -16,9 +16,13 @@ struct MediaSettingsView: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
-            Toggle("Kolor wyspy z okładki", isOn: $module.tintsIsland)
-                .padding(.top, 4)
-            Text("Rozwinięty odtwarzacz przyjmuje przyciemniony kolor okładki, jak w Apple Music.")
+            Picker("Tło odtwarzacza", selection: $module.backdropStyle) {
+                ForEach(MediaBackdropStyle.allCases, id: \.self) { Text($0.displayName).tag($0) }
+            }
+            .pickerStyle(.segmented)
+            .fixedSize()
+            .padding(.top, 4)
+            Text("Tło rozwiniętego odtwarzacza. Rozmyta okładka wygląda jak odtwarzacz w Apple Music.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
             // Źródło danych wybiera się samo (adapter, a awaryjnie AppleScript); komunikat tylko, gdy nic nie działa.

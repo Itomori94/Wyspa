@@ -39,7 +39,7 @@ private enum Stage {
     static var expanded: [String: AnyView] = [:]
     static var widgets: [String: AnyView] = [:]
     static var activity: (slot: String, activity: LiveActivity)?
-    static var tints: [String: Color] = [:]
+    static var backdrops: [String: IslandBackdrop] = [:]
 }
 
 @MainActor @Observable private class SlotBase {
@@ -58,7 +58,7 @@ private func slot(_ id: String, _ name: String, _ symbol: String) -> ModuleDescr
     var liveActivity: LiveActivity? { liveActivity(for: "media") }
     func makeExpandedView() -> AnyView? { Stage.expanded["media"] }
     func makeWidgetView() -> AnyView? { Stage.widgets["media"] }
-    var islandTint: Color? { Stage.tints["media"] }
+    var islandBackdrop: IslandBackdrop? { Stage.backdrops["media"] }
 }
 @MainActor @Observable private final class TimerSlot: SlotBase, IslandModule {
     static let descriptor = slot("timer", "Timer", "timer")
@@ -173,7 +173,7 @@ struct ScreenshotTests {
                                   playbackRate: 0, isPlaying: true), artworkData: artwork())
         Stage.expanded["media"] = media.makeExpandedView()
         Stage.widgets["media"] = media.makeWidgetView()
-        Stage.tints["media"] = media.islandTint
+        Stage.backdrops["media"] = media.islandBackdrop
 
         let timer = TimerModule(context: context("timer"))
         let today = Date()

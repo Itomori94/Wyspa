@@ -119,3 +119,25 @@ struct ArtworkPaletteTests {
         #expect(accent.green > accent.red)
     }
 }
+
+@Suite("Rozmyta okładka w tle odtwarzacza")
+@MainActor
+struct ArtworkBackdropTests {
+    @Test("Okładka jest zmniejszana do małego obrazu z zachowaniem proporcji")
+    func downscales() throws {
+        let context = try #require(CGContext(
+            data: nil, width: 600, height: 300, bitsPerComponent: 8, bytesPerRow: 0,
+            space: CGColorSpace(name: CGColorSpace.sRGB)!, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+        ))
+        context.setFillColor(CGColor(srgbRed: 0.9, green: 0.2, blue: 0.1, alpha: 1))
+        context.fill(CGRect(x: 0, y: 0, width: 600, height: 300))
+        let blurred = try #require(ArtworkBackdrop.blurred(try #require(context.makeImage())))
+        #expect(CGFloat(blurred.width) <= ArtworkBackdrop.side + 1)
+        #expect(blurred.width > blurred.height)
+    }
+
+    @Test("Nazwy stylów tła są zapisane w ustawieniach — nie mogą się zmienić")
+    func storedNames() {
+        #expect(MediaBackdropStyle.allCases.map(\.rawValue) == ["black", "color", "blurred"])
+    }
+}

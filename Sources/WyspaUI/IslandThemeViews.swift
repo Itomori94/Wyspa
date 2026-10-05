@@ -14,8 +14,8 @@ struct IslandBackground: View {
     let theme: IslandTheme
     let isGlass: Bool
     let glassTint: Double
-    /// Kolor modułu pod treścią rozwiniętej wyspy (np. z okładki); nil = sama czerń albo szkło.
-    let tint: Color?
+    /// Tło modułu pod treścią rozwiniętej wyspy (np. rozmyta okładka); nil = sama czerń albo szkło.
+    let backdrop: IslandBackdrop?
     let isHidden: Bool
     /// Wyspa wychodzi poza notch (rozwinięta albo z kartą) — wtedy cień i wyraźniejsza krawędź.
     let isRaised: Bool
@@ -35,11 +35,12 @@ struct IslandBackground: View {
                     .transition(.opacity)
             }
             shape.fill(Color.black.opacity(blackOpacity))
-            if let tint, !isHidden {
-                // Ciemniej u góry, przy notchu, pełny kolor u dołu. W szkle kolor jest tak przejrzysty jak czerń.
-                let strength = isGlass ? glassTint : 1
-                shape.fill(LinearGradient(colors: [tint.opacity(0.55 * strength), tint.opacity(strength)],
-                                          startPoint: .top, endPoint: .bottom))
+            if let backdrop, !isHidden {
+                // W szkle tło modułu jest tak przejrzyste jak czerń.
+                BackdropLayer(backdrop: backdrop)
+                    .opacity(isGlass ? glassTint : 1)
+                    .clipShape(shape)
+                    .id(backdrop.id)
                     .transition(.opacity)
             }
             if theme == .blackSheet, !isHidden {
@@ -50,7 +51,7 @@ struct IslandBackground: View {
         .compositingGroup()
         .shadow(color: .black.opacity(shadowOpacity), radius: 20, y: isGlass ? 16 : 10)
         .animation(.easeInOut(duration: 0.25), value: isGlass)
-        .animation(.easeInOut(duration: 0.5), value: tint)
+        .animation(.easeInOut(duration: 0.5), value: backdrop?.id)
     }
 
     private var blackOpacity: Double {
@@ -65,6 +66,31 @@ struct IslandBackground: View {
         case .classic: return 0.5
         case .blackSheet: return 0.5
         case .glass: return 0.32
+        }
+    }
+}
+
+/// Tło modułu: obraz rozciągnięty na całą wyspę (przyciemniony pod biały tekst) albo kolor.
+/// Ciemniej u góry, przy notchu — wyspa łagodnie przechodzi w czarny notch.
+private struct BackdropLayer: View {
+    let backdrop: IslandBackdrop
+
+    var body: some View {
+        if let image = backdrop.image {
+            // Obraz w nakładce na pustym kolorze: `scaledToFill` nie może wtedy poszerzyć wyspy.
+            Color.clear
+                .overlay {
+                    Image(decorative: image, scale: 1)
+                        .resizable()
+                        .interpolation(.high)
+                        .scaledToFill()
+                }
+                .overlay {
+                    LinearGradient(colors: [.black.opacity(0.6), .black.opacity(0.3)], startPoint: .top, endPoint: .bottom)
+                }
+                .clipped()
+        } else if let color = backdrop.color {
+            LinearGradient(colors: [color.opacity(0.55), color], startPoint: .top, endPoint: .bottom)
         }
     }
 }

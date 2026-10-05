@@ -22,7 +22,7 @@ public struct IslandView: View {
         ZStack(alignment: .top) {
             IslandBackground(topRadius: topRadius, bottomRadius: bottomRadius, theme: model.theme,
                              isGlass: model.theme.usesGlass(isExpanded: model.phase == .expanded, showsCard: showsCard),
-                             glassTint: model.glassTint, tint: model.tint, isHidden: model.phase == .hidden,
+                             glassTint: model.glassTint, backdrop: model.backdrop, isHidden: model.phase == .hidden,
                              isRaised: isRaised)
                 .contentShape(IslandShape(topRadius: topRadius, bottomRadius: bottomRadius))
                 .onTapGesture {
