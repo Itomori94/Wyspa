@@ -20,6 +20,8 @@ public struct IslandPage: Identifiable {
         public let name: String
         public let width: WidgetWidth
         public let content: AnyView
+        /// Tło widżetu podane przez moduł (np. rozmyta okładka odtwarzacza); nil w trybie prywatnym.
+        public let backdrop: IslandBackdrop?
     }
 
     public enum Content {
@@ -187,7 +189,8 @@ public final class ModuleRegistry {
             let resolved = widgets.compactMap { widget -> IslandPage.Widget? in
                 guard let module = instances[widget.moduleID], let view = module.makeWidgetView() else { return nil }
                 return IslandPage.Widget(id: widget.id, moduleID: widget.moduleID, name: type(of: module).descriptor.name,
-                                         width: widget.width, content: gated(view, of: module, compact: true))
+                                         width: widget.width, content: gated(view, of: module, compact: true),
+                                         backdrop: isMasked(widget.moduleID) ? nil : module.islandBackdrop)
             }
             guard !resolved.isEmpty else { return nil }
             let name = resolved.map(\.name).joined(separator: " · ")
@@ -228,8 +231,8 @@ public final class ModuleRegistry {
         return gated(view, of: module, compact: false)
     }
 
-    /// Tło rozwiniętej wyspy: tylko pełny widok modułu (strona albo widok doraźny), nigdy strona z widżetami
-    /// ani moduł zasłonięty w trybie prywatnym.
+    /// Tło całej rozwiniętej wyspy: tylko pełny widok modułu (strona albo widok doraźny), nigdy moduł zasłonięty
+    /// w trybie prywatnym. Na stronie z widżetami tło dostaje sam widżet modułu (`IslandPage.Widget.backdrop`).
     public func islandBackdrop(standaloneModuleID: String?, pageIndex: Int) -> IslandBackdrop? {
         let moduleID: String?
         if let standaloneModuleID {

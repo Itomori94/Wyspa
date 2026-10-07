@@ -72,7 +72,7 @@ struct IslandBackground: View {
 
 /// Tło modułu: obraz rozciągnięty na całą wyspę (przyciemniony pod biały tekst) albo kolor.
 /// Ciemniej u góry, przy notchu — wyspa łagodnie przechodzi w czarny notch.
-private struct BackdropLayer: View {
+struct BackdropLayer: View {
     let backdrop: IslandBackdrop
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.islandStaticSnapshot) private var isStaticSnapshot
