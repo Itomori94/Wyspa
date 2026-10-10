@@ -36,9 +36,9 @@ struct IslandBackground: View {
             }
             shape.fill(Color.black.opacity(blackOpacity))
             if let backdrop, !isHidden {
-                // W szkle tło modułu jest tak przejrzyste jak czerń.
+                // Tło modułu (np. okładka) jest nieprzezroczyste w każdym motywie, jak odtwarzacz w Apple Music:
+                // przez szkło prześwitywałoby to, co leży pod oknem, a biały tekst traciłby kontrast.
                 BackdropLayer(backdrop: backdrop)
-                    .opacity(isGlass ? glassTint : 1)
                     .clipShape(shape)
                     .id(backdrop.id)
                     .transition(.opacity)

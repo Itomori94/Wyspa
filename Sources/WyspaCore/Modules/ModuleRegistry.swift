@@ -35,6 +35,9 @@ public struct IslandPage: Identifiable {
     public let content: Content
     /// Moduły obecne na stronie (do kierowania upuszczeń).
     public let moduleIDs: [String]
+    /// Tło całej wyspy dla tej strony: pełny widok modułu albo strona z jednym widżetem (np. sam odtwarzacz).
+    /// Na stronie z kilkoma widżetami tło dostaje tylko karta widżetu (`Widget.backdrop`).
+    public let backdrop: IslandBackdrop?
 }
 
 /// Tworzy, włącza i wyłącza moduły zgodnie z ustawieniami i uprawnieniami.
@@ -184,7 +187,8 @@ public final class ModuleRegistry {
             guard let module = instances[id], let view = module.makeExpandedView() else { return nil }
             let descriptor = type(of: module).descriptor
             return IslandPage(id: page.id, name: descriptor.name, symbol: descriptor.symbol,
-                              content: .module(gated(view, of: module, compact: false)), moduleIDs: [id])
+                              content: .module(gated(view, of: module, compact: false)), moduleIDs: [id],
+                              backdrop: isMasked(id) ? nil : module.islandBackdrop)
         case .widgets(let widgets):
             let resolved = widgets.compactMap { widget -> IslandPage.Widget? in
                 guard let module = instances[widget.moduleID], let view = module.makeWidgetView() else { return nil }
@@ -196,8 +200,9 @@ public final class ModuleRegistry {
             let name = resolved.map(\.name).joined(separator: " · ")
             let leading = resolved.map { BoardWidget(id: $0.id, moduleID: $0.moduleID, width: $0.width) }.dominantModuleID
             let symbol = leading.flatMap { descriptor(for: $0)?.symbol } ?? "square.grid.2x2"
+            // Jeden widżet zajmuje całą stronę: jego tło rysuje cała wyspa, a nie karta w środku.
             return IslandPage(id: page.id, name: name, symbol: symbol, content: .widgets(resolved),
-                              moduleIDs: resolved.map(\.moduleID))
+                              moduleIDs: resolved.map(\.moduleID), backdrop: resolved.count == 1 ? resolved[0].backdrop : nil)
         }
     }
 
@@ -231,22 +236,17 @@ public final class ModuleRegistry {
         return gated(view, of: module, compact: false)
     }
 
-    /// Tło całej rozwiniętej wyspy: tylko pełny widok modułu (strona albo widok doraźny), nigdy moduł zasłonięty
-    /// w trybie prywatnym. Na stronie z widżetami tło dostaje sam widżet modułu (`IslandPage.Widget.backdrop`).
+    /// Tło całej rozwiniętej wyspy (`IslandPage.backdrop`) dla widocznej strony albo widoku doraźnego modułu;
+    /// nigdy dla modułu zasłoniętego w trybie prywatnym.
     public func islandBackdrop(standaloneModuleID: String?, pageIndex: Int) -> IslandBackdrop? {
-        let moduleID: String?
         if let standaloneModuleID {
-            moduleID = standaloneModuleID
-        } else {
-            // Ten sam wybór strony co w rozwiniętej wyspie (indeks poza zakresem = ostatnia strona).
-            let pages = pages
-            guard !pages.isEmpty else { return nil }
-            let page = pages[min(max(pageIndex, 0), pages.count - 1)]
-            guard case .module = page.content else { return nil }
-            moduleID = page.moduleIDs.first
+            guard !isMasked(standaloneModuleID) else { return nil }
+            return instances[standaloneModuleID]?.islandBackdrop
         }
-        guard let moduleID, !isMasked(moduleID) else { return nil }
-        return instances[moduleID]?.islandBackdrop
+        // Ten sam wybór strony co w rozwiniętej wyspie (indeks poza zakresem = ostatnia strona).
+        let pages = pages
+        guard !pages.isEmpty else { return nil }
+        return pages[min(max(pageIndex, 0), pages.count - 1)].backdrop
     }
 
     /// Strona modułu: najpierw jego pełny widok, potem strona z jego widżetem.
