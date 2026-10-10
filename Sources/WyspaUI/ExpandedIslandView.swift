@@ -170,7 +170,8 @@ public struct PageContentView: View {
         case .module(let view):
             view
         case .widgets(let widgets):
-            WidgetRow(widgets: widgets)
+            // Tło całej strony (jeden widżet) rysuje wyspa — wtedy widżet nie dostaje osobnej karty z tłem.
+            WidgetRow(widgets: widgets, drawsBackdrops: page.backdrop == nil)
         }
     }
 }
@@ -181,6 +182,8 @@ public struct WidgetRow: View {
     public static let dividerSpacing: CGFloat = 14
 
     let widgets: [IslandPage.Widget]
+    /// Tła widżetów na kartach; wyłączone, gdy tło całej strony rysuje już wyspa.
+    var drawsBackdrops = true
     @Environment(\.islandTheme) private var theme
 
     /// Czarna tafla: każdy widżet na własnej karcie, z odstępem zamiast kreski.
@@ -204,7 +207,7 @@ public struct WidgetRow: View {
                                 .frame(width: gap)
                         }
                     }
-                    widgetView(widget.content, backdrop: widget.backdrop, width: unit * CGFloat(widget.width.units),
+                    widgetView(widget.content, backdrop: drawsBackdrops ? widget.backdrop : nil, width: unit * CGFloat(widget.width.units),
                                isFirst: index == 0, isLast: index == widgets.count - 1)
                 }
                 Spacer(minLength: 0)

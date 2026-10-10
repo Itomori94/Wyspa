@@ -123,6 +123,33 @@ final class HUDLikeModule: IslandModule {
 }
 
 @MainActor
+@Observable
+final class BackdropModule: IslandModule {
+    static let descriptor = ModuleDescriptor(id: "backdrop", name: "Okładka", summary: "", symbol: "music.note",
+                                             content: .neutral, widgetMinWidth: 60)
+    init(context: ModuleContext) {}
+    func activate() async throws {}
+    func deactivate() {}
+    var liveActivity: LiveActivity? { nil }
+    func makeExpandedView() -> AnyView? { AnyView(Text("okładka")) }
+    func makeWidgetView() -> AnyView? { AnyView(Text("okładka")) }
+    var islandBackdrop: IslandBackdrop? { IslandBackdrop(id: "okładka", color: .orange) }
+}
+
+@MainActor
+@Observable
+final class SmallWidgetModule: IslandModule {
+    static let descriptor = ModuleDescriptor(id: "small", name: "Mały", summary: "", symbol: "square",
+                                             content: .neutral, widgetMinWidth: 60)
+    init(context: ModuleContext) {}
+    func activate() async throws {}
+    func deactivate() {}
+    var liveActivity: LiveActivity? { nil }
+    func makeExpandedView() -> AnyView? { nil }
+    func makeWidgetView() -> AnyView? { AnyView(Text("mały")) }
+}
+
+@MainActor
 @Suite("Rejestr modułów", .serialized)
 struct ModuleRegistryTests {
     private func makeSettings() -> SettingsStore {
@@ -324,6 +351,36 @@ struct ModuleRegistryTests {
 
         await registry.setEnabled("drop", false)
         #expect(registry.pages.map(\.moduleIDs) == [["plain"]])
+    }
+
+    @Test("Tło całej wyspy: pełna strona i strona z jednym widżetem; przy kilku widżetach tło ma tylko karta")
+    func pageBackdrops() async throws {
+        let settings = makeSettings()
+        let registry = ModuleRegistry(
+            catalog: [BackdropModule.self, SmallWidgetModule.self], settings: settings,
+            permissions: FakePermissions(), requestExpand: { _ in }
+        )
+        await registry.setEnabled("backdrop", true)
+        await registry.setEnabled("small", true)
+        let minimum: IslandBoard.Minimum = { _ in WidgetWidth(units: 30) }
+        var board = IslandBoard().addingModulePage("backdrop")
+        let (withAlone, alone) = board.addingWidgetPage()
+        board = try withAlone.inserting(moduleID: "backdrop", intoPage: alone, at: 0, minimum: minimum)
+        let (withShared, shared) = board.addingWidgetPage()
+        board = try withShared.inserting(moduleID: "backdrop", intoPage: shared, at: 0, minimum: minimum)
+            .inserting(moduleID: "small", intoPage: shared, at: 1, minimum: minimum)
+        registry.setBoard(board)
+
+        let pages = registry.pages
+        #expect(pages.map { $0.backdrop?.id } == ["okładka", "okładka", nil])
+        #expect(registry.islandBackdrop(standaloneModuleID: nil, pageIndex: 1)?.id == "okładka")
+        #expect(registry.islandBackdrop(standaloneModuleID: nil, pageIndex: 2) == nil)
+        #expect(registry.islandBackdrop(standaloneModuleID: "backdrop", pageIndex: 2)?.id == "okładka")
+        guard case .widgets(let widgets) = pages[2].content else {
+            Issue.record("oczekiwana strona z widżetami")
+            return
+        }
+        #expect(widgets.map { $0.backdrop?.id } == ["okładka", nil])
     }
 
     @Test("Włączony moduł spoza układu dostaje swoją stronę na końcu")

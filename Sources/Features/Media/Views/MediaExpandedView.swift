@@ -5,9 +5,12 @@ import WyspaUI
 struct MediaExpandedView: View {
     /// Zapas na rozmycie cienia okładki (≈ 2 × promień + przesunięcie).
     static let glowMargin: CGFloat = 32
+    /// Okładka w pauzie jest lekko mniejsza, jak w Apple Music (przy odtwarzaniu wraca do pełnego rozmiaru).
+    static let pausedArtworkScale: CGFloat = 0.88
 
     let module: MediaModule
     var metrics: PlayerMetrics = .full
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         if let nowPlaying = module.nowPlaying {
@@ -18,6 +21,8 @@ struct MediaExpandedView: View {
                     .padding(Self.glowMargin)
                     .shadow(color: (module.accent ?? .black).opacity(0.45), radius: 14, y: 4)
                     .padding(-Self.glowMargin)
+                    .scaleEffect(nowPlaying.isPlaying ? 1 : Self.pausedArtworkScale)
+                    .animation(reduceMotion ? nil : .spring(response: 0.45, dampingFraction: 0.7), value: nowPlaying.isPlaying)
                 VStack(alignment: .leading, spacing: 8) {
                     TrackInfo(nowPlaying: nowPlaying, module: module)
                     Scrubber(nowPlaying: nowPlaying, accent: module.accent ?? .white, seek: module.seek)

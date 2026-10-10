@@ -109,15 +109,21 @@ binarka ma `minos 14.0` dla obu architektur (sprawdź: `vtool -arch x86_64 -show
   obraz albo kolor, `id` zmienia się z okładką → przenikanie). Rozmyta okładka (`ArtworkBackdrop.blurred`) liczona raz
   na okładkę przez Core Image (Lanczos do 48 pt, rozmycie σ 5, nasycenie 1,6), wyspa tylko ją rozciąga i przyciemnia
   (60% u góry → 30% u dołu) — bez filtra przy każdej klatce. Kolor: `ArtworkPalette.background` (odcień akcentu
-  o jasności 0,4; okładka czarno-biała = brak koloru). `ModuleRegistry.islandBackdrop` podaje tło tylko dla pełnego
-  widoku modułu (strona albo widok doraźny), nigdy dla modułu zasłoniętego w trybie prywatnym;
-  `IslandBackground` rysuje je tylko w rozwiniętej wyspie (w szkle × `glassTint`). Na stronie z widżetami tło dostaje
-  sam widżet (`IslandPage.Widget.backdrop` → `WidgetRow`: karta z zaokrąglonymi rogami jak w Czarnej tafli) —
-  działa w każdym motywie. `DriftingArtworkView` układa warstwy też w `setFrameSize` (nie czeka na `layout()`).
-  Ruch jak w Apple Music (`WyspaUI/DriftingArtwork.swift`): trzy warstwy tej samej rozmytej okładki obracają się
-  (31–60 s na obrót) i dryfują tam i z powrotem — `CABasicAnimation` w serwerze okien, bez pracy głównego wątku.
-  `IslandBackdrop.isMoving` = gra muzyka; pauza zamraża wspólny zegar warstw (`stage.speed = 0` + `timeOffset`)
-  i wznawia z tego samego miejsca. „Ogranicz ruch” i `islandStaticSnapshot` → nieruchomy `Image`.
+  o jasności 0,4; okładka czarno-biała = brak koloru).
+  Gdzie: `IslandPage.backdrop` = tło całej wyspy dla pełnej strony modułu **i strony z jednym widżetem** (sam
+  odtwarzacz na stronie z widżetami wygląda jak pełna strona); przy kilku widżetach tło ma tylko karta widżetu
+  (`Widget.backdrop` → `WidgetRow`, `drawsBackdrops` wyłączone, gdy tło rysuje wyspa). Nigdy dla modułu zasłoniętego
+  w trybie prywatnym. `IslandBackground` rysuje tło tylko w rozwiniętej wyspie, nieprzezroczyste w każdym motywie
+  (w szkle prześwitywało tło okna i biały tekst tracił kontrast).
+  Ruch jak w Apple Music (`WyspaUI/DriftingArtwork.swift`): cała okładka (bok 1,1 × przekątna, obrót 80 s) i nad nią
+  4 miękkie plamy z ćwiartek okładki (`softSpot`: 64 px, brzeg wygaszony do zera w samym obrazie — bez masek
+  i bez twardych krawędzi; wcześniej warstwa mniejsza od tła pokazywała proste krawędzie), które krążą po orbitach
+  (19–30 s) i obracają się (24–36 s). Animowane są **tylko kąty** (`transform.rotation.z`), promienie orbit
+  (`orbitRadius`) i rozmiary to układ warstw — zmiana rozmiaru (rozwijanie wyspy) nie psuje ruchu. Wygląd dobrany
+  symulacją klatek (plamy wyraźnie przesuwają się w ciągu kilku sekund). `IslandBackdrop.isMoving` = gra muzyka; pauza
+  zamraża wspólny zegar warstw (`stage.speed = 0` + `timeOffset`) i wznawia z tego samego miejsca. „Ogranicz ruch”
+  i `islandStaticSnapshot` → nieruchomy `Image`. Okładka w odtwarzaczu maleje w pauzie do 0,88 (sprężyna, jak w Apple
+  Music; bez animacji przy „Ogranicz ruch”).
 - **Wizualizer**: `CALayer` + `CABasicAnimation` (animacje w serwerze okien, nie na głównym wątku); wyłączony przy „Ogranicz ruch”.
   To wizualizacja rytmu, nie analiza audio.
 
