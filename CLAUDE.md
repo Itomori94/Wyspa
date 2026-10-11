@@ -254,13 +254,19 @@ jak reszta wyspy); kolory zostają dla znaczenia (czerwony mikrofon, pomarańczo
 
 ## Motywy wyspy
 
-- `IslandTheme` (Core): `classic` / `black-sheet` / `glass` — nazwy zapisane w ustawieniach, nie zmieniać (test).
-  `SettingsStore.islandTheme` i `glassTint` (0,35–0,9, domyślnie 0,6); zmiana bez przebudowy okien
+- `IslandTheme` (Core): `classic` / `black-sheet` / `glass` / `clear` — nazwy zapisane w ustawieniach, nie zmieniać
+  (test). `SettingsStore.islandTheme` i `glassTint` (0,35–0,9, domyślnie 0,6, tylko Szkło); zmiana bez przebudowy okien
   (`IslandWindowController.applyAppearance`).
-- `WyspaUI/IslandThemeViews.swift`: `IslandBackground` (czerń / czerń + krawędź 0,5 pt / szkło = `NSVisualEffectView`
-  `.hudWindow` `.behindWindow` + czarna warstwa `glassTint` + jaśniejąca ku dołowi krawędź), `IslandEdge` (obrys bez
-  górnej krawędzi), `TabStripBackground` i `TabPill` (zakładki), `WidgetCard` (karty widżetów w Czarnej tafli).
-  Motyw trafia do modułów przez `@Environment(\.islandTheme)`.
+- `WyspaUI/IslandThemeViews.swift`: `IslandBackground` (czerń / czerń + krawędź 0,5 pt / szkło = `FrostedGlass`:
+  `NSVisualEffectView` `.hudWindow` `.behindWindow` + czarna warstwa `glassTint` + jaśniejąca ku dołowi krawędź),
+  `IslandEdge` (obrys bez górnej krawędzi), `TabStripBackground` i `TabPill` (zakładki), `WidgetCard` (karty widżetów
+  w Czarnej tafli). Motyw trafia do modułów przez `@Environment(\.islandTheme)`.
+- **Przezroczysty** (`clear`, prośba użytkownika: „jak Centrum sterowania, w pełni transparentna”): `ClearGlass` =
+  SwiftUI `glassEffect(.regular, in: IslandShape)` na macOS 26+ — ten sam materiał Liquid Glass co Centrum sterowania
+  (wygląda jak ono także po zmianie „Liquid Glass” w Ustawieniach systemowych), bez czarnej warstwy (krycie 0,01 tylko
+  po to, żeby okno dostawało zdarzenia myszy) i bez własnego cienia. Szkło leży **poza** `compositingGroup` z cieniem
+  (spłaszczona grupa odcięłaby je od tego, co pod oknem). Na macOS < 26 `FrostedGlass` bez przyciemnienia.
+  Tło modułu (okładka) zostaje nieprzezroczyste jak w innych motywach. `hasGlass` = Szkło albo Przezroczysty.
 - Szkło tylko poza notchem (`usesGlass`: rozwinięta albo karta) — zwinięta przy notchu zostaje czarna.
 - Ikony, okładki, ikony aplikacji i kolory modułów są wspólne dla wszystkich motywów (prośba użytkownika).
 - Zrzut demo tylko dla Czarnej tafli: rozmycie za oknem nie renderuje się poza ekranem.

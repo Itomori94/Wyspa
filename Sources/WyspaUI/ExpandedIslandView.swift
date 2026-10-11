@@ -201,7 +201,7 @@ public struct WidgetRow: View {
                             Color.clear.frame(width: gap)
                         } else {
                             Rectangle()
-                                .fill(.white.opacity(theme == .glass ? 0.18 : 0.1))
+                                .fill(.white.opacity(theme.hasGlass ? 0.18 : 0.1))
                                 .frame(width: 1)
                                 .padding(.vertical, 6)
                                 .frame(width: gap)

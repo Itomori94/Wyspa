@@ -25,39 +25,43 @@ struct IslandBackground: View {
 
     var body: some View {
         ZStack {
-            if isGlass {
-                BehindWindowBlur()
-                    .clipShape(shape)
-                    .transition(.opacity)
-                // Krawędź szkła: jaśniejsza u dołu, delikatna po bokach, gaśnie ku notchowi.
-                edge.stroke(LinearGradient(colors: [.white.opacity(0.06), .white.opacity(0.28)], startPoint: .top, endPoint: .bottom),
-                            lineWidth: 1)
+            // Liquid Glass poza grupą z cieniem: spłaszczona grupa (compositingGroup) odcięłaby szkło od tego,
+            // co leży pod oknem.
+            if isGlass, theme == .clear {
+                ClearGlass(shape: shape, edge: edge)
                     .transition(.opacity)
             }
-            shape.fill(Color.black.opacity(blackOpacity))
-            if let backdrop, !isHidden {
-                // Tło modułu (np. okładka) jest nieprzezroczyste w każdym motywie, jak odtwarzacz w Apple Music:
-                // przez szkło prześwitywałoby to, co leży pod oknem, a biały tekst traciłby kontrast.
-                BackdropLayer(backdrop: backdrop)
-                    .clipShape(shape)
-                    .id(backdrop.id)
-                    .transition(.opacity)
+            ZStack {
+                if isGlass, theme == .glass {
+                    FrostedGlass(shape: shape, edge: edge)
+                        .transition(.opacity)
+                }
+                shape.fill(Color.black.opacity(blackOpacity))
+                if let backdrop, !isHidden {
+                    // Tło modułu (np. okładka) jest nieprzezroczyste w każdym motywie, jak odtwarzacz w Apple Music:
+                    // przez szkło prześwitywałoby to, co leży pod oknem, a biały tekst traciłby kontrast.
+                    BackdropLayer(backdrop: backdrop)
+                        .clipShape(shape)
+                        .id(backdrop.id)
+                        .transition(.opacity)
+                }
+                if theme == .blackSheet, !isHidden {
+                    edge.stroke(.white.opacity(0.28), lineWidth: 0.5)
+                        .transition(.opacity)
+                }
             }
-            if theme == .blackSheet, !isHidden {
-                edge.stroke(.white.opacity(0.28), lineWidth: 0.5)
-                    .transition(.opacity)
-            }
+            .compositingGroup()
+            .shadow(color: .black.opacity(shadowOpacity), radius: 20, y: isGlass ? 16 : 10)
         }
-        .compositingGroup()
-        .shadow(color: .black.opacity(shadowOpacity), radius: 20, y: isGlass ? 16 : 10)
         .animation(.easeInOut(duration: 0.25), value: isGlass)
         .animation(.easeInOut(duration: 0.5), value: backdrop?.id)
     }
 
     private var blackOpacity: Double {
-        // Ukryta wyspa musi mieć niezerowe krycie, inaczej okno nie dostanie zdarzeń myszy.
+        // Ukryta wyspa i przezroczyste szkło muszą mieć niezerowe krycie, inaczej okno nie dostanie zdarzeń myszy.
         if isHidden { return 0.01 }
-        return isGlass ? glassTint : 1
+        guard isGlass else { return 1 }
+        return theme == .clear ? 0.01 : glassTint
     }
 
     private var shadowOpacity: Double {
@@ -66,7 +70,38 @@ struct IslandBackground: View {
         case .classic: return 0.5
         case .blackSheet: return 0.5
         case .glass: return 0.32
+        // Liquid Glass rzuca własny cień (cień prawie przezroczystej warstwy i tak byłby niewidoczny).
+        case .clear: return 0
         }
+    }
+}
+
+/// Liquid Glass jak w Centrum sterowania: ten sam materiał systemowy, więc wygląda tak jak ono (także po zmianie
+/// „Liquid Glass” w Ustawieniach systemowych) i sam dba o czytelność. Na macOS starszym niż 26 — rozmyte szkło.
+struct ClearGlass: View {
+    let shape: IslandShape
+    let edge: IslandEdge
+
+    var body: some View {
+        if #available(macOS 26, *) {
+            Color.clear.glassEffect(.regular, in: shape)
+        } else {
+            FrostedGlass(shape: shape, edge: edge)
+        }
+    }
+}
+
+/// Rozmyte szkło: to, co pod oknem, rozmyte jak w dawnym Centrum sterowania, z jaśniejącą ku dołowi krawędzią.
+struct FrostedGlass: View {
+    let shape: IslandShape
+    let edge: IslandEdge
+
+    var body: some View {
+        BehindWindowBlur()
+            .clipShape(shape)
+        // Krawędź szkła: jaśniejsza u dołu, delikatna po bokach, gaśnie ku notchowi.
+        edge.stroke(LinearGradient(colors: [.white.opacity(0.06), .white.opacity(0.28)], startPoint: .top, endPoint: .bottom),
+                    lineWidth: 1)
     }
 }
 
@@ -165,7 +200,7 @@ struct TabPill: View {
         let fill: Double = switch theme {
         case .classic: isSelected ? 0.18 : (isHovered ? 0.08 : 0)
         case .blackSheet: isSelected ? 0.22 : (isHovered ? 0.1 : 0)
-        case .glass: isSelected ? 0.2 : (isHovered ? 0.1 : 0)
+        case .glass, .clear: isSelected ? 0.2 : (isHovered ? 0.1 : 0)
         }
         Capsule()
             .fill(.white.opacity(fill))

@@ -74,6 +74,8 @@ Ustawienia → Wyspa → **Motyw**:
 - **Czarna tafla**: czarna wyspa z cienką jasną krawędzią, zakładki w kapsule, każdy widżet na osobnej karcie.
 - **Szkło**: rozwinięta wyspa i karty z rozmytego szkła (suwak *Przyciemnienie szkła*); przy samym notchu wyspa
   zostaje czarna, żeby zlewała się z wycięciem ekranu.
+- **Przezroczysty**: rozwinięta wyspa i karty z przezroczystego szkła Liquid Glass, tego samego co Centrum sterowania
+  (macOS 26 i nowszy; na starszym systemie rozmyte szkło bez przyciemnienia); przy notchu wyspa też zostaje czarna.
 
 Motyw nie zmienia ikon: okładki, ikony aplikacji (np. Apple Music) i symbole modułów wyglądają tak samo w każdym.
 
