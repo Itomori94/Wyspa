@@ -153,6 +153,23 @@ struct IslandBackground: View {
     }
 }
 
+/// Czytelność na przejrzystym szkle (motyw Szkło): pod tekstem i ikonami ciemna poświata — ostra tuż przy krawędzi
+/// liter i miękka szersza — więc biały tekst nie ginie nad jasnym pulpitem (prośba użytkownika 11.10.2026).
+/// Jeden cień całej treści, nie każdego tekstu z osobna.
+struct GlassLegibility: ViewModifier {
+    let theme: IslandTheme
+
+    func body(content: Content) -> some View {
+        if theme == .glass {
+            content
+                .shadow(color: .black.opacity(0.55), radius: 1.5, y: 0.5)
+                .shadow(color: .black.opacity(0.35), radius: 6)
+        } else {
+            content
+        }
+    }
+}
+
 /// Tafla motywu Szkło jak Centrum sterowania: przejrzysty Liquid Glass (`.clear`) na całej wyspie — pulpit widać ostro,
 /// z załamaniem i połyskiem na brzegu. Czytelność tekstu daje czarna warstwa `glassTint` nad szkłem.
 private struct IslandGlass: View {

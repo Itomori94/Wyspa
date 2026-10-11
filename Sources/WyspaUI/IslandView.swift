@@ -31,6 +31,7 @@ public struct IslandView: View {
                 }
 
             content
+                .modifier(GlassLegibility(theme: model.theme))
                 .padding(.horizontal, model.phase == .expanded ? topRadius + IslandLayout.expandedContentInset : topRadius)
                 // Najpierw rama o rozmiarze wyspy, potem przycięcie do jej kształtu: cokolwiek narysuje moduł,
                 // nie wyjdzie poza wyspę (clipShape bez ramy przycina do granic samej treści, które mogą urosnąć).

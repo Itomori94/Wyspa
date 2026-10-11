@@ -67,6 +67,9 @@ binarka ma `minos 14.0` dla obu architektur (sprawdź: `vtool -arch x86_64 -show
 - **Szkło bierze klawiaturę przy rozwinięciu** (`IslandTheme.takesKeyboardOnExpand`): Liquid Glass jest przejrzyste
   tylko w oknie kluczowym (w innym system rysuje je matowe — sprawdzone oknem testowym; nadpisanie `isKeyWindow` nie
   pomaga), więc w motywie Szkło każde rozwinięcie robi to samo co skrót (`takeKeyboard`), a zwinięcie oddaje klawiaturę.
+  To samo HUD (`syncHUDKeyboard`, aktywność `.hud`) na czas pokazywania — decyzja użytkownika: litery wpisane wtedy
+  przepadają. Inne karty (powiadomienia) nie biorą fokusu, ich szkło jest matowe. W Szkle treść ma ciemną poświatę
+  pod tekstem (`GlassLegibility`).
 - **Zwinięcie na prośbę modułu**: `ModuleContext.requestCollapse` → `ScreenCoordinator.collapseAll()` → `.collapseRequested`
   (zwija też w trakcie pisania). Po zwinięciu klawiatura wraca do aplikacji pod spodem — na tym opiera się wklejanie.
 - **Gesty**: lokalny monitor `scrollWheel` filtrowany do panelu → `SwipeRecognizer` (jeden kierunek na gest).
