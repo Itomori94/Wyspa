@@ -5,6 +5,45 @@ import WyspaCore
 extension EnvironmentValues {
     /// Motyw wyspy dla nagłówka i widżetów (moduły dostają go w środowisku i mogą z niego korzystać).
     @Entry public var islandTheme: IslandTheme = .classic
+    /// Przyciemnienie pod kafelkami motywu Przezroczysty (`SettingsStore.tileDimming`).
+    @Entry var islandTileDimming: Double = IslandTheme.defaultTileDimming
+    /// Krycie treści nad szkłem kafelków w trakcie `GlassSafeTransition` (poza przejściem 1).
+    @Entry var islandContentOpacity: Double = 1
+}
+
+/// Przejście treści leżącej na kafelkach szkła (Przezroczysty) bez przenikania całości: krycie rodzica mniejsze od 1
+/// wyłącza efekty tła (znane z UIVisualEffectView i NSVisualEffectView). Szkło pojawia się i znika własną animacją
+/// systemu, a przenikają tylko treść nad nim (`GlassContentFade`) i przyciemnienie pod nim (`TileGlass`).
+struct GlassSafeTransition: Transition {
+    var scale: CGFloat = 1
+    var offsetY: CGFloat = 0
+
+    func body(content: Content, phase: TransitionPhase) -> some View {
+        content
+            .environment(\.islandContentOpacity, phase.isIdentity ? 1 : 0)
+            .scaleEffect(phase.isIdentity ? 1 : scale, anchor: .top)
+            .offset(y: phase.isIdentity ? 0 : offsetY)
+    }
+}
+
+/// Treść nad szkłem kafelka przenikana przez `GlassSafeTransition` (samo szkło przenikać nie może).
+struct GlassContentFade: ViewModifier {
+    @Environment(\.islandContentOpacity) private var opacity
+
+    func body(content: Content) -> some View {
+        content.opacity(opacity)
+    }
+}
+
+extension AnyTransition {
+    /// Przejście treści wyspy: w motywie Przezroczysty `GlassSafeTransition` (bez przenikania szkła), w pozostałych
+    /// przenikanie z podanym ruchem.
+    static func islandContent(theme: IslandTheme, scale: CGFloat = 1, offsetY: CGFloat = 0) -> AnyTransition {
+        if theme.usesGlassTiles {
+            return AnyTransition(GlassSafeTransition(scale: scale, offsetY: offsetY))
+        }
+        return .opacity.combined(with: .scale(scale: scale, anchor: .top)).combined(with: .offset(y: offsetY))
+    }
 }
 
 /// Tło wyspy według motywu. Warstwy przenikają się, więc rozwinięcie czarnej wyspy w szklaną nie przeskakuje.
@@ -19,49 +58,66 @@ struct IslandBackground: View {
     let isHidden: Bool
     /// Wyspa wychodzi poza notch (rozwinięta albo z kartą) — wtedy cień i wyraźniejsza krawędź.
     let isRaised: Bool
+    /// Czarna belka motywu Przezroczysty: wysokość (cała zwinięta wyspa, nad kartą skrzydła, w rozwiniętej nagłówek)
+    /// i promień dolnych rogów.
+    var headHeight: CGFloat = 0
+    var headBottomRadius: CGFloat = IslandBackground.raisedHeadRadius
+
+    /// Dolne rogi belki pod nagłówkiem i nad kartą — jak zwinięta wyspa, tylko szersza.
+    static let raisedHeadRadius: CGFloat = 16
 
     private var shape: IslandShape { IslandShape(topRadius: topRadius, bottomRadius: bottomRadius) }
     private var edge: IslandEdge { IslandEdge(topRadius: topRadius, bottomRadius: bottomRadius) }
 
     var body: some View {
-        ZStack {
-            // Liquid Glass poza grupą z cieniem: spłaszczona grupa (compositingGroup) odcięłaby szkło od tego,
-            // co leży pod oknem.
-            if isGlass, theme == .clear {
-                ClearGlass(shape: shape, edge: edge)
-                    .transition(.opacity)
-            }
+        // Przenikania dotyczą tylko swoich warstw: `animation(_:value:)` na całości nadpisałoby sprężynę wyspy
+        // także dla belki (zmiana fazy zmienia `isGlass`, a rozwinięcie odtwarzacza — `backdrop`).
+        ZStack(alignment: .top) {
             ZStack {
                 if isGlass, theme == .glass {
                     FrostedGlass(shape: shape, edge: edge)
                         .transition(.opacity)
                 }
                 shape.fill(Color.black.opacity(blackOpacity))
-                if let backdrop, !isHidden {
+            }
+            .animation(.easeInOut(duration: 0.25), value: isGlass)
+            if theme.usesGlassTiles {
+                // Przezroczysty: czarna jest tylko belka przy notchu, szkło mają kafelki treści (jak moduły Centrum
+                // sterowania). Jedna belka we wszystkich fazach, więc rozwinięcie poszerza czarną wyspę w nagłówek,
+                // zamiast przenikać ją w przezroczystą (przez chwilę widać by było ciemną taflę).
+                IslandShape(topRadius: topRadius, bottomRadius: headBottomRadius)
+                    .fill(Color.black)
+                    .frame(height: headHeight)
+                    .frame(maxHeight: .infinity, alignment: .top)
+                    .clipShape(shape)
+                    .opacity(isHidden ? 0 : 1)
+            }
+            ZStack {
+                if let backdrop, !isHidden, !theme.usesGlassTiles {
                     // Tło modułu (np. okładka) jest nieprzezroczyste w każdym motywie, jak odtwarzacz w Apple Music:
                     // przez szkło prześwitywałoby to, co leży pod oknem, a biały tekst traciłby kontrast.
+                    // W motywie Przezroczysty tło ma kafelek strony, nie cała wyspa.
                     BackdropLayer(backdrop: backdrop)
                         .clipShape(shape)
                         .id(backdrop.id)
                         .transition(.opacity)
                 }
-                if theme == .blackSheet, !isHidden {
-                    edge.stroke(.white.opacity(0.28), lineWidth: 0.5)
-                        .transition(.opacity)
-                }
             }
-            .compositingGroup()
-            .shadow(color: .black.opacity(shadowOpacity), radius: 20, y: isGlass ? 16 : 10)
+            .animation(.easeInOut(duration: 0.5), value: backdrop?.id)
+            if theme == .blackSheet, !isHidden {
+                edge.stroke(.white.opacity(0.28), lineWidth: 0.5)
+                    .transition(.opacity)
+            }
         }
-        .animation(.easeInOut(duration: 0.25), value: isGlass)
-        .animation(.easeInOut(duration: 0.5), value: backdrop?.id)
+        .compositingGroup()
+        .shadow(color: .black.opacity(shadowOpacity), radius: 20, y: isGlass ? 16 : 10)
     }
 
     private var blackOpacity: Double {
-        // Ukryta wyspa i przezroczyste szkło muszą mieć niezerowe krycie, inaczej okno nie dostanie zdarzeń myszy.
-        if isHidden { return 0.01 }
-        guard isGlass else { return 1 }
-        return theme == .clear ? 0.01 : glassTint
+        // Ukryta wyspa i przezroczyste części wyspy muszą mieć niezerowe krycie, inaczej okno nie dostanie
+        // zdarzeń myszy. W motywie Przezroczysty czerń daje belka.
+        if isHidden || theme.usesGlassTiles { return 0.01 }
+        return isGlass ? glassTint : 1
     }
 
     private var shadowOpacity: Double {
@@ -70,27 +126,93 @@ struct IslandBackground: View {
         case .classic: return 0.5
         case .blackSheet: return 0.5
         case .glass: return 0.32
-        // Liquid Glass rzuca własny cień (cień prawie przezroczystej warstwy i tak byłby niewidoczny).
+        // Przezroczysta wyspa nie rzuca cienia (to byłaby ciemna plama pod niewidocznym kształtem); kafelki ze szkła
+        // mają własną głębię.
         case .clear: return 0
         }
     }
 }
 
-/// Liquid Glass jak w Centrum sterowania: ten sam materiał systemowy, więc wygląda tak jak ono (także po zmianie
-/// „Liquid Glass” w Ustawieniach systemowych) i sam dba o czytelność. Na macOS starszym niż 26 — rozmyte szkło.
-struct ClearGlass: View {
-    let shape: IslandShape
-    let edge: IslandEdge
+/// Kafelek motywu Przezroczysty, jak moduł Centrum sterowania: przejrzyste szkło Liquid Glass albo — gdy moduł podaje
+/// tło (np. okładkę) — to tło na kafelku.
+struct GlassTile: View {
+    static let pageCornerRadius: CGFloat = 20
+    static let widgetCornerRadius: CGFloat = 16
+    static let cardCornerRadius: CGFloat = 18
+    /// Kafelek strony wychodzi poza ramę treści na boki i w dół (w margines wyspy), więc treść zostaje na swoim
+    /// miejscu; od górnej krawędzi kafelka odsuwa się o `innerTop`.
+    static let outset: CGFloat = 12
+    static let bottomOutset: CGFloat = 8
+    static let innerTop: CGFloat = 10
+    /// Odstęp między kafelkami widżetów.
+    static let gap: CGFloat = 8
+
+    var cornerRadius: CGFloat = GlassTile.pageCornerRadius
+    var backdrop: IslandBackdrop?
 
     var body: some View {
+        let shape = RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+        ZStack {
+            if let backdrop {
+                BackdropLayer(backdrop: backdrop)
+                    .clipShape(shape)
+                    .id(backdrop.id)
+                    .transition(.opacity)
+            } else {
+                // Szkło bez przycinania: połysk i załamanie leżą na samym brzegu kształtu. Poza wyspę i tak nic nie
+                // wyjdzie — treść wyspy jest przycięta do jej kształtu.
+                TileGlass(shape: shape)
+            }
+        }
+        .animation(.easeInOut(duration: 0.5), value: backdrop?.id)
+    }
+}
+
+/// Szkło kafelka jak w Centrum sterowania: przejrzysty Liquid Glass (`.clear`, macOS 26+) — pulpit widać przez szkło
+/// ostro, z załamaniem i połyskiem na brzegach. `.regular` jest matowy: na całej wyspie wyglądał jak motyw Szkło.
+/// Pod szkłem czarna warstwa (`islandTileDimming`), jak zaleca Apple dla `.clear`: szkło załamuje przyciemniony pulpit,
+/// a biały tekst zostaje czytelny nad jasnym oknem. Na starszym systemie rozmycie zza okna z tym samym przyciemnieniem.
+private struct TileGlass: View {
+    let shape: RoundedRectangle
+    @Environment(\.islandTileDimming) private var dimming
+    /// Przyciemnienie przenika z treścią: bez tego przy rozwijaniu ciemne prostokąty kafelków byłyby od pierwszej
+    /// klatki, zanim szkło się pojawi.
+    @Environment(\.islandContentOpacity) private var contentOpacity
+
+    var body: some View {
+        let dim = Color.black.opacity(dimming * contentOpacity)
         if #available(macOS 26, *) {
-            // Przycięte do kształtu wyspy: szkło rysuje się też kilka punktów poza nim (poświata), a nic z wyspy
-            // nie może wychodzić poza jej kształt (test IslandOverflowTests).
             Color.clear
-                .glassEffect(.regular, in: shape)
-                .clipShape(shape)
+                .glassEffect(.clear, in: shape)
+                .background(shape.fill(dim))
         } else {
-            FrostedGlass(shape: shape, edge: edge)
+            ZStack {
+                BehindWindowBlur()
+                shape.fill(dim)
+                shape.strokeBorder(Highlight.gradient(top: 0.3), lineWidth: 0.5)
+            }
+            .clipShape(shape)
+        }
+    }
+}
+
+/// Motyw Przezroczysty: strona modułu na jednym kafelku ze szkła. Inne motywy bez zmian.
+struct PageTile: ViewModifier {
+    let backdrop: IslandBackdrop?
+    @Environment(\.islandTheme) private var theme
+
+    func body(content: Content) -> some View {
+        if theme.usesGlassTiles {
+            content
+                .modifier(GlassContentFade())
+                .padding(.top, GlassTile.innerTop)
+                .background {
+                    GlassTile(backdrop: backdrop)
+                        .padding(.horizontal, -GlassTile.outset)
+                        .padding(.bottom, -GlassTile.bottomOutset)
+                }
+        } else {
+            content
         }
     }
 }

@@ -23,7 +23,7 @@ public struct IslandView: View {
             IslandBackground(topRadius: topRadius, bottomRadius: bottomRadius, theme: model.theme,
                              isGlass: model.theme.usesGlass(isExpanded: model.phase == .expanded, showsCard: showsCard),
                              glassTint: model.glassTint, backdrop: model.backdrop, isHidden: model.phase == .hidden,
-                             isRaised: isRaised)
+                             isRaised: isRaised, headHeight: headHeight, headBottomRadius: headBottomRadius)
                 .contentShape(IslandShape(topRadius: topRadius, bottomRadius: bottomRadius))
                 .onTapGesture {
                     // W rozwiniętej wyspie kliknięcia obsługują kontrolki modułów.
@@ -53,6 +53,7 @@ public struct IslandView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .environment(\.colorScheme, .dark)
         .environment(\.islandTheme, model.theme)
+        .environment(\.islandTileDimming, model.tileDimming)
     }
 
     /// Ukryta wyspa musi mieć niezerową przezroczystość, inaczej okno nie dostanie zdarzeń myszy.
@@ -70,6 +71,26 @@ public struct IslandView: View {
 
     private var topRadius: CGFloat {
         model.phase == .expanded ? IslandLayout.expandedTopRadius : IslandLayout.collapsedTopRadius
+    }
+
+    /// Zwinięcie: treść szybko gaśnie. W Przezroczystym przez całą sprężynę zwijania gaśnie treść i przyciemnienie
+    /// kafelków (`GlassSafeTransition`), a szkło znika samo — krycie rodzica wyłączałoby efekt tła.
+    private var expandedRemoval: AnyTransition {
+        model.theme.usesGlassTiles ? .islandContent(theme: model.theme) : .opacity.animation(.easeOut(duration: 0.12))
+    }
+
+    /// Czarna belka motywu Przezroczysty: cała zwinięta wyspa, nad kartą — skrzydła, w rozwiniętej — nagłówek (do jego
+    /// dołu z zapasem). Ta sama belka we wszystkich fazach, więc zmiana fazy tylko zmienia jej rozmiar.
+    private var headHeight: CGFloat {
+        let notch = model.notch.size.height
+        switch model.phase {
+        case .expanded: return ExpandedIslandView.headerBottom(notchHeight: notch) + 4
+        case .hidden, .collapsed, .peek: return showsCard ? notch : model.islandSize.height
+        }
+    }
+
+    private var headBottomRadius: CGFloat {
+        model.phase == .expanded || showsCard ? IslandBackground.raisedHeadRadius : bottomRadius
     }
 
     private var bottomRadius: CGFloat {
@@ -95,19 +116,28 @@ public struct IslandView: View {
                     if let detail = activity.detail {
                         detail
                             .frame(height: activity.detailHeight)
+                            .modifier(GlassContentFade())
                             .padding(.horizontal, 12)
+                            .background {
+                                // Przezroczysty: karta na własnym kafelku ze szkła pod czarną belką skrzydeł.
+                                if model.theme.usesGlassTiles {
+                                    GlassTile(cornerRadius: GlassTile.cardCornerRadius)
+                                        .padding(.horizontal, 2)
+                                        .padding(.vertical, 4)
+                                }
+                            }
                             .id(activity.id + ".detail")
-                            .transition(.opacity.combined(with: .scale(scale: 0.95, anchor: .top)))
+                            .transition(.islandContent(theme: model.theme, scale: 0.95))
                     }
                 }
             }
         case .expanded:
             ExpandedIslandView(model: model, namespace: namespace)
-                .padding(.top, 8)
+                .padding(.top, ExpandedIslandView.topPadding)
                 .padding(.bottom, 16)
                 .transition(.asymmetric(
-                    insertion: .opacity.combined(with: .scale(scale: 0.92, anchor: .top)).animation(IslandMotion.expand.delay(0.04)),
-                    removal: .opacity.animation(.easeOut(duration: 0.12))
+                    insertion: .islandContent(theme: model.theme, scale: 0.92).animation(IslandMotion.expand.delay(0.04)),
+                    removal: expandedRemoval
                 ))
         }
     }

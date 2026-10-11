@@ -9,8 +9,8 @@ public enum IslandTheme: String, CaseIterable, Codable, Sendable {
     case blackSheet = "black-sheet"
     /// Szkło: rozwinięta wyspa i karty z rozmytego, przyciemnionego szkła; zwinięta wyspa zostaje czarna przy notchu.
     case glass
-    /// Przezroczysty: Liquid Glass jak w Centrum sterowania (macOS 26+), bez przyciemnienia; na starszym systemie
-    /// rozmyte szkło. Zwinięta wyspa zostaje czarna przy notchu, jak w Szkle.
+    /// Przezroczysty, jak Centrum sterowania: rozwinięta wyspa bez tła — czarna zostaje tylko belka przy notchu,
+    /// a strony, widżety i karty leżą na osobnych kafelkach z przejrzystego szkła Liquid Glass (macOS 26+).
     case clear
 
     public var displayName: String {
@@ -22,8 +22,11 @@ public enum IslandTheme: String, CaseIterable, Codable, Sendable {
         }
     }
 
-    /// Motyw ze szklaną rozwiniętą wyspą (Szkło, Przezroczysty).
+    /// Motyw ze szkłem w rozwiniętej wyspie (Szkło, Przezroczysty).
     public var hasGlass: Bool { self == .glass || self == .clear }
+
+    /// Treść na osobnych szklanych kafelkach zamiast jednej tafli (Przezroczysty).
+    public var usesGlassTiles: Bool { self == .clear }
 
     /// Szkło tylko tam, gdzie wyspa wychodzi poza notch: rozwinięta albo z kartą pod skrzydłami.
     public func usesGlass(isExpanded: Bool, showsCard: Bool) -> Bool {
@@ -33,4 +36,9 @@ public enum IslandTheme: String, CaseIterable, Codable, Sendable {
     /// Przyciemnienie szkła (krycie czarnej warstwy na rozmyciu).
     public static let glassTintRange: ClosedRange<Double> = 0.35...0.9
     public static let defaultGlassTint = 0.6
+
+    /// Przyciemnienie pod kafelkami motywu Przezroczysty (krycie czarnej warstwy pod przejrzystym szkłem). Zero = jak
+    /// Centrum sterowania; więcej = czytelniejszy biały tekst nad jasnymi oknami (Apple zaleca warstwę pod `.clear`).
+    public static let tileDimmingRange: ClosedRange<Double> = 0...0.6
+    public static let defaultTileDimming = 0.25
 }

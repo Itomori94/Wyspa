@@ -17,6 +17,7 @@ public final class SettingsStore {
         static let islandSize = "island.size"
         static let islandTheme = "island.theme"
         static let glassTint = "island.glassTint"
+        static let tileDimming = "island.tileDimming"
         static let privacyMode = "privacy.mode"
         static let hapticsEnabled = "island.haptics"
         static let hapticStrength = "island.hapticStrength"
@@ -43,6 +44,12 @@ public final class SettingsStore {
         didSet {
             let clamped = Self.clamped(glassTint, to: IslandTheme.glassTintRange)
             if clamped != glassTint { glassTint = clamped } else { defaults.set(glassTint, forKey: Key.glassTint) }
+        }
+    }
+    public var tileDimming: Double {
+        didSet {
+            let clamped = Self.clamped(tileDimming, to: IslandTheme.tileDimmingRange)
+            if clamped != tileDimming { tileDimming = clamped } else { defaults.set(tileDimming, forKey: Key.tileDimming) }
         }
     }
     public var privacyMode: PrivacyState.Mode { didSet { defaults.set(privacyMode.rawValue, forKey: Key.privacyMode) } }
@@ -78,6 +85,8 @@ public final class SettingsStore {
         islandTheme = defaults.string(forKey: Key.islandTheme).flatMap(IslandTheme.init) ?? .classic
         glassTint = Self.clamped(defaults.object(forKey: Key.glassTint) as? Double ?? IslandTheme.defaultGlassTint,
                                  to: IslandTheme.glassTintRange)
+        tileDimming = Self.clamped(defaults.object(forKey: Key.tileDimming) as? Double ?? IslandTheme.defaultTileDimming,
+                                   to: IslandTheme.tileDimmingRange)
         privacyMode = defaults.string(forKey: Key.privacyMode).flatMap(PrivacyState.Mode.init) ?? .automatic
         screenSelection = defaults.string(forKey: Key.screenSelection).flatMap(ScreenSelection.init) ?? .all
         virtualNotchMode = defaults.string(forKey: Key.virtualNotchMode).flatMap(VirtualNotchMode.init) ?? .whenActive

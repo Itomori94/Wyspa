@@ -255,18 +255,42 @@ jak reszta wyspy); kolory zostają dla znaczenia (czerwony mikrofon, pomarańczo
 ## Motywy wyspy
 
 - `IslandTheme` (Core): `classic` / `black-sheet` / `glass` / `clear` — nazwy zapisane w ustawieniach, nie zmieniać
-  (test). `SettingsStore.islandTheme` i `glassTint` (0,35–0,9, domyślnie 0,6, tylko Szkło); zmiana bez przebudowy okien
+  (test). `SettingsStore.islandTheme`, `glassTint` (0,35–0,9, domyślnie 0,6, tylko Szkło) i `tileDimming` (0–0,6,
+  domyślnie 0,25, tylko Przezroczysty; ten sam podpis suwaka „Przyciemnienie szkła”); zmiana bez przebudowy okien
   (`IslandWindowController.applyAppearance`).
 - `WyspaUI/IslandThemeViews.swift`: `IslandBackground` (czerń / czerń + krawędź 0,5 pt / szkło = `FrostedGlass`:
   `NSVisualEffectView` `.hudWindow` `.behindWindow` + czarna warstwa `glassTint` + jaśniejąca ku dołowi krawędź),
   `IslandEdge` (obrys bez górnej krawędzi), `TabStripBackground` i `TabPill` (zakładki), `WidgetCard` (karty widżetów
   w Czarnej tafli). Motyw trafia do modułów przez `@Environment(\.islandTheme)`.
-- **Przezroczysty** (`clear`, prośba użytkownika: „jak Centrum sterowania, w pełni transparentna”): `ClearGlass` =
-  SwiftUI `glassEffect(.regular, in: IslandShape)` na macOS 26+ — ten sam materiał Liquid Glass co Centrum sterowania
-  (wygląda jak ono także po zmianie „Liquid Glass” w Ustawieniach systemowych), bez czarnej warstwy (krycie 0,01 tylko
-  po to, żeby okno dostawało zdarzenia myszy) i bez własnego cienia. Szkło leży **poza** `compositingGroup` z cieniem
-  (spłaszczona grupa odcięłaby je od tego, co pod oknem). Na macOS < 26 `FrostedGlass` bez przyciemnienia.
-  Tło modułu (okładka) zostaje nieprzezroczyste jak w innych motywach. `hasGlass` = Szkło albo Przezroczysty.
+- **Przezroczysty** (`clear`, prośba użytkownika: „jak Centrum sterowania, w pełni transparentna”, potem „ma być szkło,
+  a nie po prostu przezroczyste”): rozwinięta wyspa **bez tła** — czarna jest tylko belka przy notchu
+  (`IslandBackground.headHeight`): cała zwinięta wyspa, w rozwiniętej nagłówek do `ExpandedIslandView.headerBottom` + 4,
+  nad kartą same skrzydła. Jedna belka we wszystkich fazach, więc rozwinięcie ją poszerza (przenikanie czarnej wyspy
+  w przezroczystą to przez chwilę ciemna tafla rosnąca z notcha); `animation(_:value:)` przenikań (`isGlass`,
+  `backdrop`) obejmuje tylko ich warstwy — na całości nadpisałoby sprężynę wyspy dla belki. Reszta wyspy ma krycie
+  0,01 (zdarzenia myszy). Treść leży na osobnych kafelkach `GlassTile` (`usesGlassTiles`): strona modułu na jednym
+  (`PageTile`, wysunięty poza ramę treści o `outset` na boki i `bottomOutset` w dół, treść odsunięta od góry
+  o `innerTop`), każdy widżet na swoim (odstęp 8), karta pod notchem na swoim. Szkło kafelka = SwiftUI
+  `glassEffect(.clear)` na macOS 26+, pod nim czarna warstwa `tileDimming` (zalecenie Apple dla `.clear`; szkło
+  załamuje przyciemniony pulpit), bez przycinania kafelka (połysk i załamanie leżą na brzegu; poza wyspę nic nie wyjdzie,
+  bo treść wyspy jest przycięta). Dlaczego `.clear`: na zrzucie Centrum sterowania od użytkownika (macOS 26+) moduły
+  leżą wprost na pulpicie, a szkło nie przyciemnia — czerń pod kafelkiem jest podniesiona do jasności ~47/255, jasne
+  fale zostają jasne, tło widać ostro z załamaniem na brzegach. `.regular` jest matowy: pierwsza wersja (jedna tafla
+  `.regular` na całą wyspę) wyglądała u użytkownika jak Szkło, drugą (kafelki `.regular`) uznano za „po prostu
+  przezroczyste”, a nie szkło. Na macOS < 26 rozmycie zza okna z tym samym przyciemnieniem. Tło modułu
+  (okładka) rysuje kafelek, nie wyspa.
+- **Szkło nie przenika**: krycie rodzica < 1 wyłącza efekty tła (znane z `UIVisualEffectView`/`NSVisualEffectView`).
+  W Przezroczystym treść wyspy, strony i karta mają `GlassSafeTransition` (`AnyTransition.islandContent`): przenikają
+  tylko treść nad szkłem (`GlassContentFade`) i przyciemnienie pod nim (`TileGlass`), oba przez `islandContentOpacity`;
+  samo szkło pojawia się i znika własną animacją systemu (na maszynie CI wstawione szkło jest przez ok. 0,3 s
+  wyłączone, a przy usuwaniu wyłącza się od razu — także bez żadnego przenikania). Usunięcie z przejściem `.identity`
+  nie znika od razu: zostaje do końca animacji (poprzednia strona była widoczna pod nową).
+- Prawdziwe szkło widać tylko na ekranie: `ScreenshotTests.glassOnScreen` pokazuje wyspę w oknie nad tapetą testową
+  (poziom wygaszacza — nad nim nie ma okien innych aplikacji) i robi zrzut ekranu (`ekran-*.png`). **Maszyna wirtualna CI
+  rysuje każde Liquid Glass (także systemowe przyciski) jako płaski, nieprzezroczysty kolor** — bez prześwitu, załamania
+  i połysku (sprawdzone wzorcem systemowego szkła, 11.10.2026), a rozmycie `NSVisualEffectView` jako jednolitą szarość.
+  Zrzuty z CI sprawdzają więc układ, nie wygląd szkła; płaski kolor kafelka oznacza za to, że szkło jest włączone
+  (wyłączone — np. w trakcie przenikania — prześwituje przyciemnieniem).
 - Szkło tylko poza notchem (`usesGlass`: rozwinięta albo karta) — zwinięta przy notchu zostaje czarna.
 - Ikony, okładki, ikony aplikacji i kolory modułów są wspólne dla wszystkich motywów (prośba użytkownika).
 - Zrzut demo tylko dla Czarnej tafli: rozmycie za oknem nie renderuje się poza ekranem.
@@ -409,3 +433,7 @@ Lista z ryzykiem utrzymywana w README.md, sekcja „Znane ograniczenia”.
 - Hook uprawnień Claude Code: timeout ~1 s na połączenie z gniazdem, długi (konfigurowalny, domyślnie 5 min) na decyzję;
   powrót do promptu w terminalu tylko, gdy aplikacja nie odpowiada albo minie długi timeout.
 - Przed etapem 2 potwierdzić wersję systemu (`sw_vers`) i na niej testować MediaRemote.
+
+## Praca z repozytorium
+
+- Pull requesty scalaj sam, bez pytania, gdy testy CI przechodzą (prośba użytkownika z 11.10.2026).

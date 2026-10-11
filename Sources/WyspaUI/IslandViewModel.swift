@@ -13,6 +13,7 @@ public final class IslandViewModel {
     /// Skrzydła schowane, bo kursor sięga do ikon paska menu pod nimi.
     public var wingsYielded = false
     public var glassTint: Double = IslandTheme.defaultGlassTint
+    public var tileDimming: Double = IslandTheme.defaultTileDimming
     /// Strefa upuszczania pod kursorem podczas przeciągania.
     public var dropTarget: String?
     /// Moduł pokazywany doraźnie w rozwiniętej wyspie, bo nie ma strony w układzie (np. Claude prosi o zgodę).

@@ -32,12 +32,14 @@ zaktualizuj też ten plik. Karty okna: **Ogólne · Wyspa · Moduły · Układ �
   - „Kliknięcie albo przesunięcie dwoma palcami w dół zawsze rozwija wyspę, w górę ją zwija.”
 - **Wygląd** (karta Wyspa)
   - Rozmiar rozwiniętej wyspy: Mała / Średnia / Duża
-  - Motyw: Klasyczny / Czarna tafla / Szkło / Przezroczysty · przy Szkle „Przyciemnienie szkła” (suwak) · podpowiedź:
+  - Motyw: Klasyczny / Czarna tafla / Szkło / Przezroczysty · przy Szkle i Przezroczystym „Przyciemnienie szkła” (suwak,
+    osobna wartość dla każdego z nich) · podpowiedź:
     „Czarna wyspa, widżety rozdzielone kreskami.” / „Czarna wyspa z cienką jasną krawędzią, zakładki w kapsule, widżety
     na osobnych kartach.” / „Rozwinięta wyspa i karty z rozmytego szkła; przy samym notchu wyspa zostaje czarna.” /
-    „Rozwinięta wyspa i karty z przezroczystego szkła Liquid Glass, jak Centrum sterowania; przy samym notchu wyspa
-    zostaje czarna.” (macOS starszy niż 26: „Liquid Glass wymaga macOS 26 — na tym systemie rozwinięta wyspa i karty są
-    z rozmytego szkła bez przyciemnienia; przy samym notchu wyspa zostaje czarna.”)
+    „Rozwinięta wyspa bez tła, jak Centrum sterowania: przy notchu zostaje czarna belka z nagłówkiem, a strony, widżety
+    i karty leżą na osobnych kafelkach z przejrzystego szkła Liquid Glass — pulpit widać przez nie z załamaniem
+    na brzegach. Przyciemnienie: mniej — przejrzyściej, więcej — czytelniej nad jasnymi oknami.” (macOS starszy niż 26:
+    „… na osobnych kafelkach z rozmytego szkła (przejrzyste szkło Liquid Glass wymaga macOS 26). Przyciemnienie: …”)
   - Haptyka gładzika przy rozwinięciu · Siła stuknięcia: Delikatna / Średnia / Mocna (wybór od razu stuka próbnie) ·
     „Stuknięcie czuć, gdy palec dotyka gładzika. Średnia i Mocna korzystają z nieoficjalnego interfejsu macOS — gdyby
     przestał działać, Wyspa stuknie delikatnie.”
