@@ -69,12 +69,10 @@ binarka ma `minos 14.0` dla obu architektur (sprawdź: `vtool -arch x86_64 -show
   pomaga), więc w motywie Szkło każde rozwinięcie robi to samo co skrót (`takeKeyboard`), a zwinięcie oddaje klawiaturę.
   To samo HUD (`syncHUDKeyboard`, aktywność `.hud`) na czas pokazywania — decyzja użytkownika: litery wpisane wtedy
   przepadają. Inne karty (powiadomienia) nie biorą fokusu, ich szkło jest matowe.
-- **Czytelność Szkła**: przyciemnienie dobierane przy rozwinięciu i HUD (`adaptGlassTint`) — `BackdropBrightness` czyta
-  jasność tapety pod wyspą z pliku (`desktopImageURL`, wypełnienie ekranu), `GlassContrast.tint` liczy krycie czerni
-  dające bieli kontrast 4:1 (80. percentyl luminancji; białe tło ≈ 0,79), suwak to minimum. Okno innej aplikacji pod
-  wyspą = tło nieznane → 0,5. Bez nagrywania ekranu: `SCScreenshotManager` zapalał w pasku menu wskaźnik nagrywania
-  przy każdym zrzucie. Tekst: ostry ciemny obrys bez przesunięcia (`GlassLegibility`); szeroka poświata z przesunięciem
-  wyglądała jak nakładające się litery.
+- **Szkło systemowe**: `glassEffect(.regular)` bez przyciemnienia i bez suwaka (na macOS 26+) — wygląd idzie za
+  ustawieniami systemu (Wygląd → Liquid Glass, Ogranicz przezroczystość); prośba użytkownika: „blur jak w macOS 27,
+  a nie ciemne”. Odrzucone: `.clear` + czarna warstwa (za ciemne / nieczytelne), przyciemnienie z jasności tapety,
+  ScreenCaptureKit (wskaźnik nagrywania w pasku menu). Tekst: ostry ciemny obrys bez przesunięcia (`GlassLegibility`).
 - **Zwinięcie na prośbę modułu**: `ModuleContext.requestCollapse` → `ScreenCoordinator.collapseAll()` → `.collapseRequested`
   (zwija też w trakcie pisania). Po zwinięciu klawiatura wraca do aplikacji pod spodem — na tym opiera się wklejanie.
 - **Gesty**: lokalny monitor `scrollWheel` filtrowany do panelu → `SwipeRecognizer` (jeden kierunek na gest).
@@ -267,12 +265,11 @@ jak reszta wyspy); kolory zostają dla znaczenia (czerwony mikrofon, pomarańczo
 ## Motywy wyspy
 
 - `IslandTheme` (Core): `classic` / `black-sheet` / `glass` / `clear` — nazwy zapisane w ustawieniach, nie zmieniać
-  (test). `SettingsStore.islandTheme`, `glassTint` (0–0,9, domyślnie 0,3, tylko Szkło) i `tileDimming` (0–0,6,
+  (test). `SettingsStore.islandTheme`, `glassTint` (0–0,9, domyślnie 0,3, tylko Szkło na macOS < 26) i `tileDimming` (0–0,6,
   domyślnie 0,25, tylko Przezroczysty; ten sam podpis suwaka „Przyciemnienie szkła”); zmiana bez przebudowy okien
   (`IslandWindowController.applyAppearance`).
 - `WyspaUI/IslandThemeViews.swift`: `IslandBackground` (czerń / czerń + krawędź 0,5 pt / szkło = `IslandGlass`:
-  jedna tafla `glassEffect(.clear)` na całej wyspie jak Centrum sterowania (prośba użytkownika 11.10.2026), czarna
-  warstwa `glassTint` nad nią, bez cienia, przycięta do kształtu (poświata wychodziła poza wyspę), poza `compositingGroup`;
+  jedna tafla `glassEffect(.regular)` na całej wyspie (szkło systemowe, bez przyciemnienia), bez cienia, przycięta do kształtu (poświata wychodziła poza wyspę), poza `compositingGroup`;
   stale pod czarną wyspą (poza ukrytą), rozwinięcie tylko rozjaśnia czerń 1 → `glassTint` — szkło wstawiane przy
   rozwinięciu włączało się z opóźnieniem ~0,3 s i przez chwilę wyspa wyglądała po staremu; na macOS < 26 `FrostedGlass`:
   `NSVisualEffectView` `.hudWindow` `.behindWindow` + jaśniejąca ku dołowi krawędź),

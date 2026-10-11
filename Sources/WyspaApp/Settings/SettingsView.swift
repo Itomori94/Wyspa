@@ -110,7 +110,7 @@ private struct IslandSettingsView: View {
                     ForEach(IslandTheme.allCases, id: \.self) { Text($0.displayName).tag($0) }
                 }
                 .pickerStyle(.segmented)
-                if settings.islandTheme == .glass {
+                if settings.islandTheme == .glass, !Self.hasLiquidGlass {
                     LabeledContent("Przyciemnienie szkła") {
                         Slider(value: $settings.glassTint, in: IslandTheme.glassTintRange)
                             .frame(maxWidth: 220)
@@ -165,9 +165,17 @@ private struct IslandSettingsView: View {
         switch settings.islandTheme {
         case .classic: "Czarna wyspa, widżety rozdzielone kreskami."
         case .blackSheet: "Czarna wyspa z cienką jasną krawędzią, zakładki w kapsule, widżety na osobnych kartach."
-        case .glass: "Rozwinięta wyspa i karty z przejrzystego szkła, jak Centrum sterowania; przy samym notchu wyspa zostaje czarna."
+        case .glass: Self.hasLiquidGlass
+            ? "Rozwinięta wyspa i karty ze szkła systemowego — wygląda jak macOS i idzie za ustawieniami (Wygląd → Liquid Glass). Przy samym notchu wyspa zostaje czarna."
+            : "Rozwinięta wyspa i karty z rozmytego szkła; przy samym notchu wyspa zostaje czarna."
         case .clear: Self.clearThemeHint
         }
+    }
+
+    /// Szkło systemowe (macOS 26+) nie ma suwaka przyciemnienia — wygląd ustawia system.
+    private static var hasLiquidGlass: Bool {
+        if #available(macOS 26, *) { return true }
+        return false
     }
 
     private static var clearThemeHint: String {

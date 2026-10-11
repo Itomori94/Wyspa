@@ -136,7 +136,10 @@ struct IslandBackground: View {
         // Ukryta wyspa i przezroczyste części wyspy muszą mieć niezerowe krycie, inaczej okno nie dostanie
         // zdarzeń myszy. W motywie Przezroczysty czerń daje belka.
         if isHidden || theme.usesGlassTiles { return 0.01 }
-        return isGlass ? max(glassTint, 0.01) : 1
+        guard isGlass else { return 1 }
+        // Liquid Glass bez przyciemnienia: czytelność daje samo szkło systemowe (jak w macOS), a jego wygląd idzie za
+        // ustawieniami systemu (Wygląd → Liquid Glass, Ogranicz przezroczystość). `glassTint` tylko dla rozmycia < 26.
+        return Self.hasLiquidGlass && theme == .glass ? 0.01 : glassTint
     }
 
     private var shadowOpacity: Double {
@@ -154,8 +157,8 @@ struct IslandBackground: View {
 }
 
 /// Czytelność na przejrzystym szkle (motyw Szkło): ostry, ciemny obrys liter i ikon bez przesunięcia — jak krawędź,
-/// nie drugi, rozmyty napis (szersza poświata z przesunięciem wyglądała jak nakładające się litery). Główną robotę
-/// robi przyciemnienie dobrane do pulpitu (`GlassContrast`). Jeden cień całej treści, nie każdego tekstu z osobna.
+/// nie drugi, rozmyty napis (szersza poświata z przesunięciem wyglądała jak nakładające się litery). Jeden cień całej
+/// treści, nie każdego tekstu z osobna.
 struct GlassLegibility: ViewModifier {
     let theme: IslandTheme
 
@@ -168,15 +171,17 @@ struct GlassLegibility: ViewModifier {
     }
 }
 
-/// Tafla motywu Szkło jak Centrum sterowania: przejrzysty Liquid Glass (`.clear`) na całej wyspie — pulpit widać ostro,
-/// z załamaniem i połyskiem na brzegu. Czytelność tekstu daje czarna warstwa `glassTint` nad szkłem.
+/// Tafla motywu Szkło: systemowe Liquid Glass (`.regular`) na całej wyspie — rozmycie i załamanie jak w macOS, bez
+/// przyciemnienia. Wariant `.regular` idzie za ustawieniami systemu (Wygląd → Liquid Glass: przejrzyste/barwione,
+/// Ogranicz przezroczystość), więc wyspa wygląda jak reszta systemu (prośba użytkownika 11.10.2026: „blur jak
+/// w macOS 27, a nie ciemne”, bez suwaka). Wcześniej `.clear` + czarna warstwa — za ciemne albo nieczytelne.
 private struct IslandGlass: View {
     let shape: IslandShape
 
     var body: some View {
         if #available(macOS 26, *) {
             // Przycięte do wyspy: cień i poświata szkła wychodzą poza kształt (test `IslandOverflowTests`).
-            Color.clear.glassEffect(.clear, in: shape)
+            Color.clear.glassEffect(.regular, in: shape)
                 .clipShape(shape)
         }
     }
