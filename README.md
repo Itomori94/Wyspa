@@ -74,6 +74,8 @@ Ustawienia → Wyspa → **Motyw**:
 - **Czarna tafla**: czarna wyspa z cienką jasną krawędzią, zakładki w kapsule, każdy widżet na osobnej karcie.
 - **Szkło**: rozwinięta wyspa i karty z rozmytego szkła (suwak *Przyciemnienie szkła*); przy samym notchu wyspa
   zostaje czarna, żeby zlewała się z wycięciem ekranu.
+- **Przezroczysty**: rozwinięta wyspa i karty z przezroczystego szkła Liquid Glass, tego samego co Centrum sterowania
+  (macOS 26 i nowszy; na starszym systemie rozmyte szkło bez przyciemnienia); przy notchu wyspa też zostaje czarna.
 
 Motyw nie zmienia ikon: okładki, ikony aplikacji (np. Apple Music) i symbole modułów wyglądają tak samo w każdym.
 
@@ -268,9 +270,11 @@ ustawienie urządzenia (publiczne CoreAudio, zmiany z Ustawień systemowych wida
 Wyspa porównuje wersję, z której została zbudowana, z najnowszą na GitHubie — przy włączeniu modułu i potem co
 6 godzin. Gdy jest coś nowego, w wyspie na chwilę pojawia się karta z liczbą zmian, a w ustawieniach modułu lista
 zmian i przycisk **Zaktualizuj teraz**: pobiera zmiany do katalogu projektu (`git pull --ff-only`), buduje
-i instaluje nową wersję (Wyspa zamknie się i uruchomi ponownie). Odmawia, gdy w katalogu są niezapisane zmiany
-albo aktywna jest inna gałąź niż `master`. Po ponownym uruchomieniu Wyspa potwierdza aktualizację okienkiem z nową
-wersją i listą zmian. Do GitHuba trafia tylko zapytanie o porównanie commitów, bez konta.
+i instaluje nową wersję — okienko pokazuje postęp (budowanie trwa kilka minut), potem Wyspa zamknie się i uruchomi
+ponownie sama. Gdy coś się nie uda, działa dalej poprzednia wersja, a okienko mówi, na którym etapie. Odmawia, gdy
+w katalogu są niezapisane zmiany albo aktywna jest inna gałąź niż `master`. Po ponownym uruchomieniu Wyspa
+potwierdza aktualizację okienkiem z nową wersją i listą zmian. Do GitHuba trafia tylko zapytanie o porównanie
+commitów, bez konta.
 
 ### Skrypty (komenda `wyspa`)
 

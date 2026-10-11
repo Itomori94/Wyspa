@@ -15,13 +15,12 @@ enum UpdatePrompt {
         case .available(let check):
             alert.messageText = "Dostępna nowa wersja Wyspy"
             alert.informativeText = changesText(check)
-                + "\n\nAktualizacja pobierze zmiany, zbuduje i zainstaluje Wyspę — aplikacja zamknie się i uruchomi ponownie."
+                + "\n\nAktualizacja pobierze zmiany, zbuduje i zainstaluje Wyspę (budowanie trwa kilka minut) — potem "
+                + "aplikacja zamknie się i uruchomi ponownie sama."
             alert.addButton(withTitle: "Zaktualizuj teraz")
             alert.addButton(withTitle: "Później")
-            if alert.runModal() == .alertFirstButtonReturn {
-                service.update()
-                await waitForFailure(service)
-            }
+            // Postęp i ewentualny błąd pokazuje okienko aktualizacji (UpdateProgressWindowController).
+            if alert.runModal() == .alertFirstButtonReturn { service.update() }
             return
         case .upToDate:
             alert.messageText = "Masz najnowszą wersję Wyspy"
@@ -63,18 +62,5 @@ enum UpdatePrompt {
         var lines = check.changes.prefix(maxListedChanges).map { "• \($0.title)" }
         if check.changes.count > maxListedChanges { lines.append("… i \(check.changes.count - maxListedChanges) więcej") }
         return "\(count):\n" + lines.joined(separator: "\n")
-    }
-
-    /// Udana aktualizacja kończy tę kopię Wyspy; błąd przed instalacją (np. niezapisane zmiany) pokazujemy.
-    private static func waitForFailure(_ service: UpdateService) async {
-        while service.status == .updating {
-            try? await Task.sleep(for: .milliseconds(300))
-        }
-        guard case .failed(let message) = service.status else { return }
-        let alert = NSAlert()
-        alert.alertStyle = .warning
-        alert.messageText = "Aktualizacja się nie udała"
-        alert.informativeText = message
-        alert.runModal()
     }
 }

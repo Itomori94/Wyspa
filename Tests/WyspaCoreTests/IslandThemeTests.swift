@@ -43,18 +43,31 @@ struct IslandThemeTests {
         #expect(SettingsStore(defaults: defaults).islandTheme == .classic)
     }
 
-    @Test("szkło tylko w motywie Szkło i tylko poza notchem (rozwinięta albo karta)")
-    func glassOnlyWhenRaised() {
-        #expect(IslandTheme.glass.usesGlass(isExpanded: true, showsCard: false))
-        #expect(IslandTheme.glass.usesGlass(isExpanded: false, showsCard: true))
-        #expect(!IslandTheme.glass.usesGlass(isExpanded: false, showsCard: false), "przy notchu zostaje czarna")
-        #expect(!IslandTheme.blackSheet.usesGlass(isExpanded: true, showsCard: true))
-        #expect(!IslandTheme.classic.usesGlass(isExpanded: true, showsCard: true))
+    @Test("szkło tylko w motywach Szkło i Przezroczysty i tylko poza notchem (rozwinięta albo karta)",
+          arguments: [IslandTheme.glass, .clear])
+    func glassOnlyWhenRaised(theme: IslandTheme) {
+        #expect(theme.hasGlass)
+        #expect(theme.usesGlass(isExpanded: true, showsCard: false))
+        #expect(theme.usesGlass(isExpanded: false, showsCard: true))
+        #expect(!theme.usesGlass(isExpanded: false, showsCard: false), "przy notchu zostaje czarna")
+    }
+
+    @Test("motywy bez szkła", arguments: [IslandTheme.classic, .blackSheet])
+    func noGlass(theme: IslandTheme) {
+        #expect(!theme.hasGlass)
+        #expect(!theme.usesGlass(isExpanded: true, showsCard: true))
     }
 
     @Test("zapisane nazwy motywów są stałe")
     func rawValues() {
-        #expect(IslandTheme.allCases.map(\.rawValue) == ["classic", "black-sheet", "glass"])
+        #expect(IslandTheme.allCases.map(\.rawValue) == ["classic", "black-sheet", "glass", "clear"])
+    }
+
+    @Test("motyw Przezroczysty zapisuje się i wraca po ponownym uruchomieniu")
+    func persistsClear() {
+        let (settings, defaults) = store()
+        settings.islandTheme = .clear
+        #expect(SettingsStore(defaults: defaults).islandTheme == .clear)
     }
 }
 

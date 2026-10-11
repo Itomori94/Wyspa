@@ -9,18 +9,25 @@ public enum IslandTheme: String, CaseIterable, Codable, Sendable {
     case blackSheet = "black-sheet"
     /// Szkło: rozwinięta wyspa i karty z rozmytego, przyciemnionego szkła; zwinięta wyspa zostaje czarna przy notchu.
     case glass
+    /// Przezroczysty: Liquid Glass jak w Centrum sterowania (macOS 26+), bez przyciemnienia; na starszym systemie
+    /// rozmyte szkło. Zwinięta wyspa zostaje czarna przy notchu, jak w Szkle.
+    case clear
 
     public var displayName: String {
         switch self {
         case .classic: "Klasyczny"
         case .blackSheet: "Czarna tafla"
         case .glass: "Szkło"
+        case .clear: "Przezroczysty"
         }
     }
 
+    /// Motyw ze szklaną rozwiniętą wyspą (Szkło, Przezroczysty).
+    public var hasGlass: Bool { self == .glass || self == .clear }
+
     /// Szkło tylko tam, gdzie wyspa wychodzi poza notch: rozwinięta albo z kartą pod skrzydłami.
     public func usesGlass(isExpanded: Bool, showsCard: Bool) -> Bool {
-        self == .glass && (isExpanded || showsCard)
+        hasGlass && (isExpanded || showsCard)
     }
 
     /// Przyciemnienie szkła (krycie czarnej warstwy na rozmyciu).

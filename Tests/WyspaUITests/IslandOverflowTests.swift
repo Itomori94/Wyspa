@@ -213,9 +213,32 @@ struct IslandOverflowTests {
             registry.setBoard(board)
         }
 
-        let expanded = scenario.size.expandedSize
-        let model = IslandViewModel(phase: scenario.phase, notch: Self.notch, expandedSize: expanded, registry: registry)
-        let panel = IslandLayout.panelSize(expanded: expanded, notch: Self.notch.size, shadowMargin: Self.shadowMargin)
+        let model = IslandViewModel(phase: scenario.phase, notch: Self.notch, expandedSize: scenario.size.expandedSize,
+                                    registry: registry)
+        let leaks = try await leakCount(of: model, name: scenario.testDescription)
+        #expect(leaks == 0, "\(leaks) jasnych pikseli poza wyspą")
+    }
+
+    @Test("Motywy ze szkłem (Szkło, Przezroczysty z Liquid Glass) renderują się bez treści poza wyspą",
+          arguments: [IslandTheme.glass, .clear])
+    func glassThemes(theme: IslandTheme) async throws {
+        Scenario.activityWing = IslandLayout.wingWidth
+        Scenario.detailHeight = nil
+        let defaults = UserDefaults(suiteName: "overflow.\(UUID())")!
+        let catalog = Array(allTabModules.prefix(2))
+        let registry = ModuleRegistry(catalog: catalog, settings: SettingsStore(defaults: defaults),
+                                      permissions: AllGranted(), requestExpand: { _ in })
+        for type in catalog { await registry.setEnabled(type.descriptor.id, true) }
+        let model = IslandViewModel(phase: .expanded, notch: Self.notch, expandedSize: IslandSize.medium.expandedSize,
+                                    registry: registry)
+        model.theme = theme
+        let leaks = try await leakCount(of: model, name: "motyw-\(theme.rawValue)")
+        #expect(leaks == 0, "\(leaks) jasnych pikseli poza wyspą")
+    }
+
+    /// Renderuje wyspę poza ekranem w ramie panelu i liczy jasne piksele poza prostokątem wyspy.
+    private func leakCount(of model: IslandViewModel, name: String) async throws -> Int {
+        let panel = IslandLayout.panelSize(expanded: model.expandedSize, notch: Self.notch.size, shadowMargin: Self.shadowMargin)
         let host = NSHostingView(rootView: IslandView(model: model))
         host.frame = CGRect(origin: .zero, size: panel)
         host.layoutSubtreeIfNeeded()
@@ -228,8 +251,8 @@ struct IslandOverflowTests {
         // Podgląd do oceny wzrokowej: WYSPA_RENDER_DIR=/ścieżka swift test --filter IslandOverflowTests
         if let directory = ProcessInfo.processInfo.environment["WYSPA_RENDER_DIR"],
            let png = rep.representation(using: .png, properties: [:]) {
-            let name = scenario.testDescription.replacingOccurrences(of: " ", with: "_").replacingOccurrences(of: ":", with: "-")
-            try png.write(to: URL(fileURLWithPath: directory).appendingPathComponent("\(name).png"))
+            let file = name.replacingOccurrences(of: " ", with: "_").replacingOccurrences(of: ":", with: "-")
+            try png.write(to: URL(fileURLWithPath: directory).appendingPathComponent("\(file).png"))
         }
 
         let island = model.islandSize
@@ -247,6 +270,6 @@ struct IslandOverflowTests {
                 if brightness > 0.25 { leaks += 1 }
             }
         }
-        #expect(leaks == 0, "\(leaks) jasnych pikseli poza wyspą")
+        return leaks
     }
 }

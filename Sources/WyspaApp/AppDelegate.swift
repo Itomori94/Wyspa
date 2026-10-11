@@ -1,6 +1,7 @@
 import AppKit
 import WyspaCore
 import WyspaFeatures
+import WyspaUpdates
 
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
@@ -11,6 +12,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusItem: StatusItemController?
     private var settingsWindow: SettingsWindowController?
     private var hotkey: HotkeyController?
+    private var updateProgress: UpdateProgressWindowController?
     private var terminationSignal: DispatchSourceSignal?
     private var accessibilityObserver: NSObjectProtocol?
     /// Zmiana aktywnej aplikacji (np. start udostępniania w Zoomie) — moment na sprawdzenie trybu prywatnego.
@@ -45,9 +47,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         self.screens = screens
         screens.start()
 
+        let updateProgress = UpdateProgressWindowController()
+        self.updateProgress = updateProgress
         statusItem = StatusItemController(
             openSettings: { settingsWindow.show() },
-            checkForUpdates: { Task { await UpdatePrompt.checkAndShow() } }
+            checkForUpdates: {
+                // W trakcie aktualizacji: z powrotem okienko postępu (mogło zostać zamknięte).
+                if UpdateService.shared.status == .updating {
+                    updateProgress.show()
+                } else {
+                    Task { await UpdatePrompt.checkAndShow() }
+                }
+            }
         )
         hotkey = HotkeyController(settings: settings, settingsWindow: settingsWindow) {
             screens.toggleWithKeyboardUnderPointer()
