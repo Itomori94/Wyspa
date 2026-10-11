@@ -113,6 +113,11 @@ private struct IslandSettingsView: View {
                         Slider(value: $settings.glassTint, in: IslandTheme.glassTintRange)
                             .frame(maxWidth: 220)
                     }
+                } else if settings.islandTheme == .clear {
+                    LabeledContent("Przyciemnienie szkła") {
+                        Slider(value: $settings.tileDimming, in: IslandTheme.tileDimmingRange)
+                            .frame(maxWidth: 220)
+                    }
                 }
                 Text(themeHint).font(.caption).foregroundStyle(.secondary)
                 Toggle("Haptyka gładzika przy rozwinięciu", isOn: $settings.hapticsEnabled)
@@ -166,10 +171,12 @@ private struct IslandSettingsView: View {
     private static var clearThemeHint: String {
         let layout = "Rozwinięta wyspa bez tła, jak Centrum sterowania: przy notchu zostaje czarna belka z nagłówkiem, "
             + "a strony, widżety i karty leżą na osobnych kafelkach"
+        let dimming = " Przyciemnienie: mniej — przejrzyściej, więcej — czytelniej nad jasnymi oknami."
         if #available(macOS 26, *) {
-            return layout + " ze szkła Liquid Glass."
+            return layout + " z przejrzystego szkła Liquid Glass — pulpit widać przez nie z załamaniem na brzegach."
+                + dimming
         }
-        return layout + " z rozmytego szkła (Liquid Glass wymaga macOS 26)."
+        return layout + " z rozmytego szkła (przejrzyste szkło Liquid Glass wymaga macOS 26)." + dimming
     }
 }
 

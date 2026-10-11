@@ -23,7 +23,7 @@ public struct IslandView: View {
             IslandBackground(topRadius: topRadius, bottomRadius: bottomRadius, theme: model.theme,
                              isGlass: model.theme.usesGlass(isExpanded: model.phase == .expanded, showsCard: showsCard),
                              glassTint: model.glassTint, backdrop: model.backdrop, isHidden: model.phase == .hidden,
-                             isRaised: isRaised, headHeight: headHeight)
+                             isRaised: isRaised, headHeight: headHeight, headBottomRadius: headBottomRadius)
                 .contentShape(IslandShape(topRadius: topRadius, bottomRadius: bottomRadius))
                 .onTapGesture {
                     // W rozwiniętej wyspie kliknięcia obsługują kontrolki modułów.
@@ -53,6 +53,7 @@ public struct IslandView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .environment(\.colorScheme, .dark)
         .environment(\.islandTheme, model.theme)
+        .environment(\.islandTileDimming, model.tileDimming)
     }
 
     /// Ukryta wyspa musi mieć niezerową przezroczystość, inaczej okno nie dostanie zdarzeń myszy.
@@ -72,10 +73,18 @@ public struct IslandView: View {
         model.phase == .expanded ? IslandLayout.expandedTopRadius : IslandLayout.collapsedTopRadius
     }
 
-    /// Czarna belka motywu Przezroczysty: w rozwiniętej wyspie nagłówek (do jego dołu z zapasem), nad kartą — skrzydła.
+    /// Czarna belka motywu Przezroczysty: cała zwinięta wyspa, nad kartą — skrzydła, w rozwiniętej — nagłówek (do jego
+    /// dołu z zapasem). Ta sama belka we wszystkich fazach, więc zmiana fazy tylko zmienia jej rozmiar.
     private var headHeight: CGFloat {
         let notch = model.notch.size.height
-        return model.phase == .expanded ? ExpandedIslandView.headerBottom(notchHeight: notch) + 4 : notch
+        switch model.phase {
+        case .expanded: return ExpandedIslandView.headerBottom(notchHeight: notch) + 4
+        case .hidden, .collapsed, .peek: return showsCard ? notch : model.islandSize.height
+        }
+    }
+
+    private var headBottomRadius: CGFloat {
+        model.phase == .expanded || showsCard ? IslandBackground.raisedHeadRadius : bottomRadius
     }
 
     private var bottomRadius: CGFloat {

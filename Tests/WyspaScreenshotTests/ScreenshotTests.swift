@@ -477,54 +477,34 @@ struct ScreenshotTests {
         _ = NSApplication.shared
         NSApp.setActivationPolicy(.accessory)
         try await capture("ekran-przezroczysty-widzety", phase: .expanded, tab: "widgets", theme: .clear)
-        try await capture("ekran-przezroczysty-widzety-clear", phase: .expanded, tab: "widgets", theme: .clear, clearGlass: true)
-        try await capture("ekran-przezroczysty-pogoda", phase: .expanded, tab: "weather", theme: .clear)
         try await capture("ekran-przezroczysty-odtwarzacz", phase: .expanded, tab: "media", theme: .clear)
         try await capture("ekran-przezroczysty-karta", phase: .collapsed, activity: ("alerts", Stage.notificationActivity), theme: .clear)
-        try await capture("ekran-przezroczysty-w-oknie", phase: .expanded, tab: "widgets", theme: .clear, sameWindow: true)
         try await capture("ekran-szklo-widzety", phase: .expanded, tab: "widgets", theme: .glass)
+        if #available(macOS 26, *) {
+            try await captureOnScreen("ekran-szklo-wzorzec", SystemGlassReference())
+        }
+        try await captureTransition("przejscie-przezroczysty", theme: .clear)
     }
 
     private func capture(_ name: String, phase: IslandPhase, tab: String? = nil, activity: (String, LiveActivity?)? = nil,
-                         theme: IslandTheme, clearGlass: Bool = false, sameWindow: Bool = false) async throws {
+                         theme: IslandTheme) async throws {
         let model = try await makeModel(phase: phase, tab: tab, activity: activity, theme: theme)
-        let size = IslandSize.medium.expandedSize
-        let panel = IslandLayout.panelSize(expanded: size, notch: Self.notch.size, shadowMargin: 36)
-        guard let screen = NSScreen.screens.first else {
+        try await captureOnScreen(name, IslandView(model: model))
+    }
+
+    private func captureOnScreen<Content: View>(_ name: String, _ content: Content) async throws {
+        guard let stage = showOnScreen(content) else {
             print("Zrzut \(name): brak ekranu")
             return
         }
-        let frame = CGRect(x: screen.frame.minX + 40, y: screen.frame.maxY - panel.height - 60, width: panel.width,
-                           height: panel.height)
-        let island = IslandView(model: model)
-            .frame(width: panel.width, height: panel.height)
-            .environment(\.islandStaticSnapshot, true)
-            .environment(\.islandClearGlass, clearGlass)
-            .environment(\.locale, Locale(identifier: "pl_PL"))
-        var windows: [NSWindow] = []
-        if sameWindow {
-            windows.append(showWindow(frame: frame, level: .floating, opaque: true) {
-                ZStack(alignment: .top) { GlassTestWallpaper(); island }
-            })
-        } else {
-            windows.append(showWindow(frame: frame, level: .floating, opaque: true) { GlassTestWallpaper() })
-            windows.append(showWindow(frame: frame, level: NSWindow.Level(NSWindow.Level.floating.rawValue + 1), opaque: false) { island })
-        }
-        defer { windows.forEach { $0.orderOut(nil) } }
-        windows.forEach {
-            $0.contentView?.layoutSubtreeIfNeeded()
-            $0.displayIfNeeded()
-        }
-        CATransaction.flush()
+        defer { stage.windows.forEach { $0.orderOut(nil) } }
         // Okna muszą zostać złożone przez serwer okien (szkło pojawia się z animacją).
         runMainLoop(seconds: 2.5)
 
-        // Obszar ekranu w układzie z początkiem w lewym górnym rogu głównego ekranu.
-        let rect = CGRect(x: frame.minX, y: screen.frame.maxY - frame.maxY, width: frame.width, height: frame.height)
-        let directory = URL(fileURLWithPath: outputDirectory!)
-        let file = directory.appendingPathComponent("\(name).png")
+        let file = URL(fileURLWithPath: outputDirectory!).appendingPathComponent("\(name).png")
         let tool = Process()
         tool.executableURL = URL(fileURLWithPath: "/usr/sbin/screencapture")
+        let rect = stage.rect
         tool.arguments = ["-x", "-R", "\(Int(rect.minX)),\(Int(rect.minY)),\(Int(rect.width)),\(Int(rect.height))", file.path]
         // Bez zgody na nagrywanie ekranu polecenie mogłoby czekać na odpowiedź — najwyżej 10 s.
         let watchdog = Task { [tool] in
@@ -537,21 +517,70 @@ struct ScreenshotTests {
         }
         watchdog.cancel()
         print("screencapture \(name): kod \(status), plik \(FileManager.default.fileExists(atPath: file.path))")
-        // Drugi sposób: obraz okien z serwera okien w tym samym procesie (bez zgody na nagrywanie dla własnych okien).
-        // Funkcja oznaczona jako przestarzała, więc wołana przez dlsym.
-        typealias CreateImage = @convention(c) (CGRect, UInt32, UInt32, UInt32) -> Unmanaged<CGImage>?
-        let coreGraphics = dlopen("/System/Library/Frameworks/CoreGraphics.framework/CoreGraphics", RTLD_NOW)
-        if let symbol = dlsym(coreGraphics, "CGWindowListCreateImage") {
-            let create = unsafeBitCast(symbol, to: CreateImage.self)
-            // kCGWindowListOptionOnScreenOnly, kCGNullWindowID, kCGWindowImageBestResolution
-            if let image = create(rect, 1, 0, 1 << 3)?.takeRetainedValue(),
-               let png = NSBitmapImageRep(cgImage: image).representation(using: .png, properties: [:]) {
-                try png.write(to: directory.appendingPathComponent("\(name)-cg.png"))
-                print("CGWindowListCreateImage \(name): \(image.width)×\(image.height)")
-            } else {
-                print("CGWindowListCreateImage \(name): brak obrazu")
+    }
+
+    /// Klatki rozwinięcia i zwinięcia w prawdziwym tempie: obraz okien z serwera okien co ~50 ms.
+    private func captureTransition(_ name: String, theme: IslandTheme) async throws {
+        let model = try await makeModel(phase: .collapsed, tab: "widgets", activity: ("media", Stage.mediaActivity), theme: theme)
+        guard let stage = showOnScreen(IslandView(model: model)) else { return }
+        defer { stage.windows.forEach { $0.orderOut(nil) } }
+        runMainLoop(seconds: 2)
+        let directory = URL(fileURLWithPath: outputDirectory!)
+        let steps: [(label: String, phase: IslandPhase)] = [("rozwijanie", .expanded), ("zwijanie", .collapsed)]
+        for (label, phase) in steps {
+            var frames: [(milliseconds: Int64, image: CGImage)] = []
+            let start = ContinuousClock.now
+            withAnimation(IslandMotion.animation(to: phase)) { model.phase = phase }
+            while ContinuousClock.now - start < .milliseconds(600) {
+                runMainLoop(seconds: 0.04)
+                guard let image = windowImage(stage.rect) else {
+                    print("Klatki \(name): brak obrazu okien")
+                    return
+                }
+                let elapsed = (ContinuousClock.now - start).components
+                frames.append((milliseconds: elapsed.seconds * 1000 + elapsed.attoseconds / 1_000_000_000_000_000, image: image))
             }
+            for (index, frame) in frames.enumerated() {
+                let png = NSBitmapImageRep(cgImage: frame.image).representation(using: .png, properties: [:])
+                try png?.write(to: directory.appendingPathComponent("\(name)-\(label)-\(index + 1)-\(frame.milliseconds)ms.png"))
+            }
+            runMainLoop(seconds: 1.5)
         }
+    }
+
+    /// Treść (wyspa) w przezroczystym oknie nad oknem z tapetą testową (jak panel nad pulpitem), 60 pt pod górą ekranu.
+    /// `rect` to ten obszar w układzie ekranu z początkiem w lewym górnym rogu (dla screencapture i CGWindowList).
+    /// Okna na poziomie wygaszacza: nad nimi nie ma okien innych aplikacji, więc zrzut (także uruchomiony na własnym
+    /// Macu) pokazuje tylko tapetę testową i wyspę.
+    private func showOnScreen<Content: View>(_ content: Content) -> (windows: [NSWindow], rect: CGRect)? {
+        guard let screen = NSScreen.screens.first else { return nil }
+        let panel = IslandLayout.panelSize(expanded: IslandSize.medium.expandedSize, notch: Self.notch.size, shadowMargin: 36)
+        let frame = CGRect(x: screen.frame.minX + 40, y: screen.frame.maxY - panel.height - 60, width: panel.width,
+                           height: panel.height)
+        let front = content
+            .frame(width: panel.width, height: panel.height)
+            .environment(\.islandStaticSnapshot, true)
+            .environment(\.locale, Locale(identifier: "pl_PL"))
+        let windows = [
+            showWindow(frame: frame, level: .screenSaver, opaque: true) { GlassTestWallpaper() },
+            showWindow(frame: frame, level: NSWindow.Level(NSWindow.Level.screenSaver.rawValue + 1), opaque: false) { front },
+        ]
+        windows.forEach {
+            $0.contentView?.layoutSubtreeIfNeeded()
+            $0.displayIfNeeded()
+        }
+        CATransaction.flush()
+        return (windows, CGRect(x: frame.minX, y: screen.frame.maxY - frame.maxY, width: frame.width, height: frame.height))
+    }
+
+    /// Obraz własnych okien z serwera okien, w tym samym procesie (bez zgody na nagrywanie ekranu, szybko — klatki
+    /// animacji). Funkcja oznaczona jako przestarzała, więc wołana przez dlsym.
+    private func windowImage(_ rect: CGRect) -> CGImage? {
+        typealias CreateImage = @convention(c) (CGRect, UInt32, UInt32, UInt32) -> Unmanaged<CGImage>?
+        guard let symbol = dlsym(dlopen("/System/Library/Frameworks/CoreGraphics.framework/CoreGraphics", RTLD_NOW),
+                                 "CGWindowListCreateImage") else { return nil }
+        // kCGWindowListOptionOnScreenOnly, kCGNullWindowID, kCGWindowImageBestResolution
+        return unsafeBitCast(symbol, to: CreateImage.self)(rect, 1, 0, 1 << 3)?.takeRetainedValue()
     }
 
     /// Pętla zdarzeń głównego wątku przez chwilę (rysowanie okien, animacje). Osobna funkcja synchroniczna:
@@ -569,44 +598,83 @@ struct ScreenshotTests {
         window.level = level
         window.ignoresMouseEvents = true
         window.isReleasedWhenClosed = false
-        window.contentView = NSHostingView(rootView: content())
+        let host = NSHostingView(rootView: content())
+        // Okno ma zostać w swojej ramie — treść nie może go powiększyć do swojego rozmiaru.
+        host.sizingOptions = []
+        window.contentView = host
+        window.setFrame(frame, display: false)
         window.orderFrontRegardless()
         return window
     }
 }
 
+/// Wzorzec do zrzutów szkła: systemowe Liquid Glass poza wyspą (bez przycinania i zagnieżdżenia) — pokazuje, jak serwer
+/// okien danej maszyny rysuje szkło (maszyna wirtualna CI może nie rysować załamania ani połysku).
+@available(macOS 26, *)
+private struct SystemGlassReference: View {
+    var body: some View {
+        let shape = RoundedRectangle(cornerRadius: 18, style: .continuous)
+        HStack(spacing: 14) {
+            sample("regular") { Color.clear.glassEffect(.regular, in: shape) }
+            sample("clear") { Color.clear.glassEffect(.clear, in: shape) }
+            sample("clear + 0,25") {
+                Color.clear.glassEffect(.clear, in: shape).background(shape.fill(Color.black.opacity(0.25)))
+            }
+            Button("Przycisk") {}
+                .buttonStyle(.glass)
+                .frame(width: 130, height: 110)
+        }
+        .padding(.top, 70)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+    }
+
+    private func sample<Fill: View>(_ title: String, @ViewBuilder glass: () -> Fill) -> some View {
+        Text(title)
+            .font(.system(size: 13, weight: .semibold))
+            .foregroundStyle(.white)
+            .frame(width: 130, height: 110)
+            .background { glass() }
+    }
+}
+
 /// Tapeta pod wyspą do zrzutów szkła: ukośne pasy (widać na nich załamanie i rozmycie), plamy kolorów i jasne okno
-/// z tekstem (czy biały tekst wyspy jest czytelny nad jasnym tłem).
+/// z tekstem pod kafelkiem (czy biały tekst wyspy jest czytelny nad jasnym tłem). Wszystko w nakładkach na gradiencie,
+/// więc tapeta ma dokładnie rozmiar okna; położenia w punktach od lewego górnego rogu.
 private struct GlassTestWallpaper: View {
     var body: some View {
-        ZStack {
-            LinearGradient(colors: [Color(red: 0.36, green: 0.22, blue: 0.62), Color(red: 0.12, green: 0.32, blue: 0.62)],
-                           startPoint: .topLeading, endPoint: .bottomTrailing)
-            HStack(spacing: 16) {
-                ForEach(0..<40, id: \.self) { index in
-                    Rectangle()
-                        .fill(index.isMultiple(of: 2) ? Color(red: 0.55, green: 0.3, blue: 0.85) : Color.black.opacity(0.45))
-                        .frame(width: 14)
+        LinearGradient(colors: [Color(red: 0.36, green: 0.22, blue: 0.62), Color(red: 0.12, green: 0.32, blue: 0.62)],
+                       startPoint: .topLeading, endPoint: .bottomTrailing)
+            .overlay {
+                HStack(spacing: 16) {
+                    ForEach(0..<40, id: \.self) { index in
+                        Rectangle()
+                            .fill(index.isMultiple(of: 2) ? Color(red: 0.55, green: 0.3, blue: 0.85) : Color.black.opacity(0.45))
+                            .frame(width: 14)
+                    }
+                }
+                .frame(width: 1400, height: 900)
+                .rotationEffect(.degrees(14))
+            }
+            .overlay(alignment: .topLeading) {
+                ZStack(alignment: .topLeading) {
+                    Circle().fill(Color.pink).frame(width: 110, height: 110).offset(x: 215, y: 30)
+                    Circle().fill(Color.orange).frame(width: 150, height: 150).offset(x: 290, y: 140)
+                    RoundedRectangle(cornerRadius: 10)
+                        .fill(Color.white)
+                        .frame(width: 260, height: 200)
+                        .overlay(alignment: .topLeading) {
+                            VStack(alignment: .leading, spacing: 4) {
+                                ForEach(0..<12, id: \.self) { _ in
+                                    Text("Jasne okno pod wyspą — tekst i ikony").font(.system(size: 12)).foregroundStyle(.black)
+                                }
+                            }
+                            .padding(10)
+                        }
+                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                        .offset(x: 450, y: 110)
                 }
             }
-            .frame(width: 1400, height: 900)
-            .rotationEffect(.degrees(14))
-            Circle().fill(Color.orange).frame(width: 150).offset(x: -210, y: 60)
-            Circle().fill(Color.pink).frame(width: 110).offset(x: 40, y: 110)
-            RoundedRectangle(cornerRadius: 10)
-                .fill(Color.white)
-                .frame(width: 250, height: 190)
-                .overlay(alignment: .topLeading) {
-                    VStack(alignment: .leading, spacing: 4) {
-                        ForEach(0..<9, id: \.self) { _ in
-                            Text("Jasne okno pod wyspą — tekst i ikony").font(.system(size: 12)).foregroundStyle(.black)
-                        }
-                    }
-                    .padding(10)
-                }
-                .offset(x: 200, y: 40)
-        }
-        .clipped()
+            .clipped()
     }
 }
 

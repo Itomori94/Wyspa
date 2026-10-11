@@ -71,6 +71,7 @@ final class IslandWindowController {
     func applyAppearance() {
         model.theme = settings.islandTheme
         model.glassTint = settings.glassTint
+        model.tileDimming = settings.tileDimming
     }
 
     func update(screen: ScreenInfo) {

@@ -75,8 +75,9 @@ Ustawienia → Wyspa → **Motyw**:
 - **Szkło**: rozwinięta wyspa i karty z rozmytego szkła (suwak *Przyciemnienie szkła*); przy samym notchu wyspa
   zostaje czarna, żeby zlewała się z wycięciem ekranu.
 - **Przezroczysty**: jak Centrum sterowania — rozwinięta wyspa nie ma tła, przy notchu zostaje tylko czarna belka
-  z nagłówkiem, a strony, widżety i karty leżą na osobnych kafelkach ze szkła Liquid Glass (macOS 26 i nowszy;
-  na starszym systemie z rozmytego szkła).
+  z nagłówkiem, a strony, widżety i karty leżą na osobnych kafelkach z przejrzystego szkła Liquid Glass: pulpit widać
+  przez nie ostro, z załamaniem na brzegach (macOS 26 i nowszy; na starszym systemie rozmyte szkło). Suwak
+  *Przyciemnienie szkła* przyciemnia to, co pod kafelkami — więcej daje czytelniejszy tekst nad jasnymi oknami.
 
 Motyw nie zmienia ikon: okładki, ikony aplikacji (np. Apple Music) i symbole modułów wyglądają tak samo w każdym.
 

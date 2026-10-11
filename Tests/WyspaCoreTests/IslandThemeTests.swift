@@ -36,6 +36,20 @@ struct IslandThemeTests {
         #expect(SettingsStore(defaults: defaults).glassTint == IslandTheme.glassTintRange.upperBound)
     }
 
+    @Test("przyciemnienie pod kafelkami Przezroczystego: domyślne, zapis, przycinanie, osobno od Szkła")
+    func tileDimming() {
+        let (settings, defaults) = store()
+        #expect(settings.tileDimming == IslandTheme.defaultTileDimming)
+        settings.tileDimming = 0.4
+        let reloaded = SettingsStore(defaults: defaults)
+        #expect(reloaded.tileDimming == 0.4)
+        #expect(reloaded.glassTint == IslandTheme.defaultGlassTint, "suwak Szkła się nie zmienia")
+        settings.tileDimming = -1
+        #expect(settings.tileDimming == IslandTheme.tileDimmingRange.lowerBound)
+        defaults.set(3.0, forKey: SettingsStore.Key.tileDimming)
+        #expect(SettingsStore(defaults: defaults).tileDimming == IslandTheme.tileDimmingRange.upperBound)
+    }
+
     @Test("nieznany motyw z ustawień: klasyczny")
     func unknownTheme() {
         let (_, defaults) = store()

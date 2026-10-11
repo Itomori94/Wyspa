@@ -33,6 +33,7 @@ final class ScreenCoordinator {
         observeChanges({ [weak self] in
             _ = self?.settings.islandTheme
             _ = self?.settings.glassTint
+            _ = self?.settings.tileDimming
         }) { [weak self] in self?.islands.values.forEach { $0.applyAppearance() } }
     }
 

@@ -255,23 +255,32 @@ jak reszta wyspy); kolory zostają dla znaczenia (czerwony mikrofon, pomarańczo
 ## Motywy wyspy
 
 - `IslandTheme` (Core): `classic` / `black-sheet` / `glass` / `clear` — nazwy zapisane w ustawieniach, nie zmieniać
-  (test). `SettingsStore.islandTheme` i `glassTint` (0,35–0,9, domyślnie 0,6, tylko Szkło); zmiana bez przebudowy okien
+  (test). `SettingsStore.islandTheme`, `glassTint` (0,35–0,9, domyślnie 0,6, tylko Szkło) i `tileDimming` (0–0,6,
+  domyślnie 0,25, tylko Przezroczysty; ten sam podpis suwaka „Przyciemnienie szkła”); zmiana bez przebudowy okien
   (`IslandWindowController.applyAppearance`).
 - `WyspaUI/IslandThemeViews.swift`: `IslandBackground` (czerń / czerń + krawędź 0,5 pt / szkło = `FrostedGlass`:
   `NSVisualEffectView` `.hudWindow` `.behindWindow` + czarna warstwa `glassTint` + jaśniejąca ku dołowi krawędź),
   `IslandEdge` (obrys bez górnej krawędzi), `TabStripBackground` i `TabPill` (zakładki), `WidgetCard` (karty widżetów
   w Czarnej tafli). Motyw trafia do modułów przez `@Environment(\.islandTheme)`.
-- **Przezroczysty** (`clear`, prośba użytkownika: „jak Centrum sterowania, w pełni transparentna”): rozwinięta wyspa
-  **bez tła** — czarna zostaje tylko belka przy notchu (`IslandBackground.headHeight`: nagłówek do
-  `ExpandedIslandView.headerBottom` + 4, nad kartą same skrzydła), reszta ma krycie 0,01 (zdarzenia myszy). Treść leży
-  na osobnych kafelkach `GlassTile` (`usesGlassTiles`): strona modułu na jednym (`PageTile`, wysunięty poza ramę
-  treści o `outset` na boki i `bottomOutset` w dół, treść odsunięta od góry o `innerTop`), każdy widżet na swoim
-  (odstęp 8), karta pod notchem na swoim. Szkło kafelka = SwiftUI `glassEffect(.regular)` na macOS 26+ (ten sam
-  materiał co Centrum sterowania), przycięte do kształtu kafelka (szkło rysuje się kilka punktów poza nim); na
-  macOS < 26 rozmycie zza okna z przyciemnieniem 0,3. Tło modułu (okładka) rysuje kafelek, nie wyspa. Pierwsza wersja
-  (jedna tafla szkła na całą wyspę) wyglądała jak Szkło bez przyciemnienia — duża tafla to w praktyce samo rozmycie.
-  Prawdziwe szkło widać tylko na ekranie: `ScreenshotTests.glassOnScreen` pokazuje wyspę w oknie nad tapetą testową
-  i robi zrzut ekranu (`ekran-*.png`).
+- **Przezroczysty** (`clear`, prośba użytkownika: „jak Centrum sterowania, w pełni transparentna”, potem „ma być szkło,
+  a nie po prostu przezroczyste”): rozwinięta wyspa **bez tła** — czarna jest tylko belka przy notchu
+  (`IslandBackground.headHeight`): cała zwinięta wyspa, w rozwiniętej nagłówek do `ExpandedIslandView.headerBottom` + 4,
+  nad kartą same skrzydła. Jedna belka we wszystkich fazach, więc rozwinięcie ją poszerza (przenikanie czarnej wyspy
+  w przezroczystą to przez chwilę ciemna tafla rosnąca z notcha); `animation(_:value:)` przenikań (`isGlass`,
+  `backdrop`) obejmuje tylko ich warstwy — na całości nadpisałoby sprężynę wyspy dla belki. Reszta wyspy ma krycie
+  0,01 (zdarzenia myszy). Treść leży na osobnych kafelkach `GlassTile` (`usesGlassTiles`): strona modułu na jednym
+  (`PageTile`, wysunięty poza ramę treści o `outset` na boki i `bottomOutset` w dół, treść odsunięta od góry
+  o `innerTop`), każdy widżet na swoim (odstęp 8), karta pod notchem na swoim. Szkło kafelka = SwiftUI
+  `glassEffect(.clear)` na macOS 26+, pod nim czarna warstwa `tileDimming` (zalecenie Apple dla `.clear`; szkło
+  załamuje przyciemniony pulpit), bez przycinania kafelka (połysk i załamanie leżą na brzegu; poza wyspę nic nie wyjdzie,
+  bo treść wyspy jest przycięta). Dlaczego `.clear`: na zrzucie Centrum sterowania od użytkownika (macOS 26+) moduły
+  leżą wprost na pulpicie, a szkło nie przyciemnia — czerń pod kafelkiem jest podniesiona do jasności ~47/255, jasne
+  fale zostają jasne, tło widać ostro z załamaniem na brzegach. `.regular` jest matowy: pierwsza wersja (jedna tafla
+  `.regular` na całą wyspę) wyglądała u użytkownika jak Szkło, drugą (kafelki `.regular`) uznano za „po prostu
+  przezroczyste”, a nie szkło. Na macOS < 26 rozmycie zza okna z tym samym przyciemnieniem. Tło modułu
+  (okładka) rysuje kafelek, nie wyspa. Prawdziwe szkło widać tylko na ekranie: `ScreenshotTests.glassOnScreen`
+  pokazuje wyspę w oknie nad tapetą testową (poziom wygaszacza — nad nim nie ma okien innych aplikacji) i robi zrzut
+  ekranu (`ekran-*.png`).
 - Szkło tylko poza notchem (`usesGlass`: rozwinięta albo karta) — zwinięta przy notchu zostaje czarna.
 - Ikony, okładki, ikony aplikacji i kolory modułów są wspólne dla wszystkich motywów (prośba użytkownika).
 - Zrzut demo tylko dla Czarnej tafli: rozmycie za oknem nie renderuje się poza ekranem.

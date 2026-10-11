@@ -10,7 +10,7 @@ public enum IslandTheme: String, CaseIterable, Codable, Sendable {
     /// Szkło: rozwinięta wyspa i karty z rozmytego, przyciemnionego szkła; zwinięta wyspa zostaje czarna przy notchu.
     case glass
     /// Przezroczysty, jak Centrum sterowania: rozwinięta wyspa bez tła — czarna zostaje tylko belka przy notchu,
-    /// a strony, widżety i karty leżą na osobnych kafelkach ze szkła Liquid Glass (macOS 26+).
+    /// a strony, widżety i karty leżą na osobnych kafelkach z przejrzystego szkła Liquid Glass (macOS 26+).
     case clear
 
     public var displayName: String {
@@ -36,4 +36,9 @@ public enum IslandTheme: String, CaseIterable, Codable, Sendable {
     /// Przyciemnienie szkła (krycie czarnej warstwy na rozmyciu).
     public static let glassTintRange: ClosedRange<Double> = 0.35...0.9
     public static let defaultGlassTint = 0.6
+
+    /// Przyciemnienie pod kafelkami motywu Przezroczysty (krycie czarnej warstwy pod przejrzystym szkłem). Zero = jak
+    /// Centrum sterowania; więcej = czytelniejszy biały tekst nad jasnymi oknami (Apple zaleca warstwę pod `.clear`).
+    public static let tileDimmingRange: ClosedRange<Double> = 0...0.6
+    public static let defaultTileDimming = 0.25
 }
