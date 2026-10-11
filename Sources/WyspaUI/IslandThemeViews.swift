@@ -74,15 +74,12 @@ struct IslandBackground: View {
         // także dla belki (zmiana fazy zmienia `isGlass`, a rozwinięcie odtwarzacza — `backdrop`).
         ZStack(alignment: .top) {
             // Szkło Liquid Glass poza grupą `compositingGroup` (spłaszczenie odcięłoby je od tego, co pod oknem).
-            ZStack {
-                if isGlass, theme == .glass, Self.hasLiquidGlass {
-                    // Bez przenikania (krycie < 1 wyłącza szkło): czerń nad nim przechodzi z 1 do `glassTint`,
-                    // a przy zwijaniu `.identity` trzyma szkło do końca animacji, aż czerń znów je zakryje.
-                    IslandGlass(shape: shape)
-                        .transition(.identity)
-                }
+            if theme == .glass, !isHidden, Self.hasLiquidGlass {
+                // Szkło jest stale pod czarną wyspą (przy notchu zakrywa je pełna czerń), a rozwinięcie tylko
+                // rozjaśnia czerń do `glassTint`. Wstawiane dopiero przy rozwinięciu włączało się z opóźnieniem
+                // (system włącza nowe szkło po ok. 0,3 s), więc przez chwilę wyspa wyglądała po staremu.
+                IslandGlass(shape: shape)
             }
-            .animation(.easeInOut(duration: 0.25), value: isGlass)
             background
         }
     }
