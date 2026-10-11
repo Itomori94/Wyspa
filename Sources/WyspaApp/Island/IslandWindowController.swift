@@ -303,7 +303,21 @@ final class IslandWindowController {
         if model.wingsYielded, hasCard || registry.currentActivity?.id != yieldedActivityID { restoreWings() }
         if hasCard != state.hasCard { send(.cardChanged(hasCard)) }
         if tabCount != state.tabCount { send(.tabCountChanged(tabCount)) }
+        syncHUDKeyboard()
         updateInteractiveRect()
+    }
+
+    /// Szkło: HUD (głośność, jasność) bierze klawiaturę na czas pokazywania, bo przejrzyste szkło wymaga okna
+    /// kluczowego. Decyzja użytkownika (11.10.2026): litery wpisane w tym czasie przepadają.
+    private func syncHUDKeyboard() {
+        guard state.phase != .expanded else { return }
+        let showsHUD = model.theme.takesKeyboardOnExpand && registry.currentActivity?.priority == .hud
+        if showsHUD, !panel.isKeyWindow {
+            takeKeyboard()
+        } else if !showsHUD, panel.isKeyWindow {
+            panel.acceptsKeyboard = false
+            returnKeyboard()
+        }
     }
 
     // MARK: - Geometria
