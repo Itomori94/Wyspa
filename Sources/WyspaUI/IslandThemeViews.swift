@@ -84,7 +84,11 @@ struct ClearGlass: View {
 
     var body: some View {
         if #available(macOS 26, *) {
-            Color.clear.glassEffect(.regular, in: shape)
+            // Przycięte do kształtu wyspy: szkło rysuje się też kilka punktów poza nim (poświata), a nic z wyspy
+            // nie może wychodzić poza jej kształt (test IslandOverflowTests).
+            Color.clear
+                .glassEffect(.regular, in: shape)
+                .clipShape(shape)
         } else {
             FrostedGlass(shape: shape, edge: edge)
         }
