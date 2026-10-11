@@ -68,8 +68,13 @@ binarka ma `minos 14.0` dla obu architektur (sprawdź: `vtool -arch x86_64 -show
   tylko w oknie kluczowym (w innym system rysuje je matowe — sprawdzone oknem testowym; nadpisanie `isKeyWindow` nie
   pomaga), więc w motywie Szkło każde rozwinięcie robi to samo co skrót (`takeKeyboard`), a zwinięcie oddaje klawiaturę.
   To samo HUD (`syncHUDKeyboard`, aktywność `.hud`) na czas pokazywania — decyzja użytkownika: litery wpisane wtedy
-  przepadają. Inne karty (powiadomienia) nie biorą fokusu, ich szkło jest matowe. W Szkle treść ma ciemną poświatę
-  pod tekstem (`GlassLegibility`).
+  przepadają. Inne karty (powiadomienia) nie biorą fokusu, ich szkło jest matowe.
+- **Czytelność Szkła**: przyciemnienie dobierane przy rozwinięciu i HUD (`adaptGlassTint`) — `BackdropBrightness` czyta
+  jasność tapety pod wyspą z pliku (`desktopImageURL`, wypełnienie ekranu), `GlassContrast.tint` liczy krycie czerni
+  dające bieli kontrast 4:1 (80. percentyl luminancji; białe tło ≈ 0,79), suwak to minimum. Okno innej aplikacji pod
+  wyspą = tło nieznane → 0,5. Bez nagrywania ekranu: `SCScreenshotManager` zapalał w pasku menu wskaźnik nagrywania
+  przy każdym zrzucie. Tekst: ostry ciemny obrys bez przesunięcia (`GlassLegibility`); szeroka poświata z przesunięciem
+  wyglądała jak nakładające się litery.
 - **Zwinięcie na prośbę modułu**: `ModuleContext.requestCollapse` → `ScreenCoordinator.collapseAll()` → `.collapseRequested`
   (zwija też w trakcie pisania). Po zwinięciu klawiatura wraca do aplikacji pod spodem — na tym opiera się wklejanie.
 - **Gesty**: lokalny monitor `scrollWheel` filtrowany do panelu → `SwipeRecognizer` (jeden kierunek na gest).

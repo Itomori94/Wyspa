@@ -153,17 +153,15 @@ struct IslandBackground: View {
     }
 }
 
-/// Czytelność na przejrzystym szkle (motyw Szkło): pod tekstem i ikonami ciemna poświata — ostra tuż przy krawędzi
-/// liter i miękka szersza — więc biały tekst nie ginie nad jasnym pulpitem (prośba użytkownika 11.10.2026).
-/// Jeden cień całej treści, nie każdego tekstu z osobna.
+/// Czytelność na przejrzystym szkle (motyw Szkło): ostry, ciemny obrys liter i ikon bez przesunięcia — jak krawędź,
+/// nie drugi, rozmyty napis (szersza poświata z przesunięciem wyglądała jak nakładające się litery). Główną robotę
+/// robi przyciemnienie dobrane do pulpitu (`GlassContrast`). Jeden cień całej treści, nie każdego tekstu z osobna.
 struct GlassLegibility: ViewModifier {
     let theme: IslandTheme
 
     func body(content: Content) -> some View {
         if theme == .glass {
-            content
-                .shadow(color: .black.opacity(0.55), radius: 1.5, y: 0.5)
-                .shadow(color: .black.opacity(0.35), radius: 6)
+            content.shadow(color: .black.opacity(0.6), radius: 0.8)
         } else {
             content
         }
