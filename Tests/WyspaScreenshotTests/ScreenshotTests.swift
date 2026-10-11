@@ -480,10 +480,6 @@ struct ScreenshotTests {
         try await capture("ekran-przezroczysty-odtwarzacz", phase: .expanded, tab: "media", theme: .clear)
         try await capture("ekran-przezroczysty-karta", phase: .collapsed, activity: ("alerts", Stage.notificationActivity), theme: .clear)
         try await capture("ekran-szklo-widzety", phase: .expanded, tab: "widgets", theme: .glass)
-        if #available(macOS 26, *) {
-            try await captureOnScreen("ekran-szklo-wzorzec", SystemGlassReference())
-        }
-        try await captureTransition("przejscie-przezroczysty", theme: .clear)
     }
 
     private func capture(_ name: String, phase: IslandPhase, tab: String? = nil, activity: (String, LiveActivity?)? = nil,
@@ -519,42 +515,8 @@ struct ScreenshotTests {
         print("screencapture \(name): kod \(status), plik \(FileManager.default.fileExists(atPath: file.path))")
     }
 
-    /// Klatki rozwinięcia, zmiany zakładki (widżety → pogoda) i zwinięcia w prawdziwym tempie: obraz okien z serwera
-    /// okien co ~50 ms.
-    private func captureTransition(_ name: String, theme: IslandTheme) async throws {
-        let model = try await makeModel(phase: .collapsed, tab: "widgets", activity: ("media", Stage.mediaActivity), theme: theme)
-        guard let stage = showOnScreen(IslandView(model: model)) else { return }
-        defer { stage.windows.forEach { $0.orderOut(nil) } }
-        runMainLoop(seconds: 2)
-        let directory = URL(fileURLWithPath: outputDirectory!)
-        let steps: [(label: String, change: () -> Void)] = [
-            ("rozwijanie", { withAnimation(IslandMotion.animation(to: .expanded)) { model.phase = .expanded } }),
-            ("zakladka", { withAnimation(IslandMotion.tab) { model.selectedTab = 4 } }),
-            ("zwijanie", { withAnimation(IslandMotion.animation(to: .collapsed)) { model.phase = .collapsed } }),
-        ]
-        for (label, change) in steps {
-            var frames: [(milliseconds: Int64, image: CGImage)] = []
-            let start = ContinuousClock.now
-            change()
-            while ContinuousClock.now - start < .milliseconds(600) {
-                runMainLoop(seconds: 0.04)
-                guard let image = windowImage(stage.rect) else {
-                    print("Klatki \(name): brak obrazu okien")
-                    return
-                }
-                let elapsed = (ContinuousClock.now - start).components
-                frames.append((milliseconds: elapsed.seconds * 1000 + elapsed.attoseconds / 1_000_000_000_000_000, image: image))
-            }
-            for (index, frame) in frames.enumerated() {
-                let png = NSBitmapImageRep(cgImage: frame.image).representation(using: .png, properties: [:])
-                try png?.write(to: directory.appendingPathComponent("\(name)-\(label)-\(index + 1)-\(frame.milliseconds)ms.png"))
-            }
-            runMainLoop(seconds: 1.5)
-        }
-    }
-
     /// Treść (wyspa) w przezroczystym oknie nad oknem z tapetą testową (jak panel nad pulpitem), 60 pt pod górą ekranu.
-    /// `rect` to ten obszar w układzie ekranu z początkiem w lewym górnym rogu (dla screencapture i CGWindowList).
+    /// `rect` to ten obszar w układzie ekranu z początkiem w lewym górnym rogu (dla screencapture).
     /// Okna na poziomie wygaszacza: nad nimi nie ma okien innych aplikacji, więc zrzut (także uruchomiony na własnym
     /// Macu) pokazuje tylko tapetę testową i wyspę.
     private func showOnScreen<Content: View>(_ content: Content) -> (windows: [NSWindow], rect: CGRect)? {
@@ -576,16 +538,6 @@ struct ScreenshotTests {
         }
         CATransaction.flush()
         return (windows, CGRect(x: frame.minX, y: screen.frame.maxY - frame.maxY, width: frame.width, height: frame.height))
-    }
-
-    /// Obraz własnych okien z serwera okien, w tym samym procesie (bez zgody na nagrywanie ekranu, szybko — klatki
-    /// animacji). Funkcja oznaczona jako przestarzała, więc wołana przez dlsym.
-    private func windowImage(_ rect: CGRect) -> CGImage? {
-        typealias CreateImage = @convention(c) (CGRect, UInt32, UInt32, UInt32) -> Unmanaged<CGImage>?
-        guard let symbol = dlsym(dlopen("/System/Library/Frameworks/CoreGraphics.framework/CoreGraphics", RTLD_NOW),
-                                 "CGWindowListCreateImage") else { return nil }
-        // kCGWindowListOptionOnScreenOnly, kCGNullWindowID, kCGWindowImageBestResolution
-        return unsafeBitCast(symbol, to: CreateImage.self)(rect, 1, 0, 1 << 3)?.takeRetainedValue()
     }
 
     /// Pętla zdarzeń głównego wątku przez chwilę (rysowanie okien, animacje). Osobna funkcja synchroniczna:
@@ -610,35 +562,6 @@ struct ScreenshotTests {
         window.setFrame(frame, display: false)
         window.orderFrontRegardless()
         return window
-    }
-}
-
-/// Wzorzec do zrzutów szkła: systemowe Liquid Glass poza wyspą (bez przycinania i zagnieżdżenia) — pokazuje, jak serwer
-/// okien danej maszyny rysuje szkło (maszyna wirtualna CI może nie rysować załamania ani połysku).
-@available(macOS 26, *)
-private struct SystemGlassReference: View {
-    var body: some View {
-        let shape = RoundedRectangle(cornerRadius: 18, style: .continuous)
-        HStack(spacing: 14) {
-            sample("regular") { Color.clear.glassEffect(.regular, in: shape) }
-            sample("clear") { Color.clear.glassEffect(.clear, in: shape) }
-            sample("clear + 0,25") {
-                Color.clear.glassEffect(.clear, in: shape).background(shape.fill(Color.black.opacity(0.25)))
-            }
-            Button("Przycisk") {}
-                .buttonStyle(.glass)
-                .frame(width: 130, height: 110)
-        }
-        .padding(.top, 70)
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-    }
-
-    private func sample<Fill: View>(_ title: String, @ViewBuilder glass: () -> Fill) -> some View {
-        Text(title)
-            .font(.system(size: 13, weight: .semibold))
-            .foregroundStyle(.white)
-            .frame(width: 130, height: 110)
-            .background { glass() }
     }
 }
 
