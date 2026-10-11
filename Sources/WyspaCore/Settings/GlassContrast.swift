@@ -6,17 +6,16 @@ public enum GlassContrast {
     /// Najjaśniejsze dopuszczalne tło pod białym tekstem (luminancja względna). Kontrast bieli z takim tłem to
     /// (1 + 0,05) / (0,2125 + 0,05) = 4:1 — prawie poziom WCAG AA dla zwykłego tekstu.
     static let maxBackgroundLuminance = 0.2125
-    /// Najmocniejsze przyciemnienie automatyczne (wyżej szkła już prawie nie widać).
-    static let maxAutomaticTint = 0.8
     /// Nieznane tło (np. okno innej aplikacji pod wyspą — jego wyglądu nie znamy bez nagrywania ekranu).
     static let unknownBackgroundTint = 0.5
 
     /// Krycie czarnej warstwy nad szkłem dla tła o jasności `luminance` (nil = nieznane); nigdy poniżej `minimum`.
+    /// Najwięcej (białe tło) 1 − 0,2125 ≈ 0,79 — szkło wciąż trochę widać.
     public static func tint(luminance: Double?, minimum: Double) -> Double {
         guard let luminance else { return max(minimum, unknownBackgroundTint) }
         // Czerń o kryciu t daje tło L · (1 − t); szukamy t, przy którym tło nie przekracza progu.
         let needed = luminance <= maxBackgroundLuminance ? 0 : 1 - maxBackgroundLuminance / luminance
-        return max(minimum, min(needed, maxAutomaticTint))
+        return max(minimum, needed)
     }
 
     /// Jasność tła pod tekstem: 80. percentyl luminancji względnej pikseli RGBA (8 bitów, sRGB). Percentyl zamiast

@@ -71,7 +71,7 @@ binarka ma `minos 14.0` dla obu architektur (sprawdź: `vtool -arch x86_64 -show
   przepadają. Inne karty (powiadomienia) nie biorą fokusu, ich szkło jest matowe.
 - **Czytelność Szkła**: przyciemnienie dobierane przy rozwinięciu i HUD (`adaptGlassTint`) — `BackdropBrightness` czyta
   jasność tapety pod wyspą z pliku (`desktopImageURL`, wypełnienie ekranu), `GlassContrast.tint` liczy krycie czerni
-  dające bieli kontrast 4:1 (80. percentyl luminancji, najwyżej 0,8), suwak to minimum. Okno innej aplikacji pod
+  dające bieli kontrast 4:1 (80. percentyl luminancji; białe tło ≈ 0,79), suwak to minimum. Okno innej aplikacji pod
   wyspą = tło nieznane → 0,5. Bez nagrywania ekranu: `SCScreenshotManager` zapalał w pasku menu wskaźnik nagrywania
   przy każdym zrzucie. Tekst: ostry ciemny obrys bez przesunięcia (`GlassLegibility`); szeroka poświata z przesunięciem
   wyglądała jak nakładające się litery.

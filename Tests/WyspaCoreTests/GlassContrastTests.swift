@@ -16,9 +16,9 @@ struct GlassContrastTests {
         #expect(abs(background - GlassContrast.maxBackgroundLuminance) < 0.0001)
     }
 
-    @Test("białe tło: przyciemnienie ograniczone, suwak może dać więcej")
+    @Test("białe tło: przyciemnienie poniżej 0,8 (szkło wciąż widać), suwak może dać więcej")
     func whiteBackground() {
-        #expect(GlassContrast.tint(luminance: 1, minimum: 0) == GlassContrast.maxAutomaticTint)
+        #expect(GlassContrast.tint(luminance: 1, minimum: 0) < 0.8)
         #expect(GlassContrast.tint(luminance: 1, minimum: 0.9) == 0.9)
     }
 
