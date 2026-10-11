@@ -7,6 +7,44 @@ extension EnvironmentValues {
     @Entry public var islandTheme: IslandTheme = .classic
     /// Przyciemnienie pod kafelkami motywu Przezroczysty (`SettingsStore.tileDimming`).
     @Entry var islandTileDimming: Double = IslandTheme.defaultTileDimming
+    /// Krycie treści nad szkłem kafelków w trakcie `GlassSafeTransition` (poza przejściem 1).
+    @Entry var islandContentOpacity: Double = 1
+}
+
+/// Przejście treści leżącej na kafelkach szkła (Przezroczysty) bez przenikania całości: efekt szkła przestaje działać,
+/// gdy rodzic ma krycie mniejsze od 1 (ograniczenie Core Animation, jak przy UIVisualEffectView) — kafelki byłyby przez
+/// całe przenikanie samym przyciemnieniem, a szkło wskakiwałoby na końcu (widać to na klatkach z ekranu). Kafelki są więc
+/// od razu (odsłania je rosnąca wyspa), a przenika tylko treść nad szkłem (`GlassContentFade`).
+struct GlassSafeTransition: Transition {
+    var scale: CGFloat = 1
+    var offsetY: CGFloat = 0
+
+    func body(content: Content, phase: TransitionPhase) -> some View {
+        content
+            .environment(\.islandContentOpacity, phase.isIdentity ? 1 : 0)
+            .scaleEffect(phase.isIdentity ? 1 : scale, anchor: .top)
+            .offset(y: phase.isIdentity ? 0 : offsetY)
+    }
+}
+
+/// Treść nad szkłem kafelka przenikana przez `GlassSafeTransition` (samo szkło przenikać nie może).
+struct GlassContentFade: ViewModifier {
+    @Environment(\.islandContentOpacity) private var opacity
+
+    func body(content: Content) -> some View {
+        content.opacity(opacity)
+    }
+}
+
+extension AnyTransition {
+    /// Przejście treści wyspy: w motywie Przezroczysty `GlassSafeTransition` (bez przenikania szkła), w pozostałych
+    /// przenikanie z podanym ruchem.
+    static func islandContent(theme: IslandTheme, scale: CGFloat = 1, offsetY: CGFloat = 0) -> AnyTransition {
+        if theme.usesGlassTiles {
+            return AnyTransition(GlassSafeTransition(scale: scale, offsetY: offsetY))
+        }
+        return .opacity.combined(with: .scale(scale: scale, anchor: .top)).combined(with: .offset(y: offsetY))
+    }
 }
 
 /// Tło wyspy według motywu. Warstwy przenikają się, więc rozwinięcie czarnej wyspy w szklaną nie przeskakuje.
@@ -163,6 +201,7 @@ struct PageTile: ViewModifier {
     func body(content: Content) -> some View {
         if theme.usesGlassTiles {
             content
+                .modifier(GlassContentFade())
                 .padding(.top, GlassTile.innerTop)
                 .background {
                     GlassTile(backdrop: backdrop)

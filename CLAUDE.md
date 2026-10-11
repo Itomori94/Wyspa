@@ -278,9 +278,18 @@ jak reszta wyspy); kolory zostają dla znaczenia (czerwony mikrofon, pomarańczo
   fale zostają jasne, tło widać ostro z załamaniem na brzegach. `.regular` jest matowy: pierwsza wersja (jedna tafla
   `.regular` na całą wyspę) wyglądała u użytkownika jak Szkło, drugą (kafelki `.regular`) uznano za „po prostu
   przezroczyste”, a nie szkło. Na macOS < 26 rozmycie zza okna z tym samym przyciemnieniem. Tło modułu
-  (okładka) rysuje kafelek, nie wyspa. Prawdziwe szkło widać tylko na ekranie: `ScreenshotTests.glassOnScreen`
-  pokazuje wyspę w oknie nad tapetą testową (poziom wygaszacza — nad nim nie ma okien innych aplikacji) i robi zrzut
-  ekranu (`ekran-*.png`).
+  (okładka) rysuje kafelek, nie wyspa.
+- **Szkło nie może przenikać**: efekt tła (Liquid Glass, `NSVisualEffectView`) nie działa, gdy rodzic ma krycie < 1
+  (ograniczenie Core Animation) — kafelki byłyby przez całe przenikanie samym przyciemnieniem, a szkło wskakiwałoby na
+  końcu. W Przezroczystym treść wyspy, strony i karta mają `GlassSafeTransition` (`AnyTransition.islandContent`): kafelki
+  są od razu (odsłania je rosnąca wyspa, przy zwijaniu chowa malejąca), a przenika tylko treść nad szkłem
+  (`GlassContentFade`, `islandContentOpacity`); poprzednia strona znika od razu (kafelki dwóch stron by się nakładały).
+- Prawdziwe szkło widać tylko na ekranie: `ScreenshotTests.glassOnScreen` pokazuje wyspę w oknie nad tapetą testową
+  (poziom wygaszacza — nad nim nie ma okien innych aplikacji) i robi zrzut ekranu (`ekran-*.png`). **Maszyna wirtualna CI
+  rysuje każde Liquid Glass (także systemowe przyciski) jako płaski, nieprzezroczysty kolor** — bez prześwitu, załamania
+  i połysku (sprawdzone wzorcem systemowego szkła, 11.10.2026), a rozmycie `NSVisualEffectView` jako jednolitą szarość.
+  Zrzuty z CI sprawdzają więc układ, nie wygląd szkła; płaski kolor kafelka oznacza za to, że szkło jest włączone
+  (wyłączone — np. w trakcie przenikania — prześwituje przyciemnieniem).
 - Szkło tylko poza notchem (`usesGlass`: rozwinięta albo karta) — zwinięta przy notchu zostaje czarna.
 - Ikony, okładki, ikony aplikacji i kolory modułów są wspólne dla wszystkich motywów (prośba użytkownika).
 - Zrzut demo tylko dla Czarnej tafli: rozmycie za oknem nie renderuje się poza ekranem.
@@ -423,3 +432,7 @@ Lista z ryzykiem utrzymywana w README.md, sekcja „Znane ograniczenia”.
 - Hook uprawnień Claude Code: timeout ~1 s na połączenie z gniazdem, długi (konfigurowalny, domyślnie 5 min) na decyzję;
   powrót do promptu w terminalu tylko, gdy aplikacja nie odpowiada albo minie długi timeout.
 - Przed etapem 2 potwierdzić wersję systemu (`sw_vers`) i na niej testować MediaRemote.
+
+## Praca z repozytorium
+
+- Pull requesty scalaj sam, bez pytania, gdy testy CI przechodzą (prośba użytkownika z 11.10.2026).

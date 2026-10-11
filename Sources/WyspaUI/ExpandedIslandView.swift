@@ -19,12 +19,13 @@ struct ExpandedIslandView: View {
         VStack(alignment: .leading, spacing: 12) {
             header(tabs: tabs)
                 .frame(height: Self.headerHeight(notchHeight: model.notch.size.height))
+                .modifier(GlassContentFade())
             Group {
                 if let standalone = model.standaloneModuleID, let view = model.registry.standaloneView(for: standalone) {
                     view
                         .modifier(PageTile(backdrop: model.backdrop))
                         .id("standalone." + standalone)
-                        .transition(.opacity.combined(with: .offset(y: 6)))
+                        .transition(pageTransition)
                 } else if tabs.isEmpty {
                     EmptyModulesView(openSettings: model.onOpenSettings)
                         .modifier(PageTile(backdrop: nil))
@@ -32,13 +33,20 @@ struct ExpandedIslandView: View {
                     let index = min(model.selectedTab, tabs.count - 1)
                     PageContentView(page: tabs[index])
                         .id(tabs[index].id)
-                        .transition(.opacity.combined(with: .offset(y: 6)))
+                        .transition(pageTransition)
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
             .animation(IslandMotion.tab, value: model.selectedTab)
         }
         .foregroundStyle(.white)
+    }
+
+    /// Zmiana strony. W motywie Przezroczysty poprzednia strona znika od razu: jej kafelki szkła nie mogą przenikać,
+    /// więc nakładałyby się na kafelki nowej; nowa wsuwa się z przenikaniem samej treści.
+    private var pageTransition: AnyTransition {
+        let insertion = AnyTransition.islandContent(theme: model.theme, offsetY: 6)
+        return model.theme.usesGlassTiles ? .asymmetric(insertion: insertion, removal: .identity) : insertion
     }
 
     /// Nagłówek z trzech kolumn: lewa połowa, pusta przerwa pod notchem, prawa połowa.
@@ -243,6 +251,7 @@ public struct WidgetRow: View {
             content
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
                 .clipped()
+                .modifier(GlassContentFade())
                 .padding(WidgetCard.padding)
                 .background { GlassTile(cornerRadius: GlassTile.widgetCornerRadius, backdrop: backdrop) }
                 .frame(width: width)

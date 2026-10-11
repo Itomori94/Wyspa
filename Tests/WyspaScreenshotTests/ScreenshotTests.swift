@@ -519,18 +519,23 @@ struct ScreenshotTests {
         print("screencapture \(name): kod \(status), plik \(FileManager.default.fileExists(atPath: file.path))")
     }
 
-    /// Klatki rozwinięcia i zwinięcia w prawdziwym tempie: obraz okien z serwera okien co ~50 ms.
+    /// Klatki rozwinięcia, zmiany zakładki (widżety → pogoda) i zwinięcia w prawdziwym tempie: obraz okien z serwera
+    /// okien co ~50 ms.
     private func captureTransition(_ name: String, theme: IslandTheme) async throws {
         let model = try await makeModel(phase: .collapsed, tab: "widgets", activity: ("media", Stage.mediaActivity), theme: theme)
         guard let stage = showOnScreen(IslandView(model: model)) else { return }
         defer { stage.windows.forEach { $0.orderOut(nil) } }
         runMainLoop(seconds: 2)
         let directory = URL(fileURLWithPath: outputDirectory!)
-        let steps: [(label: String, phase: IslandPhase)] = [("rozwijanie", .expanded), ("zwijanie", .collapsed)]
-        for (label, phase) in steps {
+        let steps: [(label: String, change: () -> Void)] = [
+            ("rozwijanie", { withAnimation(IslandMotion.animation(to: .expanded)) { model.phase = .expanded } }),
+            ("zakladka", { withAnimation(IslandMotion.tab) { model.selectedTab = 4 } }),
+            ("zwijanie", { withAnimation(IslandMotion.animation(to: .collapsed)) { model.phase = .collapsed } }),
+        ]
+        for (label, change) in steps {
             var frames: [(milliseconds: Int64, image: CGImage)] = []
             let start = ContinuousClock.now
-            withAnimation(IslandMotion.animation(to: phase)) { model.phase = phase }
+            change()
             while ContinuousClock.now - start < .milliseconds(600) {
                 runMainLoop(seconds: 0.04)
                 guard let image = windowImage(stage.rect) else {

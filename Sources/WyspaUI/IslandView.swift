@@ -73,6 +73,12 @@ public struct IslandView: View {
         model.phase == .expanded ? IslandLayout.expandedTopRadius : IslandLayout.collapsedTopRadius
     }
 
+    /// Zwinięcie: treść szybko gaśnie. Kafelki szkła Przezroczystego nie mogą gasnąć (zniknęłyby w połowie zwijania),
+    /// więc zostają do końca sprężyny i chowa je malejąca wyspa, a gaśnie tylko treść nad nimi.
+    private var expandedRemoval: AnyTransition {
+        model.theme.usesGlassTiles ? .islandContent(theme: model.theme) : .opacity.animation(.easeOut(duration: 0.12))
+    }
+
     /// Czarna belka motywu Przezroczysty: cała zwinięta wyspa, nad kartą — skrzydła, w rozwiniętej — nagłówek (do jego
     /// dołu z zapasem). Ta sama belka we wszystkich fazach, więc zmiana fazy tylko zmienia jej rozmiar.
     private var headHeight: CGFloat {
@@ -110,6 +116,7 @@ public struct IslandView: View {
                     if let detail = activity.detail {
                         detail
                             .frame(height: activity.detailHeight)
+                            .modifier(GlassContentFade())
                             .padding(.horizontal, 12)
                             .background {
                                 // Przezroczysty: karta na własnym kafelku ze szkła pod czarną belką skrzydeł.
@@ -120,7 +127,7 @@ public struct IslandView: View {
                                 }
                             }
                             .id(activity.id + ".detail")
-                            .transition(.opacity.combined(with: .scale(scale: 0.95, anchor: .top)))
+                            .transition(.islandContent(theme: model.theme, scale: 0.95))
                     }
                 }
             }
@@ -129,8 +136,8 @@ public struct IslandView: View {
                 .padding(.top, ExpandedIslandView.topPadding)
                 .padding(.bottom, 16)
                 .transition(.asymmetric(
-                    insertion: .opacity.combined(with: .scale(scale: 0.92, anchor: .top)).animation(IslandMotion.expand.delay(0.04)),
-                    removal: .opacity.animation(.easeOut(duration: 0.12))
+                    insertion: .islandContent(theme: model.theme, scale: 0.92).animation(IslandMotion.expand.delay(0.04)),
+                    removal: expandedRemoval
                 ))
         }
     }
