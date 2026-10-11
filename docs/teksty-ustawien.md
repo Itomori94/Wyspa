@@ -1,15 +1,19 @@
 # Teksty w Ustawieniach Wyspy
 
-Spis tekstów widocznych w oknie **Ustawienia Wyspy** (stan na 3 października 2026). Przy zmianie tekstów w kodzie
+Spis tekstów widocznych w oknie **Ustawienia Wyspy** (stan na 10 października 2026). Przy zmianie tekstów w kodzie
 zaktualizuj też ten plik. Karty okna: **Ogólne · Wyspa · Moduły · Układ · Szybkie akcje**.
 
 ## Menu Wyspy (ikona w pasku menu)
 
 - „Ustawienia…” · „Sprawdź aktualizacje…” · „Wersja …” (nieaktywna, zainstalowany commit) · „Wesprzyj autora…” (otwiera suppi.pl/itomori94) · „Zakończ Wyspę”
 - Okienka „Sprawdź aktualizacje…”: „Dostępna nowa wersja Wyspy” (… zmian: lista najwyżej 6, „… i … więcej”; „Aktualizacja
-  pobierze zmiany, zbuduje i zainstaluje Wyspę — aplikacja zamknie się i uruchomi ponownie.”; „Zaktualizuj teraz” /
-  „Później”) · „Masz najnowszą wersję Wyspy” („Zainstalowana wersja: …”) · „Nie udało się sprawdzić aktualizacji” ·
-  „Aktualizacja się nie udała” (teksty błędów jak w module Aktualizacje)
+  pobierze zmiany, zbuduje i zainstaluje Wyspę (budowanie trwa kilka minut) — potem aplikacja zamknie się i uruchomi
+  ponownie sama.”; „Zaktualizuj teraz” / „Później”) · „Masz najnowszą wersję Wyspy” („Zainstalowana wersja: …”) ·
+  „Nie udało się sprawdzić aktualizacji”
+- Okienko **Aktualizacja Wyspy** (po „Zaktualizuj teraz” z menu albo z ustawień modułu): „Aktualizowanie Wyspy” · „Wyspa
+  zbuduje nową wersję, zamknie się i uruchomi ponownie sama — nie trzeba jej wyłączać. Budowanie trwa zwykle kilka
+  minut.” · etapy „Pobieranie zmian” / „Budowanie nowej wersji” / „Instalowanie” / „Ponowne uruchamianie” (bieżący
+  z czasem trwania) · po błędzie „Aktualizacja się nie udała” + opis (jak w module Aktualizacje), „Pokaż przebieg”, „Zamknij”
 - Po ponownym uruchomieniu po aktualizacji: „Wyspa została zaktualizowana” („Masz najnowszą wersję: ….” + „Zmiany:” i lista)
   albo „Aktualizacja się nie udała” („Wyspa uruchomiła się w poprzedniej wersji. Przebieg: ~/Library/Logs/Wyspa/aktualizacja.log.”)
 
@@ -28,9 +32,12 @@ zaktualizuj też ten plik. Karty okna: **Ogólne · Wyspa · Moduły · Układ �
   - „Kliknięcie albo przesunięcie dwoma palcami w dół zawsze rozwija wyspę, w górę ją zwija.”
 - **Wygląd** (karta Wyspa)
   - Rozmiar rozwiniętej wyspy: Mała / Średnia / Duża
-  - Motyw: Klasyczny / Czarna tafla / Szkło · przy Szkle „Przyciemnienie szkła” (suwak) · podpowiedź: „Czarna wyspa,
-    widżety rozdzielone kreskami.” / „Czarna wyspa z cienką jasną krawędzią, zakładki w kapsule, widżety na osobnych
-    kartach.” / „Rozwinięta wyspa i karty z rozmytego szkła; przy samym notchu wyspa zostaje czarna.”
+  - Motyw: Klasyczny / Czarna tafla / Szkło / Przezroczysty · przy Szkle „Przyciemnienie szkła” (suwak) · podpowiedź:
+    „Czarna wyspa, widżety rozdzielone kreskami.” / „Czarna wyspa z cienką jasną krawędzią, zakładki w kapsule, widżety
+    na osobnych kartach.” / „Rozwinięta wyspa i karty z rozmytego szkła; przy samym notchu wyspa zostaje czarna.” /
+    „Rozwinięta wyspa i karty z przezroczystego szkła Liquid Glass, jak Centrum sterowania; przy samym notchu wyspa
+    zostaje czarna.” (macOS starszy niż 26: „Liquid Glass wymaga macOS 26 — na tym systemie rozwinięta wyspa i karty są
+    z rozmytego szkła bez przyciemnienia; przy samym notchu wyspa zostaje czarna.”)
   - Haptyka gładzika przy rozwinięciu · Siła stuknięcia: Delikatna / Średnia / Mocna (wybór od razu stuka próbnie) ·
     „Stuknięcie czuć, gdy palec dotyka gładzika. Średnia i Mocna korzystają z nieoficjalnego interfejsu macOS — gdyby
     przestał działać, Wyspa stuknie delikatnie.”
@@ -121,13 +128,16 @@ zaktualizuj też ten plik. Karty okna: **Ogólne · Wyspa · Moduły · Układ �
   i przywraca ją po włączeniu. Wyspa nie słucha dźwięku z mikrofonu.” · lista mikrofonów (nazwa, „· systemowy”, ikona stanu) · „„…” nie pozwala się wyciszyć ani zmienić głośności wejścia.” ·
   widżet: nazwa mikrofonu albo „Wszystkie mikrofony (…)”
 - **Aktualizacje** — „Zainstalowana wersja: … (z niezapisanymi zmianami)” · „Sprawdzanie…” / „Masz najnowszą wersję” /
-  „Dostępna nowa wersja: … zmian” + lista (najwyżej 8, „… i … więcej”) / „Aktualizowanie… Wyspa za chwilę uruchomi się
-  ponownie.” / błędy („Ta kopia Wyspy nie została zbudowana z repozytorium git — nie ma z czym porównać.”, „Brak połączenia
-  z GitHubem.”, „GitHub zwrócił nieoczekiwaną odpowiedź.”, „Nie ma katalogu projektu (…) — …”, „W katalogu projektu aktywna
-  jest gałąź „…”, a nie master — zaktualizuj ręcznie.”, „W katalogu projektu są niezapisane zmiany — …”, „Nie udało się
-  pobrać zmian (git pull): …”) · „Sprawdź teraz” · „Zaktualizuj teraz” · „GitHub” · „Aktualizacja pobiera zmiany do
-  katalogu projektu (git pull), buduje i instaluje Wyspę — aplikacja zamknie się i uruchomi ponownie. Przebieg:
-  ~/Library/Logs/Wyspa/aktualizacja.log. Sprawdzanie: przy starcie i co 6 godzin.” · karta w wyspie: „Nowa wersja Wyspy · … zmian”
+  „Dostępna nowa wersja: … zmian” + lista (najwyżej 8, „… i … więcej”) / „<etap>… Wyspa uruchomi się ponownie sama.”
+  (np. „Budowanie nowej wersji…”) / błędy („Ta kopia Wyspy nie została zbudowana z repozytorium git — nie ma z czym
+  porównać.”, „Brak połączenia z GitHubem.”, „GitHub zwrócił nieoczekiwaną odpowiedź.”, „Nie ma katalogu projektu (…) — …”,
+  „W katalogu projektu aktywna jest gałąź „…”, a nie master — zaktualizuj ręcznie.”, „W katalogu projektu są niezapisane
+  zmiany — …”, „Nie udało się pobrać zmian (git pull): …”, „Nie udało się uruchomić instalacji: …”, „Instalacja nie
+  powiodła się na etapie „…” — działa poprzednia wersja. Przebieg: ~/Library/Logs/Wyspa/aktualizacja.log.”, „Nowa wersja
+  jest zainstalowana, ale ta kopia Wyspy się nie zamknęła — zamknij ją i uruchom ponownie.”) · „Sprawdź teraz” ·
+  „Zaktualizuj teraz” · „GitHub” · „Aktualizacja pobiera zmiany do katalogu projektu (git pull), buduje i instaluje
+  Wyspę — aplikacja zamknie się i uruchomi ponownie. Przebieg: ~/Library/Logs/Wyspa/aktualizacja.log. Sprawdzanie: przy
+  starcie i co 6 godzin.” · karta w wyspie: „Nowa wersja Wyspy · … zmian”
 - **Historia schowka** — „Zapamiętuj … wpisów” · „Wyczyść historię” · „Kliknięcie wkleja do aktywnej aplikacji” ·
   „Wklejanie wymaga uprawnienia Dostępność — bez niego kliknięcie tylko kopiuje.” + „Otwórz: Dostępność” ·
   „Przypięte wpisy (pinezka przy wpisie) nie wypadają z historii i zostają po „Wyczyść”. Cała historia, także przypięta,

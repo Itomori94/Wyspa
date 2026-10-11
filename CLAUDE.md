@@ -9,7 +9,7 @@ Prywatny użytek, dystrybucja poza App Store, bez sandboxa.
 scripts/test.sh                 # wszystkie testy jednostkowe (Swift Testing) — przed każdym commitem
 scripts/build-app.sh            # build/Wyspa.app, universal (arm64 + x86_64), release
 scripts/build-app.sh --native --debug   # szybki build tylko na bieżącą architekturę
-scripts/install.sh              # build + instalacja do /Applications (zamyka działającą kopię)
+scripts/install.sh              # build + instalacja do /Applications (zamyka działającą kopię; --native = tylko ta architektura)
 swift scripts/make-icon.swift   # odtworzenie Resources/AppIcon.icns (ikona rysowana kodem)
 scripts/dev-cert.sh             # jednorazowo: lokalny certyfikat „Wyspa Development”
 scripts/update-mediaremote-adapter.sh v0.7.8   # aktualizacja adaptera MediaRemote (jedna komenda)
@@ -254,13 +254,19 @@ jak reszta wyspy); kolory zostają dla znaczenia (czerwony mikrofon, pomarańczo
 
 ## Motywy wyspy
 
-- `IslandTheme` (Core): `classic` / `black-sheet` / `glass` — nazwy zapisane w ustawieniach, nie zmieniać (test).
-  `SettingsStore.islandTheme` i `glassTint` (0,35–0,9, domyślnie 0,6); zmiana bez przebudowy okien
+- `IslandTheme` (Core): `classic` / `black-sheet` / `glass` / `clear` — nazwy zapisane w ustawieniach, nie zmieniać
+  (test). `SettingsStore.islandTheme` i `glassTint` (0,35–0,9, domyślnie 0,6, tylko Szkło); zmiana bez przebudowy okien
   (`IslandWindowController.applyAppearance`).
-- `WyspaUI/IslandThemeViews.swift`: `IslandBackground` (czerń / czerń + krawędź 0,5 pt / szkło = `NSVisualEffectView`
-  `.hudWindow` `.behindWindow` + czarna warstwa `glassTint` + jaśniejąca ku dołowi krawędź), `IslandEdge` (obrys bez
-  górnej krawędzi), `TabStripBackground` i `TabPill` (zakładki), `WidgetCard` (karty widżetów w Czarnej tafli).
-  Motyw trafia do modułów przez `@Environment(\.islandTheme)`.
+- `WyspaUI/IslandThemeViews.swift`: `IslandBackground` (czerń / czerń + krawędź 0,5 pt / szkło = `FrostedGlass`:
+  `NSVisualEffectView` `.hudWindow` `.behindWindow` + czarna warstwa `glassTint` + jaśniejąca ku dołowi krawędź),
+  `IslandEdge` (obrys bez górnej krawędzi), `TabStripBackground` i `TabPill` (zakładki), `WidgetCard` (karty widżetów
+  w Czarnej tafli). Motyw trafia do modułów przez `@Environment(\.islandTheme)`.
+- **Przezroczysty** (`clear`, prośba użytkownika: „jak Centrum sterowania, w pełni transparentna”): `ClearGlass` =
+  SwiftUI `glassEffect(.regular, in: IslandShape)` na macOS 26+ — ten sam materiał Liquid Glass co Centrum sterowania
+  (wygląda jak ono także po zmianie „Liquid Glass” w Ustawieniach systemowych), bez czarnej warstwy (krycie 0,01 tylko
+  po to, żeby okno dostawało zdarzenia myszy) i bez własnego cienia. Szkło leży **poza** `compositingGroup` z cieniem
+  (spłaszczona grupa odcięłaby je od tego, co pod oknem). Na macOS < 26 `FrostedGlass` bez przyciemnienia.
+  Tło modułu (okładka) zostaje nieprzezroczyste jak w innych motywach. `hasGlass` = Szkło albo Przezroczysty.
 - Szkło tylko poza notchem (`usesGlass`: rozwinięta albo karta) — zwinięta przy notchu zostaje czarna.
 - Ikony, okładki, ikony aplikacji i kolory modułów są wspólne dla wszystkich motywów (prośba użytkownika).
 - Zrzut demo tylko dla Czarnej tafli: rozmycie za oknem nie renderuje się poza ekranem.
@@ -296,8 +302,17 @@ jak reszta wyspy); kolory zostają dla znaczenia (czerwony mikrofon, pomarańczo
   „Aktualizacja się nie udała” z odnośnikiem do logu. Wpis jest kasowany przy odczycie (jednorazowo).
 - Karta w wyspie (8 s) raz na nowy commit (`announcedCommit` w ustawieniach modułu); lista zmian w ustawieniach.
 - „Zaktualizuj teraz”: `UpdateService.prepare` (katalog z `scripts/install.sh`, gałąź `master`, czyste
-  `git status --porcelain`, `git pull --ff-only`), potem `scripts/install.sh` jako proces potomny z wyjściem
-  do `~/Library/Logs/Wyspa/aktualizacja.log` — instalator zamyka Wyspę i uruchamia nową wersję.
+  `git status --porcelain`, `git pull --ff-only`), potem `scripts/install.sh --native` jako proces potomny z wyjściem
+  do `~/Library/Logs/Wyspa/aktualizacja.log` (do pliku, nie do potoku: po zamknięciu Wyspy potok zabiłby skrypt SIGPIPE).
+  Skrypt kopiuje build obok docelowego (`/Applications/.Wyspa-instalacja`), póki stara wersja działa, potem zamyka Wyspę
+  (SIGTERM, po 10 s SIGKILL), podmienia zmianą nazwy i sprawdza, że nowa kopia ruszyła (3 próby `open`). Gdy przerwie
+  po zamknięciu Wyspy, uruchamia ją z powrotem. **`pgrep`/`pkill` w skrypcie zawsze z `-a`**: domyślnie pomijają swoich
+  przodków, a przy aktualizacji Wyspa jest rodzicem skryptu — bez `-a` zostawała stara kopia, a `open` tylko ją
+  aktywował (trzeba było ręcznie zamknąć i włączyć Wyspę). Testy uruchamiają prawdziwy `install.sh` na atrapach poleceń.
+- Postęp: skrypt ogłasza etapy liniami `▸ <etap>: …` (nazwy = `UpdateStage`, test), `InstallOutputReader` czyta je
+  z przebiegu na bieżąco (zdarzenia pliku). Okienko `UpdateProgressWindowController` (WyspaApp) pokazuje się przy
+  `.updating` i zostaje z opisem błędu. Skrypt zakończony, gdy Wyspa wciąż działa, to błąd z etapem w komunikacie
+  (wcześniej status zostawał „Aktualizowanie…” na zawsze).
 
 ## Skrypty (moduł `WyspaScripts`)
 

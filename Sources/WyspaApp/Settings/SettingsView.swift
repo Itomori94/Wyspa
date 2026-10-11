@@ -159,7 +159,17 @@ private struct IslandSettingsView: View {
         case .classic: "Czarna wyspa, widżety rozdzielone kreskami."
         case .blackSheet: "Czarna wyspa z cienką jasną krawędzią, zakładki w kapsule, widżety na osobnych kartach."
         case .glass: "Rozwinięta wyspa i karty z rozmytego szkła; przy samym notchu wyspa zostaje czarna."
+        case .clear: Self.clearThemeHint
         }
+    }
+
+    private static var clearThemeHint: String {
+        if #available(macOS 26, *) {
+            return "Rozwinięta wyspa i karty z przezroczystego szkła Liquid Glass, jak Centrum sterowania; przy samym "
+                + "notchu wyspa zostaje czarna."
+        }
+        return "Liquid Glass wymaga macOS 26 — na tym systemie rozwinięta wyspa i karty są z rozmytego szkła "
+            + "bez przyciemnienia; przy samym notchu wyspa zostaje czarna."
     }
 }
 

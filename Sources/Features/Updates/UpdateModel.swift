@@ -95,3 +95,44 @@ public struct UpdateCheck: Equatable, Sendable {
         return UpdateCheck(changes: changes.reversed(), latestCommit: changes.last?.sha)
     }
 }
+
+/// Etap aktualizacji. Pobieranie zmian robi Wyspa, resztę ogłasza scripts/install.sh liniami „▸ <etap>: …”
+/// (nazwy etapów są wspólne ze skryptem — test pilnuje zgodności).
+public enum UpdateStage: String, CaseIterable, Comparable, Sendable {
+    case fetch, build, install, restart
+
+    public var title: String {
+        switch self {
+        case .fetch: "Pobieranie zmian"
+        case .build: "Budowanie nowej wersji"
+        case .install: "Instalowanie"
+        case .restart: "Ponowne uruchamianie"
+        }
+    }
+
+    /// Etap z linii wyjścia skryptu („▸ build: budowanie Wyspy”); inne linie → nil.
+    init?(marker line: some StringProtocol) {
+        guard line.hasPrefix("▸ ") else { return nil }
+        self.init(rawValue: String(line.dropFirst(2).prefix { $0 != ":" }))
+    }
+
+    public static func < (lhs: Self, rhs: Self) -> Bool {
+        (allCases.firstIndex(of: lhs) ?? 0) < (allCases.firstIndex(of: rhs) ?? 0)
+    }
+}
+
+/// Wyjście skryptu instalacji czytane kawałkami; zapamiętuje ostatni ogłoszony etap. Kawałek może urwać linię
+/// (także w połowie znaku UTF-8), więc niedokończona linia czeka na resztę.
+struct InstallOutputReader {
+    private var partial: [UInt8] = []
+    private(set) var stage: UpdateStage?
+
+    mutating func consume(_ bytes: some Sequence<UInt8>) {
+        partial.append(contentsOf: bytes)
+        guard let end = partial.lastIndex(of: 0x0A) else { return }
+        for line in partial[..<end].split(separator: 0x0A) {
+            if let marked = UpdateStage(marker: String(decoding: line, as: UTF8.self)) { stage = marked }
+        }
+        partial.removeFirst(end + 1)
+    }
+}
