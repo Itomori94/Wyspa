@@ -262,7 +262,8 @@ jak reszta wyspy); kolory zostają dla znaczenia (czerwony mikrofon, pomarańczo
 - `WyspaUI/IslandThemeViews.swift`: `IslandBackground` (czerń / czerń + krawędź 0,5 pt / szkło = `IslandGlass`:
   jedna tafla `glassEffect(.clear)` na całej wyspie jak Centrum sterowania (prośba użytkownika 11.10.2026), czarna
   warstwa `glassTint` nad nią, bez cienia, przycięta do kształtu (poświata wychodziła poza wyspę), poza `compositingGroup`;
-  wstawiana bez przenikania (`.identity`), czerń przechodzi 1 ↔ `glassTint`; na macOS < 26 `FrostedGlass`:
+  stale pod czarną wyspą (poza ukrytą), rozwinięcie tylko rozjaśnia czerń 1 → `glassTint` — szkło wstawiane przy
+  rozwinięciu włączało się z opóźnieniem ~0,3 s i przez chwilę wyspa wyglądała po staremu; na macOS < 26 `FrostedGlass`:
   `NSVisualEffectView` `.hudWindow` `.behindWindow` + jaśniejąca ku dołowi krawędź),
   `IslandEdge` (obrys bez górnej krawędzi), `TabStripBackground` i `TabPill` (zakładki), `WidgetCard` (karty widżetów
   w Czarnej tafli). Motyw trafia do modułów przez `@Environment(\.islandTheme)`.
