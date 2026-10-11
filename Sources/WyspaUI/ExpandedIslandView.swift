@@ -42,11 +42,11 @@ struct ExpandedIslandView: View {
         .foregroundStyle(.white)
     }
 
-    /// Zmiana strony. W motywie Przezroczysty poprzednia strona znika od razu: jej kafelki szkła nie mogą przenikać,
-    /// więc nakładałyby się na kafelki nowej; nowa wsuwa się z przenikaniem samej treści.
+    /// Zmiana strony: przenikanie z przesunięciem (w Przezroczystym przenika treść i przyciemnienie, a szkło kafelków obu
+    /// stron znika i pojawia się samo). Usunięcie bez przejścia nie znika od razu — zostaje do końca animacji pod nową
+    /// stroną (widać to było na klatkach z ekranu).
     private var pageTransition: AnyTransition {
-        let insertion = AnyTransition.islandContent(theme: model.theme, offsetY: 6)
-        return model.theme.usesGlassTiles ? .asymmetric(insertion: insertion, removal: .identity) : insertion
+        .islandContent(theme: model.theme, offsetY: 6)
     }
 
     /// Nagłówek z trzech kolumn: lewa połowa, pusta przerwa pod notchem, prawa połowa.

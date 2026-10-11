@@ -73,8 +73,8 @@ public struct IslandView: View {
         model.phase == .expanded ? IslandLayout.expandedTopRadius : IslandLayout.collapsedTopRadius
     }
 
-    /// Zwinięcie: treść szybko gaśnie. Kafelki szkła Przezroczystego nie mogą gasnąć (zniknęłyby w połowie zwijania),
-    /// więc zostają do końca sprężyny i chowa je malejąca wyspa, a gaśnie tylko treść nad nimi.
+    /// Zwinięcie: treść szybko gaśnie. W Przezroczystym przez całą sprężynę zwijania gaśnie treść i przyciemnienie
+    /// kafelków (`GlassSafeTransition`), a szkło znika samo — krycie rodzica wyłączałoby efekt tła.
     private var expandedRemoval: AnyTransition {
         model.theme.usesGlassTiles ? .islandContent(theme: model.theme) : .opacity.animation(.easeOut(duration: 0.12))
     }

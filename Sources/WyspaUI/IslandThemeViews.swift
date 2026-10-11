@@ -11,10 +11,9 @@ extension EnvironmentValues {
     @Entry var islandContentOpacity: Double = 1
 }
 
-/// Przejście treści leżącej na kafelkach szkła (Przezroczysty) bez przenikania całości: efekt szkła przestaje działać,
-/// gdy rodzic ma krycie mniejsze od 1 (ograniczenie Core Animation, jak przy UIVisualEffectView) — kafelki byłyby przez
-/// całe przenikanie samym przyciemnieniem, a szkło wskakiwałoby na końcu (widać to na klatkach z ekranu). Kafelki są więc
-/// od razu (odsłania je rosnąca wyspa), a przenika tylko treść nad szkłem (`GlassContentFade`).
+/// Przejście treści leżącej na kafelkach szkła (Przezroczysty) bez przenikania całości: krycie rodzica mniejsze od 1
+/// wyłącza efekty tła (znane z UIVisualEffectView i NSVisualEffectView). Szkło pojawia się i znika własną animacją
+/// systemu, a przenikają tylko treść nad nim (`GlassContentFade`) i przyciemnienie pod nim (`TileGlass`).
 struct GlassSafeTransition: Transition {
     var scale: CGFloat = 1
     var offsetY: CGFloat = 0
@@ -176,16 +175,20 @@ struct GlassTile: View {
 private struct TileGlass: View {
     let shape: RoundedRectangle
     @Environment(\.islandTileDimming) private var dimming
+    /// Przyciemnienie przenika z treścią: bez tego przy rozwijaniu ciemne prostokąty kafelków byłyby od pierwszej
+    /// klatki, zanim szkło się pojawi.
+    @Environment(\.islandContentOpacity) private var contentOpacity
 
     var body: some View {
+        let dim = Color.black.opacity(dimming * contentOpacity)
         if #available(macOS 26, *) {
             Color.clear
                 .glassEffect(.clear, in: shape)
-                .background(shape.fill(Color.black.opacity(dimming)))
+                .background(shape.fill(dim))
         } else {
             ZStack {
                 BehindWindowBlur()
-                shape.fill(Color.black.opacity(dimming))
+                shape.fill(dim)
                 shape.strokeBorder(Highlight.gradient(top: 0.3), lineWidth: 0.5)
             }
             .clipShape(shape)
