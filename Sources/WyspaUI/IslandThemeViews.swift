@@ -73,8 +73,30 @@ struct IslandBackground: View {
         // Przenikania dotyczą tylko swoich warstw: `animation(_:value:)` na całości nadpisałoby sprężynę wyspy
         // także dla belki (zmiana fazy zmienia `isGlass`, a rozwinięcie odtwarzacza — `backdrop`).
         ZStack(alignment: .top) {
+            // Szkło Liquid Glass poza grupą `compositingGroup` (spłaszczenie odcięłoby je od tego, co pod oknem).
             ZStack {
-                if isGlass, theme == .glass {
+                if isGlass, theme == .glass, Self.hasLiquidGlass {
+                    // Bez przenikania (krycie < 1 wyłącza szkło): czerń nad nim przechodzi z 1 do `glassTint`,
+                    // a przy zwijaniu `.identity` trzyma szkło do końca animacji, aż czerń znów je zakryje.
+                    IslandGlass(shape: shape)
+                        .transition(.identity)
+                }
+            }
+            .animation(.easeInOut(duration: 0.25), value: isGlass)
+            background
+        }
+    }
+
+    /// Przejrzyste szkło Liquid Glass (macOS 26+); na starszym systemie rozmycie zza okna.
+    static var hasLiquidGlass: Bool {
+        if #available(macOS 26, *) { return true }
+        return false
+    }
+
+    private var background: some View {
+        ZStack(alignment: .top) {
+            ZStack {
+                if isGlass, theme == .glass, !Self.hasLiquidGlass {
                     FrostedGlass(shape: shape, edge: edge)
                         .transition(.opacity)
                 }
@@ -117,7 +139,7 @@ struct IslandBackground: View {
         // Ukryta wyspa i przezroczyste części wyspy muszą mieć niezerowe krycie, inaczej okno nie dostanie
         // zdarzeń myszy. W motywie Przezroczysty czerń daje belka.
         if isHidden || theme.usesGlassTiles { return 0.01 }
-        return isGlass ? glassTint : 1
+        return isGlass ? max(glassTint, 0.01) : 1
     }
 
     private var shadowOpacity: Double {
@@ -125,10 +147,25 @@ struct IslandBackground: View {
         switch theme {
         case .classic: return 0.5
         case .blackSheet: return 0.5
-        case .glass: return 0.32
+        // Liquid Glass ma własną głębię, a cień pod przejrzystym szkłem byłby ciemną plamą.
+        case .glass: return Self.hasLiquidGlass ? 0 : 0.32
         // Przezroczysta wyspa nie rzuca cienia (to byłaby ciemna plama pod niewidocznym kształtem); kafelki ze szkła
         // mają własną głębię.
         case .clear: return 0
+        }
+    }
+}
+
+/// Tafla motywu Szkło jak Centrum sterowania: przejrzysty Liquid Glass (`.clear`) na całej wyspie — pulpit widać ostro,
+/// z załamaniem i połyskiem na brzegu. Czytelność tekstu daje czarna warstwa `glassTint` nad szkłem.
+private struct IslandGlass: View {
+    let shape: IslandShape
+
+    var body: some View {
+        if #available(macOS 26, *) {
+            // Przycięte do wyspy: cień i poświata szkła wychodzą poza kształt (test `IslandOverflowTests`).
+            Color.clear.glassEffect(.clear, in: shape)
+                .clipShape(shape)
         }
     }
 }
