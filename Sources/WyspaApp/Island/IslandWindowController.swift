@@ -70,7 +70,7 @@ final class IslandWindowController {
     /// Motyw i przyciemnienie szkła — bez przebudowy okna (suwak działa płynnie).
     func applyAppearance() {
         model.theme = settings.islandTheme
-        model.glassTint = adaptedGlassTint()
+        model.glassTint = settings.glassTint
         model.tileDimming = settings.tileDimming
     }
 
@@ -120,7 +120,6 @@ final class IslandWindowController {
             if next.phase == .expanded { registry.privacy.refresh() }
             if previous.phase == .expanded, panel.isKeyWindow { returnKeyboard() }
             if next.phase == .expanded, model.theme.takesKeyboardOnExpand { takeKeyboard() }
-            if next.phase == .expanded { adaptGlassTint() }
         }
         if next.phase != .collapsed, model.wingsYielded { restoreWings() }
         if next.selectedTab != model.selectedTab {
@@ -314,7 +313,6 @@ final class IslandWindowController {
         guard state.phase != .expanded else { return }
         let showsHUD = model.theme.takesKeyboardOnExpand && registry.currentActivity?.priority == .hud
         if showsHUD, !panel.isKeyWindow {
-            adaptGlassTint()
             takeKeyboard()
         } else if !showsHUD, panel.isKeyWindow {
             panel.acceptsKeyboard = false
@@ -330,24 +328,6 @@ final class IslandWindowController {
         )
         panel.setFrame(IslandPlacement.topCentered(size, in: screen.frame), display: true)
         updateInteractiveRect()
-    }
-
-    /// Szkło: przyciemnienie dobrane do jasności pulpitu pod wyspą (`GlassContrast`), suwak to minimum. Liczone przy
-    /// rozwinięciu i pokazaniu HUD — pulpit zmienia się rzadko, a wyspa i tak wtedy rośnie.
-    private func adaptGlassTint() {
-        let tint = adaptedGlassTint()
-        guard tint != model.glassTint else { return }
-        withAnimation(.easeInOut(duration: 0.3)) { model.glassTint = tint }
-    }
-
-    private func adaptedGlassTint() -> Double {
-        guard settings.islandTheme == .glass,
-              let nsScreen = panel.screen else { return settings.glassTint }
-        let size = islandSize
-        let rect = CGRect(x: panel.frame.midX - size.width / 2, y: panel.frame.maxY - size.height,
-                          width: size.width, height: size.height)
-        let luminance = BackdropBrightness.luminance(of: rect, on: nsScreen, below: panel.windowNumber)
-        return GlassContrast.tint(luminance: luminance, minimum: settings.glassTint)
     }
 
     /// Rozmiar wyspy w bieżącej fazie (z aktywnością i kartą).
