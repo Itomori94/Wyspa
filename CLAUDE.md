@@ -113,7 +113,8 @@ binarka ma `minos 14.0` dla obu architektur (sprawdź: `vtool -arch x86_64 -show
   Gdzie: `IslandPage.backdrop` = tło całej wyspy dla pełnej strony modułu **i strony z jednym widżetem** (sam
   odtwarzacz na stronie z widżetami wygląda jak pełna strona); przy kilku widżetach tło ma tylko karta widżetu
   (`Widget.backdrop` → `WidgetRow`, `drawsBackdrops` wyłączone, gdy tło rysuje wyspa). Nigdy dla modułu zasłoniętego
-  w trybie prywatnym. `IslandBackground` rysuje tło tylko w rozwiniętej wyspie, nieprzezroczyste w każdym motywie
+  w trybie prywatnym ani w motywie Szkło (`IslandTheme.showsModuleBackdrops`; okładka zakrywała szkło, a tekst był
+  nieczytelny — w Szkle ustawienia nie pokazują wyboru tła odtwarzacza). `IslandBackground` rysuje tło tylko w rozwiniętej wyspie, nieprzezroczyste w każdym motywie
   (w szkle prześwitywało tło okna i biały tekst tracił kontrast).
   Ruch jak w Apple Music (`WyspaUI/DriftingArtwork.swift`): cała okładka (bok 1,1 × przekątna, obrót 80 s) i nad nią
   4 miękkie plamy z ćwiartek okładki (`softSpot`: 64 px, brzeg wygaszony do zera w samym obrazie — bez masek

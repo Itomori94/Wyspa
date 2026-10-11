@@ -77,6 +77,11 @@ struct IslandThemeTests {
         #expect(IslandTheme.allCases.filter(\.usesGlassTiles) == [.clear])
     }
 
+    @Test("tło modułu (rozmyta okładka) we wszystkich motywach poza Szkłem")
+    func moduleBackdrops() {
+        #expect(IslandTheme.allCases.filter { !$0.showsModuleBackdrops } == [.glass])
+    }
+
     @Test("zapisane nazwy motywów są stałe")
     func rawValues() {
         #expect(IslandTheme.allCases.map(\.rawValue) == ["classic", "black-sheet", "glass", "clear"])

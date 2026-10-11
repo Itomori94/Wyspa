@@ -29,6 +29,10 @@ public enum IslandTheme: String, CaseIterable, Codable, Sendable {
     /// Treść na osobnych szklanych kafelkach zamiast jednej tafli (Przezroczysty).
     public var usesGlassTiles: Bool { self == .clear }
 
+    /// Tło modułu (np. rozmyta okładka) pod treścią. W Szkle nigdy: zakrywałoby szkło, a biały tekst na okładce
+    /// za przejrzystym szkłem był nieczytelny (prośba użytkownika 11.10.2026).
+    public var showsModuleBackdrops: Bool { self != .glass }
+
     /// Szkło tylko tam, gdzie wyspa wychodzi poza notch: rozwinięta albo z kartą pod skrzydłami.
     public func usesGlass(isExpanded: Bool, showsCard: Bool) -> Bool {
         hasGlass && (isExpanded || showsCard)
