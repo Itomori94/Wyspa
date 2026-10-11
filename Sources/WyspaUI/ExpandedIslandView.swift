@@ -187,7 +187,7 @@ public struct PageContentView: View {
     public var body: some View {
         switch page.content {
         case .module(let view):
-            view.modifier(PageTile(backdrop: page.backdrop))
+            view.modifier(PageTile(backdrop: theme.showsModuleBackdrops ? page.backdrop : nil))
         case .widgets(let widgets):
             if theme.usesGlassTiles {
                 // Przezroczysty: każdy widżet na własnym kafelku (z własnym tłem), wiersz wysunięty jak kafelek strony.
@@ -196,7 +196,7 @@ public struct PageContentView: View {
                     .padding(.bottom, -GlassTile.bottomOutset)
             } else {
                 // Tło całej strony (jeden widżet) rysuje wyspa — wtedy widżet nie dostaje osobnej karty z tłem.
-                WidgetRow(widgets: widgets, drawsBackdrops: page.backdrop == nil)
+                WidgetRow(widgets: widgets, drawsBackdrops: page.backdrop == nil && theme.showsModuleBackdrops)
             }
         }
     }

@@ -22,6 +22,8 @@ struct SettingsView: View {
                 .tabItem { Label("Szybkie akcje", systemImage: "bolt.circle") }
         }
         .frame(width: 720, height: 620)
+        // Ustawienia modułów zależne od motywu (np. tło odtwarzacza znika w Szkle).
+        .environment(\.islandTheme, settings.islandTheme)
     }
 }
 

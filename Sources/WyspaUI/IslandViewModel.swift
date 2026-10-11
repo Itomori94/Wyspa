@@ -45,7 +45,7 @@ public final class IslandViewModel {
 
     /// Tło rozwiniętej wyspy podane przez widoczny moduł (np. rozmyta okładka w odtwarzaczu).
     public var backdrop: IslandBackdrop? {
-        guard phase == .expanded else { return nil }
+        guard phase == .expanded, theme.showsModuleBackdrops else { return nil }
         return registry.islandBackdrop(standaloneModuleID: standaloneModuleID, pageIndex: selectedTab)
     }
 
