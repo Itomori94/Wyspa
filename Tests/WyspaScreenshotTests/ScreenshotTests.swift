@@ -517,7 +517,7 @@ struct ScreenshotTests {
         }
         CATransaction.flush()
         // Okna muszą zostać złożone przez serwer okien (szkło pojawia się z animacją).
-        _ = CFRunLoopRunInMode(.defaultMode, 2.5, false)
+        runMainLoop(seconds: 2.5)
 
         // Obszar ekranu w układzie z początkiem w lewym górnym rogu głównego ekranu.
         let rect = CGRect(x: frame.minX, y: screen.frame.maxY - frame.maxY, width: frame.width, height: frame.height)
@@ -552,6 +552,12 @@ struct ScreenshotTests {
                 print("CGWindowListCreateImage \(name): brak obrazu")
             }
         }
+    }
+
+    /// Pętla zdarzeń głównego wątku przez chwilę (rysowanie okien, animacje). Osobna funkcja synchroniczna:
+    /// `CFRunLoopRunInMode` nie wolno wołać wprost z funkcji `async`.
+    private func runMainLoop(seconds: CFTimeInterval) {
+        _ = CFRunLoopRunInMode(.defaultMode, seconds, false)
     }
 
     private func showWindow<Content: View>(frame: CGRect, level: NSWindow.Level, opaque: Bool,
