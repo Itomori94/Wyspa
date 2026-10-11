@@ -368,8 +368,9 @@ struct ScreenshotTests {
         return (board, tabs)
     }
 
-    private func render(_ name: String, phase: IslandPhase, tab: String? = nil, activity: (String, LiveActivity?)? = nil,
-                        privateMode: Bool = false, size: IslandSize = .medium, theme: IslandTheme = .classic) async throws {
+    private func makeModel(phase: IslandPhase, tab: String? = nil, activity: (String, LiveActivity?)? = nil,
+                           privateMode: Bool = false, size: IslandSize = .medium,
+                           theme: IslandTheme = .classic) async throws -> IslandViewModel {
         Stage.activity = activity.flatMap { slot, activity in activity.map { (slot, $0) } }
         let settings = SettingsStore(defaults: UserDefaults(suiteName: "wyspa.shots.registry.\(UUID())")!)
         let registry = ModuleRegistry(catalog: Self.catalog, settings: settings, permissions: NoPermissions(), requestExpand: { _ in })
@@ -383,6 +384,13 @@ struct ScreenshotTests {
         let model = IslandViewModel(phase: phase, notch: Self.notch, expandedSize: size.expandedSize, registry: registry)
         model.selectedTab = tab.flatMap { tabs[$0] } ?? 0
         model.theme = theme
+        return model
+    }
+
+    private func render(_ name: String, phase: IslandPhase, tab: String? = nil, activity: (String, LiveActivity?)? = nil,
+                        privateMode: Bool = false, size: IslandSize = .medium, theme: IslandTheme = .classic) async throws {
+        let model = try await makeModel(phase: phase, tab: tab, activity: activity, privateMode: privateMode, size: size,
+                                        theme: theme)
         let panel = IslandLayout.panelSize(expanded: size.expandedSize, notch: Self.notch.size, shadowMargin: 36)
         let canvas = CGSize(width: panel.width + 80, height: panel.height + 20)
         let view = ZStack(alignment: .top) {
@@ -455,7 +463,144 @@ struct ScreenshotTests {
         try await render("bluetooth", phase: .expanded, tab: "bluetooth")
         try await render("motyw-czarna-tafla", phase: .expanded, tab: "widgets", theme: .blackSheet)
         try await render("motyw-czarna-tafla-karta", phase: .collapsed, activity: ("alerts", Stage.notificationActivity), theme: .blackSheet)
-        // Szkła nie da się tu sfotografować: rozmycie okna działa tylko na prawdziwym ekranie.
+        // Szkła nie da się tu sfotografować: rozmycie okna działa tylko na prawdziwym ekranie (niżej).
+    }
+
+    // MARK: - Szkło na prawdziwym ekranie
+
+    /// Liquid Glass rysuje serwer okien, więc poza ekranem go nie widać. Wyspa w przezroczystym oknie nad oknem
+    /// z tapetą (jak panel aplikacji nad pulpitem), zrzut obszaru ekranu. Bez dostępu do ekranu (brak zgody na
+    /// nagrywanie) zrzutów po prostu nie ma — test nie przerywa reszty.
+    @Test("Szkło motywów Przezroczysty i Szkło na prawdziwym ekranie")
+    func glassOnScreen() async throws {
+        try await prepare()
+        _ = NSApplication.shared
+        NSApp.setActivationPolicy(.accessory)
+        try await capture("ekran-przezroczysty-widzety", phase: .expanded, tab: "widgets", theme: .clear)
+        try await capture("ekran-przezroczysty-widzety-clear", phase: .expanded, tab: "widgets", theme: .clear, clearGlass: true)
+        try await capture("ekran-przezroczysty-pogoda", phase: .expanded, tab: "weather", theme: .clear)
+        try await capture("ekran-przezroczysty-odtwarzacz", phase: .expanded, tab: "media", theme: .clear)
+        try await capture("ekran-przezroczysty-karta", phase: .collapsed, activity: ("alerts", Stage.notificationActivity), theme: .clear)
+        try await capture("ekran-przezroczysty-w-oknie", phase: .expanded, tab: "widgets", theme: .clear, sameWindow: true)
+        try await capture("ekran-szklo-widzety", phase: .expanded, tab: "widgets", theme: .glass)
+    }
+
+    private func capture(_ name: String, phase: IslandPhase, tab: String? = nil, activity: (String, LiveActivity?)? = nil,
+                         theme: IslandTheme, clearGlass: Bool = false, sameWindow: Bool = false) async throws {
+        let model = try await makeModel(phase: phase, tab: tab, activity: activity, theme: theme)
+        let size = IslandSize.medium.expandedSize
+        let panel = IslandLayout.panelSize(expanded: size, notch: Self.notch.size, shadowMargin: 36)
+        guard let screen = NSScreen.screens.first else {
+            print("Zrzut \(name): brak ekranu")
+            return
+        }
+        let frame = CGRect(x: screen.frame.minX + 40, y: screen.frame.maxY - panel.height - 60, width: panel.width,
+                           height: panel.height)
+        let island = IslandView(model: model)
+            .frame(width: panel.width, height: panel.height)
+            .environment(\.islandStaticSnapshot, true)
+            .environment(\.islandClearGlass, clearGlass)
+            .environment(\.locale, Locale(identifier: "pl_PL"))
+        var windows: [NSWindow] = []
+        if sameWindow {
+            windows.append(showWindow(frame: frame, level: .floating, opaque: true) {
+                ZStack(alignment: .top) { GlassTestWallpaper(); island }
+            })
+        } else {
+            windows.append(showWindow(frame: frame, level: .floating, opaque: true) { GlassTestWallpaper() })
+            windows.append(showWindow(frame: frame, level: NSWindow.Level(NSWindow.Level.floating.rawValue + 1), opaque: false) { island })
+        }
+        defer { windows.forEach { $0.orderOut(nil) } }
+        windows.forEach {
+            $0.contentView?.layoutSubtreeIfNeeded()
+            $0.displayIfNeeded()
+        }
+        CATransaction.flush()
+        // Okna muszą zostać złożone przez serwer okien (szkło pojawia się z animacją).
+        _ = CFRunLoopRunInMode(.defaultMode, 2.5, false)
+
+        // Obszar ekranu w układzie z początkiem w lewym górnym rogu głównego ekranu.
+        let rect = CGRect(x: frame.minX, y: screen.frame.maxY - frame.maxY, width: frame.width, height: frame.height)
+        let directory = URL(fileURLWithPath: outputDirectory!)
+        let file = directory.appendingPathComponent("\(name).png")
+        let tool = Process()
+        tool.executableURL = URL(fileURLWithPath: "/usr/sbin/screencapture")
+        tool.arguments = ["-x", "-R", "\(Int(rect.minX)),\(Int(rect.minY)),\(Int(rect.width)),\(Int(rect.height))", file.path]
+        // Bez zgody na nagrywanie ekranu polecenie mogłoby czekać na odpowiedź — najwyżej 10 s.
+        let watchdog = Task { [tool] in
+            try? await Task.sleep(for: .seconds(10))
+            if tool.isRunning { tool.terminate() }
+        }
+        let status = try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Int32, Error>) in
+            tool.terminationHandler = { continuation.resume(returning: $0.terminationStatus) }
+            do { try tool.run() } catch { continuation.resume(throwing: error) }
+        }
+        watchdog.cancel()
+        print("screencapture \(name): kod \(status), plik \(FileManager.default.fileExists(atPath: file.path))")
+        // Drugi sposób: obraz okien z serwera okien w tym samym procesie (bez zgody na nagrywanie dla własnych okien).
+        // Funkcja oznaczona jako przestarzała, więc wołana przez dlsym.
+        typealias CreateImage = @convention(c) (CGRect, UInt32, UInt32, UInt32) -> Unmanaged<CGImage>?
+        let coreGraphics = dlopen("/System/Library/Frameworks/CoreGraphics.framework/CoreGraphics", RTLD_NOW)
+        if let symbol = dlsym(coreGraphics, "CGWindowListCreateImage") {
+            let create = unsafeBitCast(symbol, to: CreateImage.self)
+            // kCGWindowListOptionOnScreenOnly, kCGNullWindowID, kCGWindowImageBestResolution
+            if let image = create(rect, 1, 0, 1 << 3)?.takeRetainedValue(),
+               let png = NSBitmapImageRep(cgImage: image).representation(using: .png, properties: [:]) {
+                try png.write(to: directory.appendingPathComponent("\(name)-cg.png"))
+                print("CGWindowListCreateImage \(name): \(image.width)×\(image.height)")
+            } else {
+                print("CGWindowListCreateImage \(name): brak obrazu")
+            }
+        }
+    }
+
+    private func showWindow<Content: View>(frame: CGRect, level: NSWindow.Level, opaque: Bool,
+                                           @ViewBuilder content: () -> Content) -> NSWindow {
+        let window = NSWindow(contentRect: frame, styleMask: [.borderless], backing: .buffered, defer: false)
+        window.isOpaque = opaque
+        window.backgroundColor = opaque ? .black : .clear
+        window.hasShadow = false
+        window.level = level
+        window.ignoresMouseEvents = true
+        window.isReleasedWhenClosed = false
+        window.contentView = NSHostingView(rootView: content())
+        window.orderFrontRegardless()
+        return window
+    }
+}
+
+/// Tapeta pod wyspą do zrzutów szkła: ukośne pasy (widać na nich załamanie i rozmycie), plamy kolorów i jasne okno
+/// z tekstem (czy biały tekst wyspy jest czytelny nad jasnym tłem).
+private struct GlassTestWallpaper: View {
+    var body: some View {
+        ZStack {
+            LinearGradient(colors: [Color(red: 0.36, green: 0.22, blue: 0.62), Color(red: 0.12, green: 0.32, blue: 0.62)],
+                           startPoint: .topLeading, endPoint: .bottomTrailing)
+            HStack(spacing: 16) {
+                ForEach(0..<40, id: \.self) { index in
+                    Rectangle()
+                        .fill(index.isMultiple(of: 2) ? Color(red: 0.55, green: 0.3, blue: 0.85) : Color.black.opacity(0.45))
+                        .frame(width: 14)
+                }
+            }
+            .frame(width: 1400, height: 900)
+            .rotationEffect(.degrees(14))
+            Circle().fill(Color.orange).frame(width: 150).offset(x: -210, y: 60)
+            Circle().fill(Color.pink).frame(width: 110).offset(x: 40, y: 110)
+            RoundedRectangle(cornerRadius: 10)
+                .fill(Color.white)
+                .frame(width: 250, height: 190)
+                .overlay(alignment: .topLeading) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        ForEach(0..<9, id: \.self) { _ in
+                            Text("Jasne okno pod wyspą — tekst i ikony").font(.system(size: 12)).foregroundStyle(.black)
+                        }
+                    }
+                    .padding(10)
+                }
+                .offset(x: 200, y: 40)
+        }
+        .clipped()
     }
 }
 

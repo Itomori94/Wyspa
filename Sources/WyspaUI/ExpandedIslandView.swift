@@ -6,18 +6,28 @@ struct ExpandedIslandView: View {
     @Bindable var model: IslandViewModel
     let namespace: Namespace.ID
 
+    /// Odstęp nagłówka od górnej krawędzi wyspy.
+    static let topPadding: CGFloat = 8
+
+    static func headerHeight(notchHeight: CGFloat) -> CGFloat { max(notchHeight - 8, 24) }
+
+    /// Dół nagłówka liczony od górnej krawędzi wyspy (do niego sięga czarna belka motywu Przezroczysty).
+    static func headerBottom(notchHeight: CGFloat) -> CGFloat { topPadding + headerHeight(notchHeight: notchHeight) }
+
     var body: some View {
         let tabs = model.registry.pages
         VStack(alignment: .leading, spacing: 12) {
             header(tabs: tabs)
-                .frame(height: max(model.notch.size.height - 8, 24))
+                .frame(height: Self.headerHeight(notchHeight: model.notch.size.height))
             Group {
                 if let standalone = model.standaloneModuleID, let view = model.registry.standaloneView(for: standalone) {
                     view
+                        .modifier(PageTile(backdrop: model.backdrop))
                         .id("standalone." + standalone)
                         .transition(.opacity.combined(with: .offset(y: 6)))
                 } else if tabs.isEmpty {
                     EmptyModulesView(openSettings: model.onOpenSettings)
+                        .modifier(PageTile(backdrop: nil))
                 } else {
                     let index = min(model.selectedTab, tabs.count - 1)
                     PageContentView(page: tabs[index])
@@ -160,6 +170,7 @@ private struct OverflowMenu: View {
 /// Zawartość strony: pełny widok modułu albo widżety obok siebie z cienkimi dzielnikami.
 public struct PageContentView: View {
     let page: IslandPage
+    @Environment(\.islandTheme) private var theme
 
     public init(page: IslandPage) {
         self.page = page
@@ -168,10 +179,17 @@ public struct PageContentView: View {
     public var body: some View {
         switch page.content {
         case .module(let view):
-            view
+            view.modifier(PageTile(backdrop: page.backdrop))
         case .widgets(let widgets):
-            // Tło całej strony (jeden widżet) rysuje wyspa — wtedy widżet nie dostaje osobnej karty z tłem.
-            WidgetRow(widgets: widgets, drawsBackdrops: page.backdrop == nil)
+            if theme.usesGlassTiles {
+                // Przezroczysty: każdy widżet na własnym kafelku (z własnym tłem), wiersz wysunięty jak kafelek strony.
+                WidgetRow(widgets: widgets)
+                    .padding(.horizontal, -GlassTile.outset)
+                    .padding(.bottom, -GlassTile.bottomOutset)
+            } else {
+                // Tło całej strony (jeden widżet) rysuje wyspa — wtedy widżet nie dostaje osobnej karty z tłem.
+                WidgetRow(widgets: widgets, drawsBackdrops: page.backdrop == nil)
+            }
         }
     }
 }
@@ -186,8 +204,11 @@ public struct WidgetRow: View {
     var drawsBackdrops = true
     @Environment(\.islandTheme) private var theme
 
-    /// Czarna tafla: każdy widżet na własnej karcie, z odstępem zamiast kreski.
-    private var gap: CGFloat { theme == .blackSheet ? 8 : Self.dividerSpacing }
+    /// Czarna tafla i Przezroczysty: każdy widżet na własnej karcie, z odstępem zamiast kreski.
+    private var gap: CGFloat {
+        if theme.usesGlassTiles { return GlassTile.gap }
+        return theme == .blackSheet ? 8 : Self.dividerSpacing
+    }
 
     public var body: some View {
         GeometryReader { proxy in
@@ -197,7 +218,7 @@ public struct WidgetRow: View {
             HStack(spacing: 0) {
                 ForEach(Array(widgets.enumerated()), id: \.element.id) { index, widget in
                     if index > 0 {
-                        if theme == .blackSheet {
+                        if theme == .blackSheet || theme.usesGlassTiles {
                             Color.clear.frame(width: gap)
                         } else {
                             Rectangle()
@@ -218,7 +239,14 @@ public struct WidgetRow: View {
     @ViewBuilder
     private func widgetView(_ content: AnyView, backdrop: IslandBackdrop?, width: CGFloat, isFirst: Bool,
                             isLast: Bool) -> some View {
-        if theme == .blackSheet {
+        if theme.usesGlassTiles {
+            content
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                .clipped()
+                .padding(WidgetCard.padding)
+                .background { GlassTile(cornerRadius: GlassTile.widgetCornerRadius, backdrop: backdrop) }
+                .frame(width: width)
+        } else if theme == .blackSheet {
             content
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
                 .clipped()

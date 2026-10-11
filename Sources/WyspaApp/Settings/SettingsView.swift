@@ -164,12 +164,12 @@ private struct IslandSettingsView: View {
     }
 
     private static var clearThemeHint: String {
+        let layout = "Rozwinięta wyspa bez tła, jak Centrum sterowania: przy notchu zostaje czarna belka z nagłówkiem, "
+            + "a strony, widżety i karty leżą na osobnych kafelkach"
         if #available(macOS 26, *) {
-            return "Rozwinięta wyspa i karty z przezroczystego szkła Liquid Glass, jak Centrum sterowania; przy samym "
-                + "notchu wyspa zostaje czarna."
+            return layout + " ze szkła Liquid Glass."
         }
-        return "Liquid Glass wymaga macOS 26 — na tym systemie rozwinięta wyspa i karty są z rozmytego szkła "
-            + "bez przyciemnienia; przy samym notchu wyspa zostaje czarna."
+        return layout + " z rozmytego szkła (Liquid Glass wymaga macOS 26)."
     }
 }
 

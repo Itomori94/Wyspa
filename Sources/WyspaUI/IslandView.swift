@@ -23,7 +23,7 @@ public struct IslandView: View {
             IslandBackground(topRadius: topRadius, bottomRadius: bottomRadius, theme: model.theme,
                              isGlass: model.theme.usesGlass(isExpanded: model.phase == .expanded, showsCard: showsCard),
                              glassTint: model.glassTint, backdrop: model.backdrop, isHidden: model.phase == .hidden,
-                             isRaised: isRaised)
+                             isRaised: isRaised, headHeight: headHeight)
                 .contentShape(IslandShape(topRadius: topRadius, bottomRadius: bottomRadius))
                 .onTapGesture {
                     // W rozwiniętej wyspie kliknięcia obsługują kontrolki modułów.
@@ -72,6 +72,12 @@ public struct IslandView: View {
         model.phase == .expanded ? IslandLayout.expandedTopRadius : IslandLayout.collapsedTopRadius
     }
 
+    /// Czarna belka motywu Przezroczysty: w rozwiniętej wyspie nagłówek (do jego dołu z zapasem), nad kartą — skrzydła.
+    private var headHeight: CGFloat {
+        let notch = model.notch.size.height
+        return model.phase == .expanded ? ExpandedIslandView.headerBottom(notchHeight: notch) + 4 : notch
+    }
+
     private var bottomRadius: CGFloat {
         switch model.phase {
         case .hidden: 0
@@ -96,6 +102,14 @@ public struct IslandView: View {
                         detail
                             .frame(height: activity.detailHeight)
                             .padding(.horizontal, 12)
+                            .background {
+                                // Przezroczysty: karta na własnym kafelku ze szkła pod czarną belką skrzydeł.
+                                if model.theme.usesGlassTiles {
+                                    GlassTile(cornerRadius: GlassTile.cardCornerRadius)
+                                        .padding(.horizontal, 2)
+                                        .padding(.vertical, 4)
+                                }
+                            }
                             .id(activity.id + ".detail")
                             .transition(.opacity.combined(with: .scale(scale: 0.95, anchor: .top)))
                     }
@@ -103,7 +117,7 @@ public struct IslandView: View {
             }
         case .expanded:
             ExpandedIslandView(model: model, namespace: namespace)
-                .padding(.top, 8)
+                .padding(.top, ExpandedIslandView.topPadding)
                 .padding(.bottom, 16)
                 .transition(.asymmetric(
                     insertion: .opacity.combined(with: .scale(scale: 0.92, anchor: .top)).animation(IslandMotion.expand.delay(0.04)),

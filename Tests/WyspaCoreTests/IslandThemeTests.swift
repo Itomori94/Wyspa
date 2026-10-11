@@ -58,6 +58,11 @@ struct IslandThemeTests {
         #expect(!theme.usesGlass(isExpanded: true, showsCard: true))
     }
 
+    @Test("kafelki ze szkła (jak Centrum sterowania) tylko w motywie Przezroczysty")
+    func glassTiles() {
+        #expect(IslandTheme.allCases.filter(\.usesGlassTiles) == [.clear])
+    }
+
     @Test("zapisane nazwy motywów są stałe")
     func rawValues() {
         #expect(IslandTheme.allCases.map(\.rawValue) == ["classic", "black-sheet", "glass", "clear"])
