@@ -33,6 +33,11 @@ public enum IslandTheme: String, CaseIterable, Codable, Sendable {
     /// za przejrzystym szkłem był nieczytelny (prośba użytkownika 11.10.2026).
     public var showsModuleBackdrops: Bool { self != .glass }
 
+    /// Panel bierze klawiaturę przy każdym rozwinięciu (jak po skrócie). Liquid Glass jest przejrzysty tylko w oknie
+    /// kluczowym — w innym system rysuje je matowe, a Szkło wyglądało „po staremu”, dopóki kliknięcie pola tekstowego
+    /// nie dało panelowi fokusu (sprawdzone 11.10.2026; samo nadpisanie `isKeyWindow` nie wystarcza).
+    public var takesKeyboardOnExpand: Bool { self == .glass }
+
     /// Szkło tylko tam, gdzie wyspa wychodzi poza notch: rozwinięta albo z kartą pod skrzydłami.
     public func usesGlass(isExpanded: Bool, showsCard: Bool) -> Bool {
         hasGlass && (isExpanded || showsCard)

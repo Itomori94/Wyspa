@@ -77,6 +77,11 @@ struct IslandThemeTests {
         #expect(IslandTheme.allCases.filter(\.usesGlassTiles) == [.clear])
     }
 
+    @Test("klawiatura przy rozwinięciu tylko w Szkle (przejrzyste Liquid Glass wymaga okna kluczowego)")
+    func keyboardOnExpand() {
+        #expect(IslandTheme.allCases.filter(\.takesKeyboardOnExpand) == [.glass])
+    }
+
     @Test("tło modułu (rozmyta okładka) we wszystkich motywach poza Szkłem")
     func moduleBackdrops() {
         #expect(IslandTheme.allCases.filter { !$0.showsModuleBackdrops } == [.glass])

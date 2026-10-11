@@ -119,6 +119,7 @@ final class IslandWindowController {
             if next.phase != .expanded { model.standaloneModuleID = nil }
             if next.phase == .expanded { registry.privacy.refresh() }
             if previous.phase == .expanded, panel.isKeyWindow { returnKeyboard() }
+            if next.phase == .expanded, model.theme.takesKeyboardOnExpand { takeKeyboard() }
         }
         if next.phase != .collapsed, model.wingsYielded { restoreWings() }
         if next.selectedTab != model.selectedTab {
@@ -205,6 +206,11 @@ final class IslandWindowController {
     func toggleWithKeyboard() {
         send(.toggleRequested)
         guard state.phase == .expanded else { return }
+        takeKeyboard()
+    }
+
+    /// Panel nie aktywuje Wyspy, więc aplikacja pod spodem zostaje na pierwszym planie i po zwinięciu odzyskuje klawiaturę.
+    private func takeKeyboard() {
         panel.acceptsKeyboard = true
         panel.makeKey()
         // Bez fokusu w polu tekstowym: strzałki zmieniają strony, a pisanie trafia do wyszukiwania schowka.
