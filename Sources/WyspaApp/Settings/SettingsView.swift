@@ -163,7 +163,7 @@ private struct IslandSettingsView: View {
         switch settings.islandTheme {
         case .classic: "Czarna wyspa, widżety rozdzielone kreskami."
         case .blackSheet: "Czarna wyspa z cienką jasną krawędzią, zakładki w kapsule, widżety na osobnych kartach."
-        case .glass: "Rozwinięta wyspa i karty z rozmytego szkła; przy samym notchu wyspa zostaje czarna."
+        case .glass: "Rozwinięta wyspa i karty z przejrzystego szkła, jak Centrum sterowania; przy samym notchu wyspa zostaje czarna."
         case .clear: Self.clearThemeHint
         }
     }

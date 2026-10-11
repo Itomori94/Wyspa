@@ -30,7 +30,7 @@ struct IslandThemeTests {
     @Test("przyciemnienie poza zakresem jest przycinane")
     func clampsTint() {
         let (settings, defaults) = store()
-        settings.glassTint = 0.05
+        settings.glassTint = -0.2
         #expect(settings.glassTint == IslandTheme.glassTintRange.lowerBound)
         defaults.set(5.0, forKey: SettingsStore.Key.glassTint)
         #expect(SettingsStore(defaults: defaults).glassTint == IslandTheme.glassTintRange.upperBound)

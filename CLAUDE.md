@@ -255,11 +255,14 @@ jak reszta wyspy); kolory zostają dla znaczenia (czerwony mikrofon, pomarańczo
 ## Motywy wyspy
 
 - `IslandTheme` (Core): `classic` / `black-sheet` / `glass` / `clear` — nazwy zapisane w ustawieniach, nie zmieniać
-  (test). `SettingsStore.islandTheme`, `glassTint` (0,35–0,9, domyślnie 0,6, tylko Szkło) i `tileDimming` (0–0,6,
+  (test). `SettingsStore.islandTheme`, `glassTint` (0–0,9, domyślnie 0,3, tylko Szkło) i `tileDimming` (0–0,6,
   domyślnie 0,25, tylko Przezroczysty; ten sam podpis suwaka „Przyciemnienie szkła”); zmiana bez przebudowy okien
   (`IslandWindowController.applyAppearance`).
-- `WyspaUI/IslandThemeViews.swift`: `IslandBackground` (czerń / czerń + krawędź 0,5 pt / szkło = `FrostedGlass`:
-  `NSVisualEffectView` `.hudWindow` `.behindWindow` + czarna warstwa `glassTint` + jaśniejąca ku dołowi krawędź),
+- `WyspaUI/IslandThemeViews.swift`: `IslandBackground` (czerń / czerń + krawędź 0,5 pt / szkło = `IslandGlass`:
+  jedna tafla `glassEffect(.clear)` na całej wyspie jak Centrum sterowania (prośba użytkownika 11.10.2026), czarna
+  warstwa `glassTint` nad nią, bez cienia, przycięta do kształtu (poświata wychodziła poza wyspę), poza `compositingGroup`;
+  wstawiana bez przenikania (`.identity`), czerń przechodzi 1 ↔ `glassTint`; na macOS < 26 `FrostedGlass`:
+  `NSVisualEffectView` `.hudWindow` `.behindWindow` + jaśniejąca ku dołowi krawędź),
   `IslandEdge` (obrys bez górnej krawędzi), `TabStripBackground` i `TabPill` (zakładki), `WidgetCard` (karty widżetów
   w Czarnej tafli). Motyw trafia do modułów przez `@Environment(\.islandTheme)`.
 - **Przezroczysty** (`clear`, prośba użytkownika: „jak Centrum sterowania, w pełni transparentna”, potem „ma być szkło,
