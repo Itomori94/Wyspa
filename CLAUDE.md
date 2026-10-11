@@ -275,18 +275,13 @@ jak reszta wyspy); kolory zostają dla znaczenia (czerwony mikrofon, pomarańczo
   `backdrop`) obejmuje tylko ich warstwy — na całości nadpisałoby sprężynę wyspy dla belki. Reszta wyspy ma krycie
   0,01 (zdarzenia myszy). Treść leży na osobnych kafelkach `GlassTile` (`usesGlassTiles`): strona modułu na jednym
   (`PageTile`, wysunięty poza ramę treści o `outset` na boki i `bottomOutset` w dół, treść odsunięta od góry
-  o `innerTop`), każdy widżet na swoim (odstęp 8), karta pod notchem na swoim. Szkło kafelka = SwiftUI
-  `glassEffect(.clear)` na macOS 26+, pod nim czarna warstwa `tileDimming` (zalecenie Apple dla `.clear`; szkło
-  załamuje przyciemniony pulpit), bez przycinania kafelka (połysk i załamanie leżą na brzegu; poza wyspę nic nie wyjdzie,
-  bo treść wyspy jest przycięta). Dlaczego `.clear`: na zrzucie Centrum sterowania od użytkownika (macOS 26+) moduły
-  leżą wprost na pulpicie, a szkło nie przyciemnia — czerń pod kafelkiem jest podniesiona do jasności ~47/255, jasne
-  fale zostają jasne, tło widać ostro z załamaniem na brzegach. `.regular` jest matowy: pierwsza wersja (jedna tafla
-  `.regular` na całą wyspę) wyglądała u użytkownika jak Szkło, drugą (kafelki `.regular`) uznano za „po prostu
-  przezroczyste”, a nie szkło. Na macOS < 26 rozmycie zza okna z tym samym przyciemnieniem. Tło modułu
-  (okładka) rysuje kafelek, nie wyspa.
+  o `innerTop`), każdy widżet na swoim (odstęp 8), karta pod notchem na swoim. Kafelek **bez szkła** (`TileSurface`):
+  czarna warstwa `tileDimming` + cienka krawędź, przenika z treścią. Historia: kafelki z `glassEffect(.clear)` (wcześniej
+  `.regular`), ale gdy Szkło dostało przejrzyste Liquid Glass, użytkownik zdecydował (11.10.2026), że w Przezroczystym
+  szkła ma nie być wcale (włączało się też z opóźnieniem). Tło modułu (okładka) rysuje kafelek, nie wyspa.
 - **Szkło nie przenika**: krycie rodzica < 1 wyłącza efekty tła (znane z `UIVisualEffectView`/`NSVisualEffectView`).
   W Przezroczystym treść wyspy, strony i karta mają `GlassSafeTransition` (`AnyTransition.islandContent`): przenikają
-  tylko treść nad szkłem (`GlassContentFade`) i przyciemnienie pod nim (`TileGlass`), oba przez `islandContentOpacity`;
+  tylko treść nad szkłem (`GlassContentFade`) i kafelek pod nim (`TileSurface`), oba przez `islandContentOpacity`;
   samo szkło pojawia się i znika własną animacją systemu (na maszynie CI wstawione szkło jest przez ok. 0,3 s
   wyłączone, a przy usuwaniu wyłącza się od razu — także bez żadnego przenikania). Usunięcie z przejściem `.identity`
   nie znika od razu: zostaje do końca animacji (poprzednia strona była widoczna pod nową).

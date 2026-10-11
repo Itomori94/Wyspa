@@ -1,4 +1,5 @@
 import SwiftUI
+import WyspaCore
 import WyspaUI
 
 /// Szczegóły modułu w oknie ustawień: z jakich aplikacji pokazywać dźwięk.

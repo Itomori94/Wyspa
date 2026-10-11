@@ -174,11 +174,7 @@ private struct IslandSettingsView: View {
         let layout = "Rozwinięta wyspa bez tła, jak Centrum sterowania: przy notchu zostaje czarna belka z nagłówkiem, "
             + "a strony, widżety i karty leżą na osobnych kafelkach"
         let dimming = " Przyciemnienie: mniej — przejrzyściej, więcej — czytelniej nad jasnymi oknami."
-        if #available(macOS 26, *) {
-            return layout + " z przejrzystego szkła Liquid Glass — pulpit widać przez nie z załamaniem na brzegach."
-                + dimming
-        }
-        return layout + " z rozmytego szkła (przejrzyste szkło Liquid Glass wymaga macOS 26)." + dimming
+        return layout + " bez szkła — pulpit widać przez nie wprost." + dimming
     }
 }
 
