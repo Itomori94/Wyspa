@@ -1,85 +1,6 @@
 import SwiftUI
-import AppKit
 import WyspaCore
 import WyspaUI
-
-/// Wrapper enabling horizontal mouse wheel scrolling for a ScrollView.
-/// Uses NSViewRepresentable to intercept scrollWheel events and forward them
-/// to the contained NSScrollView's horizontal scroller.
-private struct HorizontalMouseWheelScrollView<Content: View>: NSViewRepresentable {
-    @ViewBuilder let content: () -> Content
-
-    func makeNSView(context: Context) -> ScrollHostingView<Content> {
-        ScrollHostingView(rootView: content())
-    }
-
-    func updateNSView(_ view: ScrollHostingView<Content>, context: Context) {
-        view.rootView = content()
-    }
-}
-
-private final class ScrollHostingView<Content: View>: NSView {
-    private let hostingView: NSHostingView<Content>
-    private var scrollView: NSScrollView?
-
-    init(rootView: Content) {
-        self.hostingView = NSHostingView(rootView: rootView)
-        super.init(frame: .zero)
-        setupScrollView()
-    }
-
-    @available(*, unavailable)
-    required init?(coder: NSCoder) { fatalError("init(coder:) is not supported") }
-
-    var rootView: Content {
-        get { hostingView.rootView }
-        set { hostingView.rootView = newValue }
-    }
-
-    private func setupScrollView() {
-        let scrollView = NSScrollView()
-        scrollView.hasVerticalScroller = false
-        scrollView.hasHorizontalScroller = false
-        scrollView.autohidesScrollers = true
-        scrollView.drawsBackground = false
-        scrollView.documentView = hostingView
-        scrollView.contentView.postsBoundsChangedNotifications = true
-        self.scrollView = scrollView
-
-        addSubview(scrollView)
-        scrollView.translatesAutoresizingMaskIntoConstraints = false
-        NSLayoutConstraint.activate([
-            scrollView.leadingAnchor.constraint(equalTo: leadingAnchor),
-            scrollView.trailingAnchor.constraint(equalTo: trailingAnchor),
-            scrollView.topAnchor.constraint(equalTo: topAnchor),
-            scrollView.bottomAnchor.constraint(equalTo: bottomAnchor),
-        ])
-    }
-
-    override func scrollWheel(with event: NSEvent) {
-        guard let scrollView else { super.scrollWheel(with: event); return }
-        // Only handle horizontal scrolling (deltaX) when there's content to scroll
-        let hasHorizontalContent = scrollView.documentView?.frame.width ?? 0 > scrollView.contentView.bounds.width
-        if hasHorizontalContent, abs(event.scrollingDeltaX) > abs(event.scrollingDeltaY) {
-            // Convert vertical wheel to horizontal scroll for mice without horizontal wheel
-            let deltaX = event.scrollingDeltaX != 0 ? event.scrollingDeltaX : -event.scrollingDeltaY
-            let newX = scrollView.contentView.bounds.origin.x + deltaX
-            let maxX = max(0, (scrollView.documentView?.frame.width ?? 0) - scrollView.contentView.bounds.width)
-            let clampedX = min(max(0, newX), maxX)
-            scrollView.contentView.scroll(to: NSPoint(x: clampedX, y: 0))
-            scrollView.reflectScrolledClipView(scrollView.contentView)
-        } else {
-            super.scrollWheel(with: event)
-        }
-    }
-
-    override func layout() {
-        super.layout()
-        scrollView?.frame = bounds
-    }
-
-    override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
-}
 
 struct ShelfExpandedView: View {
     let module: ShelfModule
@@ -188,7 +109,7 @@ private struct StoreZone: View {
                 }
                 .foregroundStyle(.white.opacity(isTargeted ? 0.9 : 0.45))
             } else {
-                HorizontalMouseWheelScrollView {
+                ScrollView(.horizontal, showsIndicators: false) {
                     LazyHStack(spacing: 6) {
                         ForEach(module.items) { item in
                             ShelfTile(module: module, item: item, isSelected: module.selection.selected.contains(item.id))
